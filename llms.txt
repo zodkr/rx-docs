@@ -1,0 +1,211 @@
+# Rhymix
+
+> Rhymix는 XpressEngine 1.8을 fork해 발전시킨 한국 커뮤니티 CMS다. PHP 7.4+에서 동작하며, **레거시 XE 클래스 계층**(`classes/`, 전역 namespace)과 **신형 Rhymix 프레임워크**(`common/framework/`, `Rhymix\Framework\*`)가 공존한다. 두 계층은 `common/autoload.php`의 커스텀 autoloader로 통합되며, 대부분의 레거시 클래스는 신형 framework 클래스의 얇은 wrapper다. 현재 버전은 `common/constants.php:6`의 `RX_VERSION` 상수에 있다.
+
+이 파일은 LLM/AI 어시스턴트가 Rhymix 코드베이스를 효율적으로 탐색하기 위한 진입 가이드다. 인간 독자는 [README.md](README.md)부터 본다.
+
+## 작업 전 필수 규약
+
+- **코드 인용은 `file_path:line_number` 형식.** (예: `common/autoload.php:75-86`)
+- **추측 금지** — 모든 사실은 실제 소스 또는 `info.xml`/`module.xml`에서 검증.
+- **`@deprecated` 표시는 신규 코드에 사용하지 않는다.** 설명도 생략.
+- **신규 코드는 신형 namespace(`Rhymix\Framework\*`, `Rhymix\Modules\*`)에 작성.**
+- **PHP 8.4 문법 기준.** 단, CI는 PHP 7.4 ~ 8.5 매트릭스이므로 호환성 유지.
+- **들여쓰기**: PHP는 tabs / JSON·YAML·Markdown은 2-space. UTF-8, LF, final newline.
+- **PR base 브랜치는 `master`** (`main`이 아님).
+
+## 권장 진입 순서
+
+1. [01-overview.md](01-overview.md) — Rhymix 정체성, XE 관계, 핵심 디자인 원칙.
+2. [04-bootstrap-and-request-lifecycle.md](04-bootstrap-and-request-lifecycle.md) — `index.php` ~ `Context::close()`.
+3. [06-module-handler-lifecycle.md](06-module-handler-lifecycle.md) — 모듈 실행 흐름.
+4. [26-namespaces-and-autoload.md](26-namespaces-and-autoload.md) — autoloader 4단계 분기. **이 문서를 모르면 클래스 호출 흐름을 못 따라간다.**
+5. [27-extension-points/](27-extension-points/) — 확장 메커니즘 7종.
+6. 작업 대상 모듈을 [28-modules/](28-modules/)에서 찾기.
+7. 필요한 framework 클래스를 [10-framework.md](10-framework.md)에서 인덱스로 찾기.
+
+## 핵심 아키텍처 (반드시 기억할 것)
+
+### 요청 흐름
+
+```
+index.php → common/autoload.php → Context::init()
+         → new ModuleHandler() → init() → procModule() → displayContent()
+         → Context::close()
+```
+
+CLI 모드는 `ModuleHandler::procCommandLineArguments($argv)`로 분기 ([21-cli-and-scripts.md](21-cli-and-scripts.md)).
+
+### autoloader 4단계 분기 (`common/autoload.php`)
+
+1. `Rhymix\(Framework|Addons|Modules|Plugins|Themes|Widgets)\...\Class` → 디렉토리 매핑.
+2. `$GLOBALS['RX_AUTOLOAD_FILE_MAP']`(`common/legacy.php:12-56`)의 정적 별칭.
+3. 정규식 `(Module)(Admin)?(View|Controller|Model|Item|Api|Wap|Mobile)?` → `modules/<mod>/<mod>[.admin][.<kind>|.class].php`.
+   예: `BoardAdminController` → `modules/board/board.admin.controller.php`.
+4. `$GLOBALS['RX_NAMESPACES']`로 등록된 외부 plugin namespace.
+
+분기 1·3·4는 해당 모듈/플러그인의 `lang/`을 자동으로 `Context::loadLang`한다. 분기 3의 정규식은 **임의의 클래스명에도 매칭**되므로 `class_exists($random)`은 디스크 stat을 유발한다.
+
+### 컨벤션 기반 라우팅
+
+액션 메서드 접두사가 의미를 가진다. `ModuleActionParser`가 `module.xml`의 type을 자동 결정.
+
+| 접두사 | 의미 |
+|---|---|
+| `disp*` | HTML 페이지 (View) |
+| `proc*` | 처리/변경 (Controller) |
+| `get*`  | 데이터 조회 (Model/API) |
+
+`module.xml`의 `<action class="Controllers\Foo" />`는 namespace 모듈 등록이며, `method=` 속성은 **PHP 메서드명이 아니라 허용 HTTP 메서드**(GET/POST 등)다. 호출되는 PHP 메서드는 액션 이름과 동일.
+
+### 인스턴스 캐싱
+
+- `ModuleObject::getInstance()`가 `$GLOBALS['_module_instances_']`에 캐싱.
+- `getController('member')`, `getModel('document')` 등 헬퍼는 모두 이 캐시 경유 (`common/legacy.php`).
+- 모든 모듈/위젯 조상 `BaseObject`(`classes/object/Object.class.php`)는 `error`/`message`/`variables` 상태와 `setError`/`get`/`add`/`toBool` API 제공. 에러는 `toBool()`로 평가되어 트리거/액션 중단을 결정.
+
+### XML 메타데이터
+
+| 파일 | 용도 |
+|---|---|
+| `conf/info.xml` | 플러그인 메타 (title, version, author, extra_vars) |
+| `conf/module.xml` | 액션/권한/메뉴/라우트/트리거 핸들러 |
+| `queries/*.xml` | 선언적 DB 쿼리 |
+| `schemas/*.xml` | 테이블 정의 |
+| `ruleset/*.xml` | 입력 검증 |
+
+파서는 `common/framework/parsers/`. 새 모듈/위젯/스킨 추가 시 **코드보다 먼저 이 XML을 본다.**
+
+## 레거시 클래스 명명 ↔ 파일 매핑
+
+| 클래스명 | 파일 |
+|---|---|
+| `Board` | `modules/board/board.class.php` |
+| `BoardController` | `modules/board/board.controller.php` |
+| `BoardModel` | `modules/board/board.model.php` |
+| `BoardView` | `modules/board/board.view.php` |
+| `BoardAdminController` | `modules/board/board.admin.controller.php` |
+| `BoardAdminModel` | `modules/board/board.admin.model.php` |
+| `BoardAdminView` | `modules/board/board.admin.view.php` |
+| `BoardMobile` | `modules/board/board.mobile.php` |
+| `BoardApi` | `modules/board/board.api.php` |
+| `BoardWap` | `modules/board/board.wap.php` |
+
+신형 namespace 모듈은 `Rhymix\Modules\Board\Controllers\Foo` 형식이며 `module.xml`의 `<action class="Controllers\Foo" />`로 등록.
+
+점진 전환 패턴(예: `modules/admin/`): 레거시 `*.controller.php`에 wrapper만 두고 신규 액션은 `controllers/Foo.php`에 namespace로 작성.
+
+## 빌드 / 테스트
+
+테스트는 **Composer dev 의존성이 아니라 `codecept.phar`를 직접** 사용.
+
+```bash
+wget https://res.rhymix.org/ci/php8.4/codecept.phar
+mysql -uroot -e "CREATE DATABASE rhymix; CREATE USER 'rhymix'@'localhost' IDENTIFIED BY 'rhymix'; GRANT ALL ON rhymix.* TO 'rhymix'@'localhost';"
+php codecept.phar build
+php codecept.phar run unit
+php codecept.phar run unit framework/RouterTest.php
+php codecept.phar run unit framework/RouterTest.php:testParseUrl
+php codecept.phar run --debug --fail-fast
+# install 스위트는 PHP dev 서버 필요
+php -S localhost:8000 &
+php codecept.phar run install
+```
+
+PHP Lint (CI `.github/workflows/ci.yml:24`와 동일):
+
+```bash
+if find . -name "*.php" ! -path "./common/vendor/*" -print0 | xargs -0 -n 1 -P 8 php -l | grep -v "No syntax errors detected"; then exit 1; fi
+```
+
+**주의:** 안쪽 파이프라인만 떼면 의미가 **역전**된다(`grep -v`는 에러가 있을 때 exit 0). 반드시 `if ... then exit 1` 래퍼와 함께 쓴다.
+
+커버리지 화이트리스트는 `common/framework/*`만 측정(`codeception.dist.yml`).
+
+## 문서 인덱스
+
+### 기초
+
+- [01-overview.md](01-overview.md): Rhymix 정체성, XE 관계, 핵심 디자인 원칙.
+- [02-infrastructure.md](02-infrastructure.md): PHP 요구사항, 드라이버, 웹서버 설정.
+- [03-directory-structure.md](03-directory-structure.md): 저장소 트리.
+
+### 요청 라이프사이클
+
+- [04-bootstrap-and-request-lifecycle.md](04-bootstrap-and-request-lifecycle.md): 부트스트랩 전체 흐름.
+- [05-context.md](05-context.md): `Context` 클래스 API.
+- [06-module-handler-lifecycle.md](06-module-handler-lifecycle.md): `ModuleHandler`/`ModuleObject` 라이프사이클.
+- [07-router.md](07-router.md): `Rhymix\Framework\Router`.
+- [08-display-and-response.md](08-display-and-response.md): DisplayHandler, 응답 포맷.
+- [09-templates-and-skins.md](09-templates-and-skins.md): 템플릿 v1/v2 엔진과 스킨.
+
+### 프레임워크/레거시
+
+- [10-framework.md](10-framework.md): `Rhymix\Framework\*` 클래스 인덱스.
+- [11-legacy-classes.md](11-legacy-classes.md): `classes/*` 레거시 클래스 인덱스.
+- [12-helpers-and-globals.md](12-helpers-and-globals.md): 전역 함수, 상수, `$GLOBALS`.
+
+### 서브시스템
+
+- [13-event-and-trigger-system.md](13-event-and-trigger-system.md): 트리거/애드온/eventHandler.
+- [14-database-and-queries.md](14-database-and-queries.md): DB 추상화, XML 쿼리.
+- [15-session-and-auth.md](15-session-and-auth.md): Session, 로그인, CSRF.
+- [16-i18n-and-lang.md](16-i18n-and-lang.md): 다국어 시스템.
+- [17-cache-and-queue.md](17-cache-and-queue.md): 캐시와 큐.
+- [18-mail-sms-push.md](18-mail-sms-push.md): 메일/SMS/푸시 추상화.
+- [19-security.md](19-security.md): CSRF/XSS/파일 업로드/IP 차단.
+- [20-storage-and-files.md](20-storage-and-files.md): 파일 스토리지.
+- [21-cli-and-scripts.md](21-cli-and-scripts.md): CLI 모드, cron, 정리 스크립트.
+- [22-multi-site-and-domain.md](22-multi-site-and-domain.md): 다중 사이트.
+- [23-mobile-detection.md](23-mobile-detection.md): 모바일 감지.
+- [24-debug-and-logging.md](24-debug-and-logging.md): 디버그/로깅.
+- [25-config-system.md](25-config-system.md): 설정 시스템.
+- [26-namespaces-and-autoload.md](26-namespaces-and-autoload.md): autoloader 4단계 분기.
+
+### 확장 포인트
+
+- [27-extension-points/module.md](27-extension-points/module.md): 모듈 작성법.
+- [27-extension-points/addon.md](27-extension-points/addon.md): 애드온 작성법.
+- [27-extension-points/layout.md](27-extension-points/layout.md): 레이아웃 작성법.
+- [27-extension-points/module-skin.md](27-extension-points/module-skin.md): 모듈 스킨 작성법.
+- [27-extension-points/widget.md](27-extension-points/widget.md): 위젯 작성법.
+- [27-extension-points/widgetstyle.md](27-extension-points/widgetstyle.md): 위젯스타일 작성법.
+- [27-extension-points/editor-component.md](27-extension-points/editor-component.md): 에디터 컴포넌트 작성법.
+
+### 코어 자원 카탈로그
+
+- [28-modules/](28-modules/): 코어 32개 모듈.
+- [29-addons/](29-addons/): 코어 6개 애드온.
+- [30-widgets/](30-widgets/): 코어 6개 위젯.
+- [31-widgetstyles/](31-widgetstyles/): 코어 위젯스타일.
+- [32-layouts/](32-layouts/): 코어 레이아웃 (PC + 모바일).
+- [33-editor-components/](33-editor-components/): 코어 에디터 컴포넌트.
+- [34-external-libraries.md](34-external-libraries.md): Composer 패키지와 JS 라이브러리.
+
+### 개발/배포
+
+- [35-testing-and-ci.md](35-testing-and-ci.md): Codeception, GitHub Actions.
+
+## 사용자에게 X를 요청받았을 때
+
+| 요청 | 우선 읽을 문서 |
+|---|---|
+| "새 모듈 만들어줘" | [27-extension-points/module.md](27-extension-points/module.md), [06-module-handler-lifecycle.md](06-module-handler-lifecycle.md) |
+| "기존 액션에 hook 걸어줘" | [13-event-and-trigger-system.md](13-event-and-trigger-system.md), [27-extension-points/addon.md](27-extension-points/addon.md) |
+| "DB 쿼리 추가해줘" | [14-database-and-queries.md](14-database-and-queries.md) |
+| "권한/인증 관련" | [15-session-and-auth.md](15-session-and-auth.md), [19-security.md](19-security.md) |
+| "캐시/큐 드라이버 추가" | [17-cache-and-queue.md](17-cache-and-queue.md) |
+| "CLI 스크립트 추가" | [21-cli-and-scripts.md](21-cli-and-scripts.md) |
+| "다국어 추가" | [16-i18n-and-lang.md](16-i18n-and-lang.md) |
+| "라우팅 어떻게 동작?" | [07-router.md](07-router.md), [06-module-handler-lifecycle.md](06-module-handler-lifecycle.md) |
+| "위젯/레이아웃/스킨" | [27-extension-points/](27-extension-points/) 해당 파일 |
+
+## 만지지 말 것
+
+- `common/vendor/` — 커밋된 Composer 산출물. 직접 수정 금지.
+- `files/` — 런타임 생성(gitignore). 테스트/설치 외에는 만지지 않는다.
+- `@deprecated` 표시 메서드/클래스 — 신규 코드 사용 금지.
+
+## Optional
+
+- [PROMPT.md](PROMPT.md): 이 문서 모음이 처음 생성될 때 사용된 원본 작성 지시 프롬프트. 기여자가 이 문서를 갱신·확장할 때 톤·범위·작성 원칙의 출처로 참고할 수 있다.

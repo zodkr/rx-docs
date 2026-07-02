@@ -46,7 +46,7 @@ protected static $_kinds = [
 
 → 클래스명 합성 규칙: `<module><Kind><Type>`. 예: `module='board'`, `type='controller'`, `kind='admin'` → `BoardAdminController`.
 
-`getModuleInstance($module, $type, $kind)` (`:1276`)가 이를 사용한다.
+`getModuleInstance($module, $type, $kind)` (`:1265`)가 이를 사용한다.
 
 ## CSRF 면제 메서드
 
@@ -82,42 +82,43 @@ protected static $_nocsrf_methods = ['GET', 'HEAD', 'OPTIONS'];
 처리 단계 (요약, 상세는 [04-bootstrap-and-request-lifecycle.md](04-bootstrap-and-request-lifecycle.md)):
 
 1. 미등록 도메인 액션 — `redirect_301`/`redirect_302`/`block`/`display`.
-2. `success_return_url`/`error_return_url` 내부 URL 검증.
-3. 라우터 에러 → 404.
-4. entry → document_srl 변환.
-5. document_srl → module_info 역추적.
-6. mid → module_info 매핑.
-7. 도메인 일치 검사.
-8. 기본 모듈/인덱스 문서 적용.
-9. PC/Mobile 레이아웃 srl 결정 (`-1`: 사이트 기본, `-2`: PC와 공유).
-10. `module_info->site_srl` 오버라이드(레거시).
-11. **트리거** — `moduleHandler.init.after`.
+2. 라우터 에러 → 404.
+3. entry → document_srl 변환.
+4. document_srl → module_info 역추적.
+5. mid → module_info 매핑.
+6. 도메인 일치 검사.
+7. 기본 모듈/인덱스 문서 적용.
+8. PC/Mobile 레이아웃 srl 결정 (`-1`: 사이트 기본, `-2`: PC와 공유).
+9. `module_info->site_srl` 오버라이드(레거시).
+10. **트리거** — `moduleHandler.init.after`.
 
-## procModule() (`:331`)
+> `success_return_url`/`error_return_url` 내부 URL 검증은 더 이상 init()에 없다. 요청 변수 사니타이즈 단계(`Context.class.php:1533-1541`)로 옮겨져 **비(非)GET 요청에 한해** `URL::isInternalURL()` 실패 시 `security_check = 'DENY ALL'`로 처리된다. GET 요청은 앞선 분기(`Context.class.php:1525`)에서 escape만 되고 이 검증을 거치지 않는다 (`19-security.md` Open Redirect 참고).
 
-1. 모바일 재감지 (`:334`).
-2. 에러 있으면 message 모듈로 변환해 반환 (`:337-340`).
-3. `ModuleModel::getModuleActionXml($this->module)` — module.xml 캐시된 결과 (`:343`).
-4. install 모듈일 때 `default_index_act` 폴백 (`:346-352`).
-5. act가 비어 있으면 `default_index_act` 폴백, 여전히 없으면 404 (`:355-364`).
-6. type/class_name/ruleset/meta_noindex 결정 — admin이 포함된 액션은 `kind='admin'` (`:367-381`).
-7. **HTTP 메서드 검사** — 허용 method에 없으면 405 (`:384-391`).
-8. **CSRF 검사** — 비-GET/HEAD/OPTIONS + `check_csrf !== 'false'` + 설치됨이면 `Security::checkCSRF()`. 실패 시 403 (`:394-400`).
-9. **standalone 검사** — `standalone='auto'`인데 module/mid 둘 다 비었거나, `standalone='false'`인데 mid 없으면 403 (`:403-413`).
-10. `use_mobile='N'`이면 `Mobile::setMobile(false)` (`:415-423`).
-11. 로그인 회원 메뉴 lang 재할당 (`:426-430`).
-12. **모듈 인스턴스 생성** (`:433-474`):
+## procModule() (`:320`)
+
+1. 모바일 재감지 (`:323`).
+2. 에러 있으면 message 모듈로 변환해 반환 (`:326-329`).
+3. `ModuleModel::getModuleActionXml($this->module)` — module.xml 캐시된 결과 (`:332`).
+4. install 모듈일 때 `default_index_act` 폴백 (`:335-341`).
+5. act가 비어 있으면 `default_index_act` 폴백, 여전히 없으면 404 (`:344-353`).
+6. type/class_name/ruleset/meta_noindex 결정 — admin이 포함된 액션은 `kind='admin'` (`:356-370`).
+7. **HTTP 메서드 검사** — 허용 method에 없으면 405 (`:372-380`).
+8. **CSRF 검사** — 비-GET/HEAD/OPTIONS + `check_csrf !== 'false'` + 설치됨이면 `Security::checkCSRF()`. 실패 시 403 (`:382-389`).
+9. **standalone 검사** — `standalone='auto'`인데 module/mid 둘 다 비었거나, `standalone='false'`인데 mid 없으면 403 (`:391-402`).
+10. `use_mobile='N'`이면 `Mobile::setMobile(false)` (`:404-412`).
+11. 로그인 회원 메뉴 lang 재할당 (`:414-419`).
+12. **모듈 인스턴스 생성** (`:421-463`):
     - `class_name` 있으면 `<namespaces>` 첫 항목 또는 표준 `Rhymix\Modules\<Module>` prefix로 풀네임 만들어 `class_exists` 후 `getInstance()` (v2).
     - 그 외엔 `getModuleInstance($module, $type, $kind)` (v1). 못 찾으면 `ModuleModel::getModuleDefaultClass()` fallback.
-13. 액션 메서드 미존재 시 forward 탐색 — 액션명에서 모듈명 역추론, 그 다음 `getActionForward($act)`로 DB 등록 forward 확인. 매칭되면 그 모듈의 인스턴스로 다시 생성 (`:482-628`).
-14. **ruleset 검증** — `ruleset=` 있으면 `Validator` 실행. v2(namespaced) 모듈에서는 `E_USER_WARNING`(`Ruleset is deprecated`) (`:630-676`).
-15. `setAct($act)` + `setModuleInfo($module_info, $xml_info)` — 후자가 권한 검사/admin 레이아웃/init() 호출 (`:678-681`).
-16. view/mobile + 비-admin이면 도메인 헤더/푸터/타이틀 주입, admin이면 `robots=noindex` 메타 추가 (`:683-706`).
-17. **`$oModule->proc()` 실행** (`:711`).
-18. HTML(비-XMLRPC/JSON/JS_CALLBACK) 응답이면 error/message/redirect를 세션 INPUT_ERROR로 저장 (`:713-751`).
+13. 액션 메서드 미존재 시 forward 탐색 — 액션명에서 모듈명 역추론, 그 다음 `getActionForward($act)`로 DB 등록 forward 확인. 매칭되면 그 모듈의 인스턴스로 다시 생성 (`:471-617`).
+14. **ruleset 검증** — `ruleset=` 있으면 `Validator` 실행. v2(namespaced) 모듈에서는 `E_USER_WARNING`(`Ruleset is deprecated`) (`:619-665`).
+15. `setAct($act)` + `setModuleInfo($module_info, $xml_info)` — 후자가 권한 검사/admin 레이아웃/init() 호출 (`:667-670`).
+16. view/mobile + 비-admin이면 도메인 헤더/푸터/타이틀 주입, admin이면 `robots=noindex` 메타 추가 (`:672-695`).
+17. **`$oModule->proc()` 실행** (`:700`).
+18. HTML(비-XMLRPC/JSON/JS_CALLBACK) 응답이면 error/message/redirect를 세션 INPUT_ERROR로 저장 (`:702-740`).
 19. JSON/XMLRPC 응답일 때 같은 모듈의 API 인스턴스 추가 실행 + 결과 병합은 `ModuleObject::proc()` 내부에서 처리(아래 §ModuleObject `proc()`).
 
-## displayContent() (`:1004`)
+## displayContent() (`:993`)
 
 상세는 [04-bootstrap-and-request-lifecycle.md](04-bootstrap-and-request-lifecycle.md). 요약:
 
@@ -128,7 +129,7 @@ protected static $_nocsrf_methods = ['GET', 'HEAD', 'OPTIONS'];
 5. HTTP 상태 코드/메시지 설정.
 6. `new DisplayHandler() -> printContent($oModule)`.
 
-## getModuleInstance() (`:1276`)
+## getModuleInstance() (`:1265`)
 
 ```php
 $class_name = $module . self::$_kinds[$kind] . self::$_types[$type];
@@ -140,7 +141,7 @@ if (class_exists($class_name) && is_subclass_of($class_name, 'ModuleObject')) {
 - autoloader가 클래스 파일을 찾는다.
 - `getInstance()`가 `$GLOBALS['_module_instances_']`에 캐시된 인스턴스를 반환.
 
-## triggerCall() (`:1304`)
+## triggerCall() (`:1293`)
 
 ```php
 ModuleHandler::triggerCall($trigger_name, $called_position, $obj_or_data);
@@ -157,7 +158,7 @@ ModuleHandler::triggerCall($trigger_name, $called_position, $obj_or_data);
    - `try-catch`로 메서드 호출.
 4. 호출 결과가 false면 즉시 종료 → 호출자에게 BaseObject 반환.
 5. 추가로 `ModuleModel::getTriggerFunctions(...)`로 코드 단 등록 콜백 실행.
-6. 슬로우 임계치(`config('debug.log_slow_triggers')`) 초과 시 Debug에 기록.
+6. Debug가 현재 사용자에게 활성화되어 있으면 각 트리거의 소요 시간을 `Debug::addTrigger()`로 무조건 기록. `config('debug.log_slow_triggers')`(기본 0.25초)를 초과하는 트리거는 `Debug::addTrigger()` 내부에서 슬로우 트리거 목록에 별도 표시된다.
 
 상세: [13-event-and-trigger-system.md](13-event-and-trigger-system.md).
 

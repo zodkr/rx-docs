@@ -21,10 +21,12 @@ Rhymix가 제공하는 보안 메커니즘 일람. **보안 취약점 보고는 
 ### 수동 토큰 사용
 
 ```php
+// createToken($key)은 랜덤 토큰을 반환하고, 그 토큰을 키로·인자($key)를 값으로 세션에 저장.
 $token = Rhymix\Framework\Session::createToken('mymodule.deleteItem');
-// 폼에 hidden으로 포함
-$ok = Rhymix\Framework\Session::verifyToken('mymodule.deleteItem', $_POST['token']);
-Rhymix\Framework\Session::invalidateToken('mymodule.deleteItem');
+// createToken이 반환한 $token을 폼에 hidden으로 포함
+// verifyToken($token, $key): 첫 인자가 토큰, 둘째가 키.
+$ok = Rhymix\Framework\Session::verifyToken($_POST['token'], 'mymodule.deleteItem');
+Rhymix\Framework\Session::invalidateToken($_POST['token']);
 ```
 
 ## XSS (Cross-Site Scripting)
@@ -53,7 +55,7 @@ $safe_html = Rhymix\Framework\Filters\HTMLFilter::clean(
 
 ### 보안 헤더
 
-`DisplayHandler::printContent`가 출력 (`classes/display/DisplayHandler.class.php:118-125`):
+`DisplayHandler::printContent`가 출력 (`classes/display/DisplayHandler.class.php:118-131` — X-Robots-Tag는 128-131):
 
 | 헤더 | 기본값 | 설정 키 |
 |---|---|---|
@@ -127,19 +129,19 @@ $temp = Rhymix\Framework\Password::getRandomPassword(16);   // 16자 (기본)
 
 ### `Rhymix\Framework\Filters\FilenameFilter`
 
-- 위험 확장자 차단: `.php`, `.phtml`, `.pl`, `.cgi`, `.asp`, `.jsp`, `.html`, ...
-- 이중 확장자 검사: `file.php.jpg` 같은 패턴.
-- 허용 확장자 화이트리스트 (`config('file.allowed_extensions')`).
+- `.php` 파일은 실행되지 않도록 `.phps`로 변환.
+- 오인 유발 이중 확장자 제거: `php`/`jsp`/`asp(x)`/`exe`/`bat`/`msi`/`scr`/`com`/`zip`/`doc(x)`/`xls(x)`/`ppt(x)`/`hwp(x)` 등 뒤에 다른 확장자가 붙은 경우 앞쪽을 제거(예: `file.php.jpg` → `file.jpg`).
+- 허용 확장자 화이트리스트는 FilenameFilter가 아니라 file 모듈 설정 `allowed_extensions`(file 모듈 업로드 흐름)에서 검사.
 
 ### `Rhymix\Framework\Filters\FileContentFilter`
 
 - 매직 바이트 (file signature) 검사.
 - PHP 코드 패턴 검출 (`<?php`, `<?=`).
-- SVG는 `enshrined/svg-sanitize`로 정화.
+- SVG/XML의 스크립트·이벤트 핸들러 등 위험 패턴을 정규식으로 탐지해 거부(`_checkSVG`). (`enshrined/svg-sanitize` 기반 정화는 `Security::sanitize($str, 'svg')`에서 수행)
 
 ### `UploadFileFilter` (legacy)
 
-위 둘을 종합한 진입점.
+업로드된 임시 파일을 검사한 뒤 내부적으로 `FileContentFilter::check()`를 호출하는 진입점 (FilenameFilter는 호출하지 않음).
 
 ```php
 $ok = UploadFileFilter::check($tmp_path, $filename);
@@ -184,7 +186,7 @@ $is_korea = Rhymix\Framework\Korea::isKoreanIP(RX_CLIENT_IP);
 - YouTube/Vimeo/SoundCloud 등 화이트리스트 도메인의 iframe만 허용.
 - 본문 콘텐츠에서 `<iframe src="...">` 자동 검사.
 
-설정: `config('mediafilter.iframe')`, `config('mediafilter.object')`.
+설정: `config('mediafilter.whitelist')`(허용 도메인 접두사 배열), `config('mediafilter.classes')`. (`mediafilter.iframe`/`mediafilter.object`는 하위 호환용 레거시 키)
 
 ### `EmbedFilter` (classes/security/)
 
@@ -207,7 +209,7 @@ XE 호환. iframe/object/embed/applet 화이트리스트.
 
 - `is_admin === 'Y'` 회원만 root.
 - root는 모든 모듈의 매니저 권한 보유.
-- `config('admin.deny_root_in_admin')` — 일반 관리자 페이지에서 root 차단.
+- 관리자 페이지 접근 IP 제한은 위의 `config('admin.allow')`/`config('admin.deny')`로 수행한다(별도의 root 차단 설정 키는 없음).
 
 ## 사이트 잠금 (점검 모드)
 
@@ -253,7 +255,7 @@ $cipher = Rhymix\Framework\Security::encrypt($plaintext);
 $plain  = Rhymix\Framework\Security::decrypt($cipher);
 ```
 
-내부적으로 OpenSSL AES-256-GCM 사용.
+내부적으로 OpenSSL AES-128-CBC + HMAC-SHA256(Encrypt-then-MAC, defuse/php-encryption 1.x 호환 포맷) 사용. `encrypt`/`decrypt`는 키를 `sha256`의 앞 16바이트(128비트)로 잘라 `\CryptoCompat`에 넘긴다.
 
 ## JWT
 
@@ -274,8 +276,9 @@ $decoded = JWT::decode($token, new Key($key, 'HS256'));
 
 ## Open Redirect
 
-- `success_return_url`/`error_return_url`은 `ModuleHandler::init`이 `URL::isInternalURL()`로 검증.
-- 외부 URL이면 제거되어 기본 페이지로 리다이렉트.
+- `Context`의 요청 변수 필터링(`_filterRequestVar()`) 단계에서 `success_return_url`/`error_return_url`을 검증한다. 단, **이 검증은 GET이 아닌 요청(POST 등)에만 적용된다.** `_filterRequestVar()`의 `elseif` 체인에서 GET 요청은 앞선 분기(`classes/context/Context.class.php:1525`)에 먼저 걸려 값이 escape만 되고, `Rhymix\Framework\URL::isInternalURL()` 검증(`classes/context/Context.class.php:1533-1540`)까지 도달하지 못한다.
+- 비(非)GET 요청에서 외부 URL이 감지되면 값을 null로 제거하고 `security_check`를 `DENY ALL`로 설정해 요청 전체를 차단한다.
+- 따라서 `?success_return_url=https://...`처럼 **GET 파라미터로 전달된 리다이렉트 URL은 이 단계에서 내부 URL 여부가 검사되지 않으므로**, 그 값을 소비해 리다이렉트하는 쪽에서 별도로 내부 URL임을 보장해야 한다.
 
 ## 디렉토리 보호
 
@@ -293,7 +296,7 @@ Rhymix\Framework\Storage::protectDirectory($path);
 - `<script ...language=...>`.
 - `</?script`.
 
-발견 시 `security_check`를 `DENY ALL`로 설정 → 모든 처리 거부.
+`<?`/`<%`, `<script ...language=...>`(javascript 제외) 패턴은 `security_check`를 `DENY ALL`로 설정 → 모든 처리 거부. `</?script`는 `ALLOW ADMIN ONLY`로 설정되어 관리자에게는 허용되고 비관리자 요청만 차단된다.
 
 ## 다음 문서
 

@@ -106,7 +106,7 @@ $GLOBALS['RX_AUTOLOAD_FILE_MAP'] = [
 ```
 
 - 키는 소문자 비교.
-- 약 44개 항목.
+- 총 43개 항목. 이 중 `ftp` → `common/libraries/ftp.php`, `tar` → `common/libraries/tar.php`는 해당 파일이 제거되어 현재 존재하지 않는 dangling 항목이다 (`common/legacy.php:52-53`).
 - XE 호환을 위해 유지.
 - 일부 별칭이 같은 파일을 가리킨다 (예: `xexmlparser` → `classes/xml/XmlParser.class.php` — XmlParser의 별칭).
 
@@ -159,7 +159,8 @@ $GLOBALS['RX_AUTOLOAD_FILE_MAP'] = [
 런타임에 정규식이 생성된다:
 
 ```php
-$GLOBALS['RX_NAMESPACES']['regexp'] = '#^(Vendor/MyPlugin|Acme/Tools)/(.*?/)?(\w+)$#';
+// 구분자는 `!`, 이름은 길이 내림차순 정렬 (modules/module/module.controller.php:1563)
+$GLOBALS['RX_NAMESPACES']['regexp'] = '!^(Vendor/MyPlugin|Acme/Tools)/((?:\w+/)*)(\w+)$!';
 $GLOBALS['RX_NAMESPACES']['mapping'] = [
     'Vendor\\MyPlugin' => 'plugins/myplugin',
     'Acme\\Tools'      => 'plugins/acme-tools',
@@ -197,29 +198,30 @@ config('namespaces.mapping', [
 
 ```
 modules/admin/
-├── admin.controller.php           ← 레거시 진입점 (얇은 wrapper 가능)
-├── admin.model.php
-├── admin.view.php
+├── admin.class.php                 ← 기반 클래스 (Admin = Rhymix\Modules\Admin\Controllers\Base 별칭)
+├── admin.admin.controller.php      ← 레거시 진입점 (class AdminAdminController, @deprecated 얇은 wrapper)
+├── admin.admin.model.php
+├── admin.admin.view.php
 ├── controllers/
-│   ├── Dashboard.php              ← Rhymix\Modules\Admin\Controllers\Dashboard
-│   ├── SystemConfig/
-│   │   └── Domains.php            ← Rhymix\Modules\Admin\Controllers\SystemConfig\Domains
+│   ├── Dashboard.php               ← Rhymix\Modules\Admin\Controllers\Dashboard
+│   └── systemconfig/               ← namespace 세그먼트는 SystemConfig (autoloader가 소문자 매핑)
+│       └── Domains.php             ← Rhymix\Modules\Admin\Controllers\SystemConfig\Domains
 ├── models/
-│   └── Member.php                 ← Rhymix\Modules\Admin\Models\Member
+│   └── Favorite.php                ← Rhymix\Modules\Admin\Models\Favorite
 └── conf/module.xml
 ```
 
 `module.xml`에서 namespace 클래스로 액션 등록:
 
 ```xml
-<action name="dispAdminDashboard" class="Controllers\Dashboard" />
+<action name="dispAdminIndex" class="Controllers\Dashboard" index="true" />
 ```
 
-→ `ModuleHandler`가 `Rhymix\Modules\Admin\Controllers\Dashboard` 풀 클래스명으로 해석하고 그 인스턴스의 **`dispAdminDashboard()` 메서드**(액션 이름과 동일)를 호출한다. XML의 `method=` 속성은 PHP 메서드명이 아니라 허용 HTTP 메서드(`GET`/`POST` 등)다.
+→ `ModuleHandler`가 `Rhymix\Modules\Admin\Controllers\Dashboard` 풀 클래스명으로 해석하고 그 인스턴스의 **`dispAdminIndex()` 메서드**(액션 이름과 동일)를 호출한다. XML의 `method=` 속성은 PHP 메서드명이 아니라 허용 HTTP 메서드(`GET`/`POST` 등)다.
 
 ## 신구 혼합 패턴
 
-`admin.controller.php`(레거시)에 `procXyz` 메서드 그대로 두고, 새 액션은 `controllers/Xyz.php`에 namespace로 작성 — 점진적 전환.
+`admin.admin.controller.php`(레거시, `class AdminAdminController`)에 `procAdmin*` wrapper 메서드 그대로 두고, 새 액션은 `controllers/Xyz.php`에 namespace로 작성 — 점진적 전환.
 
 ## 안전성
 

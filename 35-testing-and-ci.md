@@ -52,7 +52,7 @@ coverage:
 - PHP dev server 필요 (`php -S localhost:8000`).
 - MySQL 데이터베이스 `rhymix` (사용자 `rhymix`/비밀번호 `rhymix`) 필요.
 
-설정: `tests/install.suite.dist.yml` (`.yml.dist`를 복사해서 사용).
+설정: `tests/install.suite.dist.yml` (로컬에서 DB 접속정보 등을 바꾸려면 `install.suite.dist.yml`을 `install.suite.yml`로 복사해서 오버라이드; CI는 복사 없이 `.dist.yml`을 그대로 사용).
 
 ### `tests/_data/`
 
@@ -125,10 +125,10 @@ php codecept.phar run install
 ### PHP Lint 명령
 
 ```bash
-find . -name "*.php" ! -path "./common/vendor/*" -print0 | xargs -0 -n 1 -P 8 php -l | grep -v "No syntax errors detected"
+if find . -name "*.php" ! -path "./common/vendor/*" -print0 | xargs -0 -n 1 -P 8 php -l | grep -v "No syntax errors detected"; then exit 1; fi
 ```
 
-CI는 위 grep 결과가 비어 있어야 한다 (에러가 있으면 출력되어 fail).
+CI(`.github/workflows/ci.yml:24`)는 위와 같이 파이프라인을 `if ... then exit 1` 래퍼로 감싼다. 안쪽 파이프라인만 떼어 실행하면 `grep -v` 특성상 exit 코드 의미가 역전되므로(에러가 있으면 grep이 출력되어 exit 0, 에러가 없으면 exit 1) 반드시 이 래퍼와 함께 사용한다.
 
 ## 코딩 표준
 

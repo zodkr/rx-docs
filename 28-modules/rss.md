@@ -35,8 +35,14 @@
 
 ## 출력 포맷
 
-- RSS 2.0.
-- Atom 1.0.
+`RssView::output()`의 `switch`가 네 가지 포맷을 처리한다 (`rss.view.php:60-78`). 각 포맷은 `tpl/format/`의 템플릿으로 렌더된다.
+
+- RSS 2.0 (기본, `rss20.html`).
+- Atom 1.0 (`format=atom`, `atom10.html`).
+- RSS 1.0 (`format=rss1.0`, `rss10.html`).
+- XE 호환 포맷 (`format=xe`, `xe.html`).
+
+`rss` 액션은 `Context::get('format')` 값으로 `output()`을 호출하므로 `?format=rss1.0`·`?format=xe` 등으로 포맷을 선택하며, 지정하지 않으면 RSS 2.0을 출력한다. `atom` 액션은 항상 `output('atom')`을 호출해 Atom 1.0을 출력한다.
 
 ## 이 모듈이 hook하는 트리거 (`conf/module.xml`의 `<eventHandlers>`)
 

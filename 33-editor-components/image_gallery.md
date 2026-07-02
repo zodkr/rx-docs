@@ -35,7 +35,7 @@
 | `bg_color` | 동상 |
 | `gallery_align` | `left`/`center`/`right` 중 하나만 허용, 그 외엔 `center`로 강제 |
 | `images_list` | 공백 구분 파일명들. `(gif\|jpe?g\|png)` 확장자만 허용 |
-| `style` | `width([^digit]+)([0-9]+)` regex로 width 추출, 없으면 400 |
+| `style` | `(width\|height)([^[:digit:]]+)([0-9]+)` regex(width·height 모두 매칭)로 첫 매칭의 숫자값을 추출해 width로 사용, 값이 없거나 0이면 400 |
 
 각 갤러리 인스턴스에 고유 `srl`(`rand(111111, 999999)`)을 부여.
 

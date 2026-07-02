@@ -93,9 +93,9 @@ $files = FileModel::getFiles($oComment->get('comment_srl'));
 
 ## 트리
 
-`comments`는 평면 저장. `comment_list`가 트리 정렬을 위한 별도 인덱스 (depth, head, arrange).
+`comments`는 평면 저장. `comments_list`가 트리 정렬을 위한 별도 인덱스 (depth, head, arrange).
 
-`getCommentList($document_srl, $sort='oldest')` 호출 시 join + sort.
+`getCommentList($document_srl, $page=0, $unused=0, $count=0, $statusList=[])` 호출 시 `comments` + `comments_list`를 join한 뒤 head/arrange 오름차순(오래된 순)으로 정렬한다. 정렬은 별도 `$sort` 인자가 아니라 `getCommentPageList` 쿼리의 `list_order`(head asc → arrange asc) 인덱스로 고정된다.
 
 ## 이 모듈이 정의하는 트리거
 
@@ -112,8 +112,8 @@ $files = FileModel::getFiles($oComment->get('comment_srl'));
 | `comment.copyCommentByDocument` | add | `comment.controller.php:2262` |
 | `comment.copyCommentByDocument.each` | before/after (한 댓글마다) | `comment.controller.php:2263, 2268` |
 | `comment.getCommentMenu` | before/after | `CommentModel::getCommentMenu` (`comment.model.php:39, 96`) |
-| `comment.getCommentList` | before/after | `CommentModel::getCommentList` (`comment.model.php:566, 600`) |
-| `comment.getTotalCommentList` | before/after | `CommentModel::getTotalCommentList` (`comment.model.php:954, 1027`) |
+| `comment.getCommentList` | before/after | `CommentModel::getCommentList` (`comment.model.php:557, 591`) |
+| `comment.getTotalCommentList` | before/after | `CommentModel::getTotalCommentList` (`comment.model.php:944, 1017`) |
 | `comment.getThumbnail` | before | `CommentItem::getThumbnail` (`comment.item.php:841`) |
 | `comment.procCommentAdminChangeStatus` | after | `CommentAdminController::procCommentAdminChangeStatus` (`comment.admin.controller.php:147`) |
 | `comment.sendEmailToAdminAfterInsertComment` | after | `CommentController` 내부 (`comment.controller.php:943`) |
@@ -131,10 +131,10 @@ $files = FileModel::getFiles($oComment->get('comment_srl'));
 
 ## 권한
 
-- `comment_write` — 댓글 쓰기.
-- `comment_view` — 보기.
+- `write_comment` — 댓글 쓰기. 호스트 모듈(board 등)이 정의한다 (`modules/board/conf/module.xml:34`).
+- 댓글 보기는 상위 모듈의 `view`/`list` grant를 따른다 (별도 grant 없음).
 
-상위 모듈(board 등)의 grant에서 위임됨.
+comment 모듈 자체는 grant를 정의하지 않는다 (`<grants />`, `conf/module.xml:3`).
 
 ## 상태 (status)
 

@@ -77,11 +77,12 @@
 
 ## 발송 채널
 
-각 알림은 사용자 설정에 따라:
+각 알림은 사용자 설정에 따라 다음 채널로 발송된다. 기본 채널 목록은 `['web', 'mail', 'sms', 'push']` (`ncenterlite.model.php:232`)이며, `_insertNotify`는 DB 저장(`insertNotify`) 성공 후 `sendPushMessage`·`sendSmsMessage`·`sendMailMessage`를 차례로 호출한다 (`ncenterlite.controller.php:1468-1473`).
 
-- **사이트 내** — DB 알림.
-- **메일** — `Mail::send`.
-- **푸시** — `Push::send`.
+- **사이트 내(web)** — DB 알림.
+- **메일** — `new \Rhymix\Framework\Mail()` 인스턴스의 `->send()` (`sendMailMessage`, `ncenterlite.controller.php:1780,1784`).
+- **SMS** — `getSmsHandler`로 드라이버(`new Rhymix\Framework\SMS`)를 확인한 뒤 `sendSmsMessage`로 발송 (`ncenterlite.class.php:244`, `ncenterlite.controller.php:1669`). 회원 전화번호 필드는 `config->variable_name`으로 지정하며, `Korea::isValidPhoneNumber`로 검증하고 한국 번호(`phone_country === 'KOR'`)만 발송한다.
+- **푸시** — `new \Rhymix\Framework\Push()` 인스턴스의 `->send()` (`sendPushMessage`, `ncenterlite.controller.php:1655,1664`).
 
 ## 관련
 

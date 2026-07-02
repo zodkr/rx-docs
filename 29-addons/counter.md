@@ -24,7 +24,7 @@ if ($called_position == 'before_display_content'
 }
 ```
 
-`CounterController::counterExecute()`가 `counter`/`counter_log`/`counter_status` 테이블에 누적 집계한다 (실시간 + 단계적 일별/월별 집계).
+`CounterController::counterExecute()`가 `counter_status`/`counter_log` 테이블에 누적 집계한다 (`CounterModel::isLogged()`로 오늘·접속 IP의 첫 방문 여부를 판별해, 첫 방문이면 `counter_status`의 오늘 날짜(`regdate=Ymd`) 일별 행과 누적 총계 행(`regdate=0`)의 `unique_visitor`·`pageview`를 `+1` 갱신하고 `counter_log`에 접근 로그 1행을 남기며, 재방문이면 `pageview`만 `+1`한다. 월별/주별/연별 통계는 별도 롤업 없이 조회 시 `CounterModel::getHourlyStatus()`가 일별 `counter_status` 행을 `SUM`으로 합산해 산출한다).
 
 ## 위젯
 

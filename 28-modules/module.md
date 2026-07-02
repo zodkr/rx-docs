@@ -12,9 +12,9 @@
 | 클래스 | 파일 | 역할 |
 |---|---|---|
 | `Module` | `module.class.php` | ModuleObject. |
-| `ModuleController` | `module.controller.php` | `insertModule`/`updateModule`/`deleteModule` 등 모듈 인스턴스 CRUD. `insertEventHandler`(트리거 DB 등록). |
+| `ModuleController` | `module.controller.php` | `insertModule`/`updateModule`/`deleteModule` 등 모듈 인스턴스 CRUD. `insertTrigger`/`deleteTrigger`(트리거 DB 등록), `registerEventHandlers`(module.xml event_handlers 동기화). |
 | `ModuleModel` | `module.model.php` | 모듈 정보 조회. `getModuleInfoByMid`, `getModuleConfig`, `getTriggers`, `getModuleActionXml`. |
-| `ModuleView` | `module.view.php` | (거의 비어 있음) |
+| `ModuleView` | `module.view.php` | 사용자/공용 뷰 — 스킨 정보/모듈 선택/파일박스/언어 전환 팝업(`dispModuleSkinInfo`/`dispModuleSelectList`/`dispModuleFileBox`/`dispModuleFileBoxAdd`/`dispModuleChangeLang`). |
 | `ModuleMobile` | `module.mobile.php` | 모바일 분기. |
 | `ModuleAdminController` | `module.admin.controller.php` | 관리자 처리. |
 | `ModuleAdminModel` | `module.admin.model.php` | 관리자 조회. |
@@ -49,10 +49,10 @@
 | `procModuleAdminInsertCategory` / `UpdateCategory` / `DeleteCategory` | 카테고리 CRUD (ruleset 동명) |
 | `procModuleAdminModuleSetup` / `procModuleAdminModuleGrantSetup` / `procModuleAdminCopyModule` | 모듈 설정/권한/복사 (ruleset=insertModuleSetup/insertModulesGrant/copyModule) |
 | `procModuleAdminInsertGrant` / `procModuleAdminUpdateSkinInfo` | 권한/스킨 (manager) |
-| `procModuleAdminInsertLang` / `procModuleAdminDeleteLang` | 다국어 코드 CRUD (manager) |
+| `procModuleAdminInsertLang` / `procModuleAdminDeleteLang` | 다국어 코드 CRUD (`procModuleAdminInsertLang`만 permission=manager, `procModuleAdminDeleteLang`은 권한 속성 없음) |
 | `procModuleAdminGetList` / `procModuleAdminSetDesignInfo` / `procModuleAdminUpdateUseMobile` | 목록/디자인/모바일 토글 |
 
-> **모듈 인스턴스 자체의 생성/수정/삭제(`insertModule`/`updateModule`/`deleteModule`)는 module.xml 액션이 아니다** — `ModuleController`의 인스턴스 메서드로만 제공되어, autoinstall/page/menu 등 다른 모듈에서 직접 호출한다. **모듈 자체 설치/제거(`procModuleAdminInstall`/`Uninstall`/`Update`)는 `autoinstall` 모듈에 있다**.
+> **모듈 인스턴스 자체의 생성/수정/삭제(`insertModule`/`updateModule`/`deleteModule`)는 module.xml 액션이 아니다** — `ModuleController`의 인스턴스 메서드로만 제공되어, autoinstall/page/menu 등 다른 모듈에서 직접 호출한다. **모듈 자체 설치/업데이트는 `install` 모듈(`procInstallAdminInstall`은 내부적으로 `InstallController::installModule` 호출, `procInstallAdminUpdate`는 모듈의 `moduleUpdate` 실행 후 라우트/트리거/네임스페이스/접두사 재등록. `InstallController::updateModule`은 `updateAllModules` 스크립트 등 다른 경로에서 사용)이, PDS 패키지 설치/제거는 `autoinstall` 모듈(`procAutoinstallAdminInstallPackage`/`procAutoinstallAdminUninstallPackage`)이 담당한다. `procModuleAdminInstall`/`Uninstall`/`Update` 같은 액션은 존재하지 않는다.**
 
 ## DB 스키마
 
@@ -85,7 +85,7 @@
 
 ## 핵심 메서드
 
-### `ModuleModel::getModuleInfoByMid($mid, $domain_srl)`
+### `ModuleModel::getModuleInfoByMid($mid)`
 
 mid로 모듈 인스턴스 정보 조회. 캐싱.
 
@@ -112,7 +112,7 @@ mid로 모듈 인스턴스 정보 조회. 캐싱.
 | `module.dispAdditionSetup` | before/after — 모듈 추가 설정 UI (board.admin.view.php / module.admin.view.php / module.admin.model.php에서 발사) |
 | `module.getModuleAdminScopes` | 관리자 권한 scope 등록 |
 | `module.deleteModule` | before/after — 모듈 인스턴스 삭제 |
-| `module.procModuleAdminCopyModule` | before/after — 모듈 복사 |
+| `module.procModuleAdminCopyModule` | after — 모듈 복사 (before 트리거는 없다) |
 
 (`module.dispAdditionSetupGeneral`/`module.dispAdditionSetupSecurity` 같은 분기는 코드에 없다.)
 

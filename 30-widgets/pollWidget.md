@@ -23,7 +23,7 @@
 
 | 키 | 값 |
 |---|---|
-| `poll_data` | `PollModel::_getPollinfo((int)$args->poll_srl)` 반환값 (`modules/poll/poll.model.php:20`). 메서드명이 `_` prefix지만 PHP가 가시성을 강제하지 않아 외부 호출됨 |
+| `poll_data` | `PollModel::_getPollinfo((int)$args->poll_srl)` 반환값 (`modules/poll/poll.model.php:20`). `_` prefix는 내부용을 뜻하는 관례 표기일 뿐 실제로는 `public`으로 선언되어 있어(`modules/poll/poll.model.php:20`) 위젯에서 `getModel('poll')->_getPollinfo()`로 정상 호출됨 |
 | `colorset` | `$args->colorset` |
 | `poll_srl` | `intval($args->poll_srl)` |
 | `style` | `$args->style` (위 참조) |

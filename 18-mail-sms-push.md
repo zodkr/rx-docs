@@ -1,6 +1,6 @@
 # 18. 메일 / SMS / 푸시
 
-세 시스템 모두 **드라이버 추상화 + 정적 발송 API + 발송 트리거** 구조를 공유한다. 관리는 `modules/advanced_mailer/`가 담당.
+세 시스템 모두 **드라이버 추상화 + 정적 발송 API + 발송 트리거** 구조를 공유한다. 드라이버 선택·인증 정보·발신 정보는 **관리자 > 시스템 설정 > 알림**(`modules/admin/controllers/systemconfig/Notification.php`, `config_notification` 템플릿)에서 설정하며, `modules/advanced_mailer/`는 발송 로그·예외 발송·SPF/DKIM 확인·테스트 발송을 담당한다.
 
 ## 메일 — `Rhymix\Framework\Mail`
 
@@ -49,7 +49,7 @@ if (!$success) {
 ### 드라이버 등록 (커스텀)
 
 ```php
-// addDriver는 인스턴스 인자만 받는다. 드라이버의 getName()이 식별자
+// addDriver는 인스턴스 인자만 받는다. 식별자는 클래스명 소문자(strtolower(class_basename($driver)))이고, getName()은 UI 표시용 이름이다
 Rhymix\Framework\Mail::addDriver(new MyMailDriver());
 Rhymix\Framework\Mail::setDefaultDriver(new MyMailDriver());
 ```
@@ -86,7 +86,7 @@ Rhymix\Framework\Queue::addTask(
 |---|---|
 | `coolsms` | 국내, CoolSMS |
 | `twilio` | 글로벌 |
-| `solapi` | SOLAPI (구 NCloud SENS) |
+| `solapi` | SOLAPI (Nurigo, 구 CoolSMS 계열) |
 | `iwinv` | iwinv |
 | `ncloud_sens` | NAVER Cloud SENS |
 | `ppurio` | 뿌리오 |
@@ -163,8 +163,8 @@ $success = $push->send(bool $sync = false);
 
 // 발송 결과 (member_srl 단위 분류 아님 — 토큰 단위)
 $successful = $push->getSuccessTokens();       // 발송 성공 토큰
-$deleted    = $push->getDeletedTokens();       // 무효 토큰 (DB에서 제거 권장)
-$updated    = $push->getUpdatedTokens();       // 토큰 갱신됨 (대체 권장)
+$deleted    = $push->getDeletedTokens();       // 무효 토큰 (send() 내부에서 이미 DB에서 삭제됨)
+$updated    = $push->getUpdatedTokens();       // 토큰 갱신됨 (send() 내부에서 이미 DB 토큰이 교체됨)
 ```
 
 ### 토픽 발송
@@ -182,19 +182,23 @@ $push->send();
 
 ### 키/인증서
 
-- APNS: p8 키 파일 + Team ID + Key ID + Bundle ID. `config('push.apns.*')`.
-- FCM v1: Service Account JSON. `config('push.fcm.*')`.
+- APNS: 인증서(.pem) 파일 + passphrase. `config('push.apns.certificate')` / `config('push.apns.passphrase')`. (레거시 바이너리 APNs 프로토콜 `ssl://gateway.push.apple.com:2195` 사용)
+- FCM v1: Service Account JSON. `config('push.fcmv1.service_account')`.
 
-설정 위치: `files/config/push/`.
+설정 위치: `files/config/apns/` (APNs 인증서 `cert-*.pem`), `files/config/fcmv1/` (FCM v1 서비스 계정 `pkey-*.json`).
 
 ## advanced_mailer 모듈
 
-`modules/advanced_mailer/`. 위 3종을 관리자 UI에서 설정한다.
+`modules/advanced_mailer/`.
 
-- 드라이버 선택 / 인증 정보 입력.
-- 발신 정보 (기본 from, 이름, 발신번호).
-- 발송 로그.
-- 자체 드라이버 추가 등록.
+드라이버 선택 / 인증 정보 / 발신 정보(기본 from·이름, SMS 발신번호) 입력은 **관리자 > 시스템 설정 > 알림**(`modules/admin/controllers/systemconfig/Notification.php`, `config_notification` 템플릿)에서 이뤄지며 `mail.type`/`sms.type`/`push` 등을 시스템 config에 저장한다(`Config::set`).
+
+advanced_mailer가 담당하는 것:
+
+- 발송 로그 on/off 및 로그 조회/삭제 (메일/SMS/푸시 각각).
+- 도메인별 예외 발송(exceptions).
+- SPF/DKIM DNS 레코드 확인(`procAdvanced_mailerAdminCheckDNSRecord`).
+- 테스트 발송(메일/SMS/푸시).
 
 [28-modules/advanced_mailer.md](28-modules/advanced_mailer.md) 참고.
 
@@ -238,10 +242,9 @@ public function onAfterCommentInsert($comment)
     $push->setURL(getNotEncodedFullUrl('', 'document_srl', $comment->document_srl));
     $push->send();
 
-    // 만료된 토큰 정리 (Push가 등록된 device_token 목록 단위로 반환)
-    foreach ($push->getDeletedTokens() as $token) {
-        MemberController::deletePushToken($token);
-    }
+    // 무효/갱신 토큰은 send() 내부에서 member.deleteMemberDevice / member.updateMemberDevice
+    // 쿼리로 자동 정리되므로 호출부에서 별도로 정리할 필요가 없다.
+    // (디바이스 토큰 관리 로직은 Rhymix\Modules\Member\Controllers\Device 참고)
 }
 ```
 

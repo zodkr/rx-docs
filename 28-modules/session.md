@@ -22,9 +22,9 @@
 | 액션 | 비고 |
 |---|---|
 | `dispSessionAdminIndex` | 세션 관리자 화면 (admin_index) |
-| `procSessionAdminClear` | 모든 세션 강제 만료 |
+| `procSessionAdminClear` | 만료된 세션 정리 (`gc(0)` 호출 → `session.gcSession`이 `expired < curdate()`인 세션만 삭제; 활성 세션은 영향 없음) |
 
-세션 저장소 관련 read/write/destroy/gc는 메서드(인스턴스)로만 제공되며 module.xml 액션이 아니다 (`SessionController`/`SessionModel`이 PHP `session_set_save_handler`로 등록됨, `Context::init` 단계).
+세션 저장소 관련 read/write/destroy/gc는 메서드(인스턴스)로만 제공되며 module.xml 액션이 아니다 (`SessionController`가 `SessionHandlerInterface`를 구현하여 read/write/open/close/destroy/gc를 제공하며, `Context::init` 단계에서 DB 세션 사용 시(비 CLI 요청) `session_set_save_handler(SessionController::getInstance(), true)`로 등록된다).
 
 ## DB 스키마
 

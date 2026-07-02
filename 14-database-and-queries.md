@@ -158,7 +158,7 @@ $list = executeQueryArray('board.getBoardList', $args)->data ?? [];
 | `notlike` | `NOT LIKE '%val%'` |
 | `notlike_prefix` / `notlike_head` | `NOT LIKE 'val%'` |
 | `notlike_suffix` / `notlike_tail` | `NOT LIKE '%val'` |
-| `and` / `or` / `xor` / `not` | 비트 연산자 (`&` / `\|` / `^` / `~`) |
+| `and` / `or` / `xor` | 비트 연산자 (`&` / `\|` / `^`) |
 | `null` | `IS NULL` |
 | `notnull` / `not_null` | `IS NOT NULL` |
 | `in` | `IN (...)` (`,`로 split한 후 각 원소를 bound parameter로) |
@@ -169,6 +169,8 @@ $list = executeQueryArray('board.getBoardList', $args)->data ?? [];
 | `plus` / `minus` / `multiply` | **`<column>`(INSERT/UPDATE) 전용**. `col = col ± ?` / `col = col * ?` 형태로 expand |
 
 > `<column>`(ColumnWrite — INSERT/UPDATE 본문)에서는 `equal` / `plus` / `minus` / `multiply` **4개만** 허용. 다른 operation은 `\Rhymix\Framework\Exceptions\QueryError: Operation … is not valid for column in an INSERT or UPDATE query`를 던진다 (`VariableBase.php:110-113`).
+
+> 위 표에 없는 operation(예: 존재하지 않는 `not`)은 switch의 default 분기(`VariableBase.php:271-273`)로 떨어져 `col = ?`(등호 비교)를 조용히 생성한다. 비트 NOT(`~`)을 만드는 코드는 파서 어디에도 없다.
 
 ### 조건이 SQL에 포함될지 결정되는 흐름
 
@@ -245,8 +247,9 @@ JOIN조건은 `<table>` 내부의 `<conditions>` 블록에 적는다.
 |---|---|
 | `pipe` | `AND`(기본)/`OR` — 그룹 전체를 결합하는 operator |
 | `if` | 비어있으면 그룹 전체 생략 |
+| `notnull` | 그룹 단위 not_null 플래그 |
 
-#### `default=` 토큰 (`VariableBase::getDefaultValue` — `VariableBase.php:340-396`)
+#### `default=` 토큰 (`VariableBase::getDefaultValue` — `VariableBase.php:329-393`)
 
 `default` 속성에 그대로 넣을 수 있는 특수 토큰. 평가 시점은 쿼리 실행 시점.
 
@@ -269,9 +272,8 @@ JOIN조건은 `<table>` 내부의 `<conditions>` 블록에 적는다.
 추가 규칙 (토큰 매칭 전/후의 특례):
 
 1. **`_srl`로 끝나는 컬럼 + 함수형 아님 + 숫자 아님** → `default` 문자열을 컬럼명으로 해석하여 quote. JOIN/co-reference 패턴 보조.
-2. **대문자 + `(args)` 패턴** (예: `NOW()`, `UNIX_TIMESTAMP()`, `IF(a,b,c)`) → 토큰 표에 없어도 SQL 표현식으로 그대로 inject.
+2. **대문자 + `(args)` 패턴** (예: `IF(a,b,c)`, `UNIX_TIMESTAMP(regdate)`, `CONCAT(a,b)`) → 토큰 표에 없어도 SQL 표현식으로 그대로 inject. 판정 정규식이 `/^[A-Z_]+\([^)]+\)/`이라 괄호 안에 최소 1글자를 요구하므로, 괄호가 비어 있는 `NOW()`·`UNIX_TIMESTAMP()`는 매칭되지 않아 SQL 표현식이 아니라 리터럴 바인딩 값으로 처리된다 (현재 시각은 소문자 토큰 `now()`를 사용) (`VariableBase.php:386`).
 3. **그 외 문자열/숫자** → 리터럴 값으로 bound parameter.
-| `notnull` | 그룹 단위 not_null 플래그 |
 
 (`<group>`은 자체 `var`/`default`/`filter`/`minlength`/`maxlength`를 받지 **않는다** — 내부에 들어가는 `<condition>`들이 갖는다.)
 
@@ -359,7 +361,7 @@ $total_page = $output->total_page;
 
 | XE 타입 | MySQL 타입 |
 |---|---|
-| `number` | `bigint` 또는 `int` (size 기반) |
+| `number` | `bigint` (size와 무관하게 항상 `bigint`, size는 무시) |
 | `bignumber` | `bigint` |
 | `varchar` | `varchar(size)` |
 | `text` | `text` |
@@ -388,7 +390,7 @@ $seq = getNextSequence();       // rx_sequence 테이블에서 발급
 
 ### 쿼리 주석
 
-`config('debug.query_comment') = true`면 모든 SQL의 끝에 `/* PHP File: ...; Caller: ... */` 주석이 자동 부착된다.
+`config('debug.query_comment') = true`면 실행되는 모든 SQL의 끝에 `/* <query_id> <클라이언트 IP> */` 형태의 주석이 자동 부착된다 (예: `/* board.getBoardList 1.2.3.4 */`). 직접 `prepare()` / `query()` / `_query()`로 실행하는 경우에는 query_id 대신 각각 `prepare()` / `query()` / `_query()` 라벨이 들어간다 (`DB.php:373`, `DB.php:236`, `DB.php:198`, `DB.php:1398`).
 
 ### 전체 스택
 
@@ -397,9 +399,13 @@ $seq = getNextSequence();       // rx_sequence 테이블에서 발급
 ### 쿼리 로그 조회
 
 ```php
-$log = Rhymix\Framework\Debug::getQueryLog();
-// [{ sql, params, elapsed, caller, ... }, ...]
+$log = Rhymix\Framework\Debug::getQueries();      // 전체 쿼리
+$slow = Rhymix\Framework\Debug::getSlowQueries(); // 슬로우 쿼리
+// 각 원소는 stdClass:
+// { query_id, query_string, query_time, query_connection, message, error_code, file, line, method, backtrace, count, time, type }
 ```
+
+`Debug::getQueryLog()`는 존재하지 않는다. `DB::getQueryLog($query, $elapsed_time)`는 로그 항목 하나를 만드는 DB 인스턴스 내부용 빌더다 (`DB.php:1262`).
 
 ## 헬퍼
 

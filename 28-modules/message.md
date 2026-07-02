@@ -22,20 +22,21 @@
 
 | 액션 | 비고 |
 |---|---|
-| `dispMessage` | 메시지 표시 (기본 메시지 보드) |
+| `dispMessage` | 오류/시스템 메시지 페이지 표시 |
 | `dispMessageAdminConfig` | 메시지 스킨/색상 관리자 진입 (admin_index) |
 | `procMessageAdminInsertConfig` | 설정 저장 |
 | `getMessageAdminColorset` | 컬러셋 조회 |
 
 ## 동작
 
-`ModuleHandler::_createErrorMessage()`가 에러 발생 시 `MessageView` 인스턴스를 만들어 반환. 기본 템플릿은 `modules/message/skins/default/`.
+`ModuleHandler::_createErrorMessage()`가 에러 발생 시 `MessageView` 인스턴스를 만들어 반환. PC 기본 스킨은 `xedition`(`modules/message/skins/xedition/`), 모바일 기본 스킨은 `default`이며, 설정된 스킨 디렉토리가 없으면 `skins/default/`로 폴백한다 (`message.view.php:17-53`).
+
+`MessageView::getErrorHelp()`가 흔한 PHP 오류 메시지를 정규식으로 판별해 친절한 도움말(`message.error_help.*` 언어값)을 `system_message_help`로 함께 표시한다 (`message.view.php:75`, `message.view.php:105-124`).
 
 ## 템플릿
 
-- `msg.html` — 일반 메시지.
+- `system_message.html` — 일반 메시지 (`MessageView::dispMessage`가 `setTemplateFile('system_message')`로 사용, `message.view.php:90`).
 - `http_status_code.html` — 404/403/500 등.
-- `refresh.html` — 리다이렉트 자동 새로고침.
 
 ## 관련
 

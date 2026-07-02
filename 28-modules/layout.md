@@ -47,14 +47,14 @@
 
 ## 시각 편집기
 
-`modules/layout/tpl/` 하위에 드래그앤드롭 편집 UI. 편집 결과는 `files/cache/layout/edited_<layout_srl>.html`에 저장되어 `ModuleObject::edited_layout_file`로 사용.
+`modules/layout/tpl/` 하위에 드래그앤드롭 편집 UI. 편집 결과는 `files/faceOff/<getNumberingPath(layout_srl)>layout.html`(`getNumberingPath()`는 뒤에 `/`를 포함, 예: `layout_srl=1`이면 `files/faceOff/001/layout.html`)에 저장되며, `LayoutModel::getUserLayoutHtml()`이 반환한 경로를 `ModuleHandler`가 `ModuleObject::setEditedLayoutFile()`로 설정해 `edited_layout_file`로 사용한다 (`classes/module/ModuleHandler.class.php:1178-1181`). (`files/cache/layout/`에는 컴파일된 `*.cache.php` 캐시만 저장된다.)
 
 ## 모델 메서드
 
 ```php
 LayoutModel::getLayout($layout_srl);             // 단일 레이아웃 정보
 LayoutModel::getLayoutList($site_srl, $type);
-LayoutAdminModel::getSiteDefaultLayout($type, $site_srl);  // -1 매핑
+LayoutAdminModel::getSiteDefaultLayout($type);   // 사이트 기본 레이아웃 srl 반환(없으면 0); -1 치환은 LayoutModel::getLayoutList()에서
 ```
 
 ## 관련

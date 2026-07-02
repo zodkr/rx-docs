@@ -3,7 +3,7 @@
 ## 개요
 
 - **카테고리**: (info.xml에 미지정 — 기본 `service`)
-- **역할**: 공개 API(또는 자체 DB)를 이용한 한국 우편번호 검색.
+- **역할**: 공개 API를 이용한 한국 우편번호 검색.
 
 ## 주요 클래스
 
@@ -29,11 +29,13 @@
 
 ## JS 위젯
 
-`common/js/plugins/ui.krzip/`이 jQuery UI 기반 우편번호 검색 위젯. extravar의 `kr_zip` 타입 필드에서 자동 사용.
+`kr_zip` extravar 타입 필드는 `KrzipModel::getKrzipCodeSearchHtml()`(`krzip.model.php:238`)이 렌더링한다 (호출부: `modules/extravar/skins/default/form_types/kr_zip.blade.php:5`). 설정된 API(`daumapi`/`epostapi`/`postcodify`)에 맞는 `tpl/template.{api}.html`을 컴파일하고, 해당 템플릿이 `modules/krzip/tpl/js/{api}.js`의 `$.fn.Krzip` jQuery 플러그인을 로드한다.
+
+`common/js/plugins/ui.krzip/krzip_search.js`는 순수 jQuery(jQuery UI 아님)로 작성됐으나 현재 어디서도 로드되지 않는 레거시(고아) 코드다.
 
 ## API
 
-외부 우편번호 API (현재는 도로명주소 검색 API) 또는 자체 데이터 활용.
+외부 우편번호 API 3종만 활용 (`krzip.class.php:23` `$api_list = array('daumapi', 'epostapi', 'postcodify')`) — 다음/카카오(`daumapi`), 우체국(`epostapi`), Postcodify(`postcodify`). 자체 DB는 없다 (`schemas/`·`queries/` 디렉터리 부재). 우체국 API는 도로명주소 검색(`target=postRoad`, `krzip.model.php:153`)을 사용한다.
 
 ## 관련
 

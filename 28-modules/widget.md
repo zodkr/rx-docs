@@ -21,24 +21,25 @@
 
 | 액션 | 비고 |
 |---|---|
-| `dispWidgetAdminWidgetList` | 위젯 카탈로그 |
-| `dispWidgetAdminInfo` | 위젯 상세 |
+| `dispWidgetAdminDownloadedList` | 설치된 위젯 목록/카탈로그 (관리자 index) |
+| `dispWidgetInfo` | 위젯 상세 팝업 |
 | `dispWidgetAdminGenerateCode` | 위젯 코드 생성기 |
 | `procWidgetGenerateCode` | 코드 생성 |
-| `procWidgetSaveExtraVarConfig` | 위젯 변수 설정 |
+| `dispWidgetAdminAddContent` | 콘텐츠 위젯 추가 |
 
 ## DB 스키마
 
-`modules/widget/schemas/` 디렉토리는 **비어 있다** — 위젯 자체는 별도 DB 테이블을 사용하지 않는다. 위젯 인스턴스 설정은 본문 마크업 안의 속성으로 직렬화되고, 위젯스타일/스킨 설정은 모듈/페이지 단위로 관리된다.
+`modules/widget/schemas/` 디렉토리는 **존재하지 않는다** (스키마/쿼리 정의 없음) — 위젯 자체는 별도 DB 테이블을 사용하지 않는다. 위젯 인스턴스 설정은 본문 마크업 안의 속성으로 직렬화되고, 위젯스타일/스킨 설정은 모듈/페이지 단위로 관리된다.
 
 ## 위젯 실행
 
 ```php
 $oWidgetController = getController('widget');
-$html = $oWidgetController->execute($widget_marker_args);
+// function execute($widget, $args, $javascript_mode = false, $escaped = true)
+$html = $oWidgetController->execute($widget_name, $args);
 ```
 
-`Context::transContent()`가 본문의 `<img class="zbxe_widget_output" widget="...">` 마커를 발견하면 이 메서드를 호출해 HTML로 치환.
+응답 HTML 생성 직전 `display`(before) 트리거로 호출되는 `triggerWidgetCompile`(`widget.controller.php:271`)이 본문의 `<img class="zbxe_widget_output" widget="...">` 마커를 정규식으로 찾아 `transWidgetCode`(`:280`)→`transWidget`(`:303`)를 거쳐 이 `execute()`(`:491`)를 호출해 HTML로 치환한다. (`Context::transContent()`는 현재 `@deprecated` no-op이다.)
 
 ## 이 모듈이 hook하는 트리거 (`conf/module.xml`의 `<eventHandlers>`)
 

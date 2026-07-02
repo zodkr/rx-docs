@@ -28,7 +28,8 @@ if ($called_position == 'after_module_proc' && Context::getResponseMethod() == '
 - 표적: `.rhymix_content, .xe_content` 셀렉터 (`autolink.js`의 `extractTargets` 인자).
 - 대상 URL 프로토콜: `https?`, `ftp`, `news`, `telnet`, `irc`, `mms`. (도메인은 점 포함 패턴 또는 IPv4 또는 `localhost`.)
 - 링크가 현재 페이지와 **다른 origin**일 때만 `target="_blank"` 추가. `rel`은 추가되지 않는다.
-- 괄호/대괄호/`<>`/한글 1-3자 접미사 자동 분리 처리.
+- 본문 내 **기존 `<a>` 링크**도 클릭 시, `target` 속성이 없고 `isSameOrigin` 판별상 다른 origin이면 `target="_blank"`가 부여된다(단, `javascript:`·`mailto:`로 시작하거나 `#`를 포함하는 링크는 제외) (`addons/autolink/autolink.js:106-115`).
+- 괄호/대괄호/`<>`/한글 1-3자 접미사 자동 분리 처리. 또한 매칭된 URL 안에 `&lt;`·`&gt;`·`&quot;` HTML 엔티티가 나타나면 그 지점부터 끝까지를 접미사로 분리한다(escape된 HTML 코드 예시의 과도한 매칭 방지, 커밋 `03d6254f1`). 한글 접미사와 엔티티 접미사 처리는 독립적인 두 개의 `if`로 순차 적용된다 (`addons/autolink/autolink.js:54-61`).
 
 ## 장점
 
@@ -42,4 +43,4 @@ if ($called_position == 'after_module_proc' && Context::getResponseMethod() == '
 
 ## 관련
 
-- 외부 라이브러리 위치: `addons/autolink/autolink.js`
+- 클라이언트 스크립트 위치: `addons/autolink/autolink.js`

@@ -6,7 +6,6 @@
 
 - **Atomic write**: 임시 파일 → `rename()` 패턴으로 부분 쓰기 방지.
 - **권한 캐시**: umask를 모듈 초기에 캐싱해 매번 stat 호출 회피.
-- **FTP 폴백**: 권한 부족 시 자동으로 FTP 경로로 위임.
 - **잠금**: 동시 쓰기 충돌 방지를 위한 파일 잠금 API.
 
 ## API
@@ -89,29 +88,17 @@ Rhymix\Framework\Storage::protectDirectory($path);
 
 > `Storage`는 mtime / mime-type / touch wrapper를 제공하지 않는다. 그 용도는 PHP 표준 함수(`filemtime`, `touch`, `mime_content_type` 등) 또는 `Rhymix\Framework\MIME`을 직접 사용한다.
 
-## FTP 폴백
+## 쓰기 실패 처리
 
-`config('ftp.*')` 설정 시 활성화. 권한 부족으로 파일 쓰기 실패 시 자동으로 FTP 명령으로 재시도.
-
-```php
-'ftp' => [
-    'host' => 'localhost',
-    'port' => 21,
-    'user' => 'ftpuser',
-    'pass' => '...',
-    'path' => '/public_html/rhymix',
-    'sftp' => false,                 // true면 SFTP
-]
-```
-
-내부 구현: `common/libraries/ftp.php` (XE 시절 PHP-FTP 클래스 수정판).
+`Storage::write()`는 권한 부족 등으로 쓰기에 실패하면 `trigger_error`(`E_USER_WARNING`) 후 `false`를 반환할 뿐, FTP 등 다른 경로로 폴백하지 않는다 (`Storage.php:312-316`). XE 시절의 레거시 FTP 클래스 `common/libraries/ftp.php`는 `tar.php`와 함께 제거되어 현재 존재하지 않는다. `config('ftp.*')` 항목 자체는 관리자 FTP 설정용으로 남아 있으나, 파일 스토리지 폴백 용도로는 더 이상 사용되지 않는다.
 
 ## 잠금 (lock)
 
 ```php
 if (Rhymix\Framework\Storage::getLock(string $name): bool) {
     try {
-        // 비독점 잠금 획득됨 — 작업 진행
+        // 배타적 잠금(exclusive lock) 획득됨 — 작업 진행
+        // (LOCK_NB 논블로킹이라 이미 다른 프로세스가 잠금 중이면 getLock()은 즉시 false 반환)
     } finally {
         // 요청 종료 시 자동 해제. 즉시 모두 해제하려면:
         Rhymix\Framework\Storage::clearLocks();
@@ -119,7 +106,7 @@ if (Rhymix\Framework\Storage::getLock(string $name): bool) {
 }
 ```
 
-`flock` 기반의 명명된 잠금. 큐 워커 1개 보장 등 동시성 제어용. 잠금 파일은 `files/cache/locks/`에 생성된다.
+`flock` 기반의 명명된 잠금. 큐 워커 1개 보장 등 동시성 제어용. 잠금 파일은 `files/locks/`에 생성된다.
 
 ## FileHandler (legacy) 메서드 매핑
 
@@ -162,7 +149,7 @@ FileHandler::createImageFile(
 원격 파일 다운로드. `Rhymix\Framework\HTTP` 위에서 동작.
 
 ```php
-$ok = FileHandler::getRemoteFile($url, $target_path, $body=null, $timeout=5, $method='GET', $content_type='', $headers=[]);
+$ok = FileHandler::getRemoteFile($url, $target_path, $body=null, $timeout=3, $method='GET', $content_type=null, $headers=[]);
 ```
 
 ### `FileHandler::returnBytes`
@@ -184,7 +171,9 @@ FileHandler::filesize(1234567);     // '1.18MB'
 
 ```php
 $info = Rhymix\Framework\Image::getImageInfo($path);
-// ['width' => ..., 'height' => ..., 'type' => 'image/jpeg', 'animated' => false]
+// ['width' => ..., 'height' => ..., 'type' => 'jpg', 'bits' => ..., 'channels' => ...]
+// type은 gif/jpg/jp2/png/webp/bmp/psd/ico 중 하나의 축약 문자열 (MIME 타입 아님).
+// 'animated' 키는 반환하지 않음 — 애니메이션 여부는 아래 메서드로 확인.
 
 $is_animated = Rhymix\Framework\Image::isAnimatedGIF($path);
 $is_animated = Rhymix\Framework\Image::isAnimatedWebP($path);
@@ -194,12 +183,21 @@ $is_animated = Rhymix\Framework\Image::isAnimatedWebP($path);
 
 ## 첨부 파일 모듈 연계
 
-`modules/file/` (코어 모듈)이 업로드/다운로드를 관리. 저장 경로 패턴:
+`modules/file/` (코어 모듈)이 업로드/다운로드를 관리. 저장 경로는 `getStoragePath()`(`file.controller.php:2011-2036`)가 `config('file.folder_structure')` 값에 따라 두 가지 구조로 결정한다. `<type>`은 `images` 또는 `binaries`.
 
-```
-files/attach/binaries/<srl 끝 3자리>/<srl>
-files/attach/images/<srl 끝 3자리>/<srl>
-```
+- 신규 설치 기본값 (`folder_structure=2`) — 날짜 기반:
+
+  ```
+  files/attach/<type>/YYYY/MM/DD/
+  ```
+
+- 기존 사용자 (`folder_structure=1` 또는 `0`) — module_srl + 업로드 대상 번호 기반:
+
+  ```
+  files/attach/<type>/<module_srl>/<upload_target_srl 3자리 분할 경로>/
+  ```
+
+  3자리 분할은 `getNumberingPath()`(`common/legacy.php:876-886`)가 하위 자리부터 재귀적으로 끊는다 (예: `12345` → `345/012/`). 경로 끝에 별도의 `/<srl>` 디렉토리는 붙지 않는다.
 
 분산 디렉토리 패턴으로 단일 디렉토리 inode 폭발 방지.
 

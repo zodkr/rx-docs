@@ -101,24 +101,24 @@ rhymix/
 
 | 경로 | 용도 | 정리 스크립트 |
 |---|---|---|
-| `files/attach/binaries/<srl/3/3>/` | 업로드 파일 본문 (해시 디렉토리) | `common/scripts/clean_garbage_files.php` |
-| `files/attach/images/<srl/3/3>/` | 이미지 업로드 + 썸네일 | 동일 |
+| `files/attach/binaries/<YYYY>/<MM>/<DD>/` | 업로드 파일 본문 (신규 설치 기본값 `file.folder_structure=2`, 날짜별 경로; 레거시(1/0)는 `.../<module_srl>/<srl 3자리 분할>/`) | `common/scripts/clean_garbage_files.php` |
+| `files/attach/images/<YYYY>/<MM>/<DD>/` | 이미지 업로드 + 썸네일 (경로 규칙은 binaries와 동일) | 동일 |
 | `files/attach/xeicon/` | 사용자 정의 xeicon | — |
 | `files/cache/` | 일반 캐시 | `Cache::clearAll`로 비움 |
 | `files/cache/template/` | 컴파일된 템플릿 | 자동 무효화 |
 | `files/cache/store/` | file 캐시 드라이버 저장소 | TTL 자동 정리 |
-| `files/cache/css_js/` | minify/concat 산출물 | 자동 |
-| `files/cache/translations/` | 다국어 캐시 | 자동 |
+| `files/cache/assets/` (하위 `minified/`=minify, `compiled/`=LESS·SCSS 컴파일, `combined/`=concat 결합) | CSS/JS minify·compile·concat 산출물 | 자동 |
+| `files/cache/lang/` | 컴파일된 다국어 캐시 | 자동 |
 | `files/cache/addons/` | 컴파일된 애드온 (PC/모바일) | 변경 시 자동 |
-| `files/cache/queue/` | 큐 락 등 | — |
+| `files/locks/` | 파일 기반 락 (`Storage::getLock`) | — |
 | `files/config/` | `config.php` 등 런타임 설정 | 수동 |
 | `files/env/` | 환경 캐시 (mid info 등) | 자동 |
 | `files/member_extra_info/` | 회원 부가 정보 (프로필 이미지/서명) | — |
-| `files/faceOff/`, `files/profile_image/` 등 | 회원 자원 | — |
+| `files/faceOff/` | 레이아웃 소스 편집(faceOff)이 레이아웃별 layout.html/layout.css 저장 | — |
 | `files/ruleset/` | 컴파일된 ruleset JS | 자동 |
 | `files/thumbnails/` | 문서 썸네일 | `common/scripts/clean_old_thumbnails.php` |
-| `files/tmp/` | 일시 작업 디렉토리 | — |
-| `files/debug.log` | 디버그 로그 (옵션) | `common/scripts/clean_old_logs.php` |
+| `files/cache/tmp/` | 일시 작업 디렉토리 | — |
+| `files/debug/YYYYMMDD.php` | 디버그 로그 (옵션, 경로는 설정 `debug.log_filename`) | 수동/날짜별 파일 로테이션 |
 
 상세 정리 스크립트 매핑: [21-cli-and-scripts.md](21-cli-and-scripts.md).
 
@@ -159,11 +159,11 @@ modules/<name>/
 
 다음은 외부에서 직접 접근하지 못하도록 `.htaccess`/nginx 설정이 차단한다.
 
-- `.git/`, `.gitignore`, `.gitattributes`, `.editorconfig`.
+- `.git/`, `.gitignore`, `.gitattributes` (`.git*`), `.travis*`, `codeception.*`, `Gruntfile.js`, `package.json`, `CONTRIBUTING`/`COPYRIGHT`/`LICENSE`/`README`.
 - `.ht*` (Apache 설정).
-- `composer.json`, `composer.lock`.
-- `files/` 하위 `*.php`, `*.html`, `*.inc`, `*.tpl`.
-- `common/vendor/` 직접 접근.
+- `composer.json`, `composer.lock` (`composer.*`).
+- `files/attach`, `files/config`, `files/cache` 하위의 `*.php`/`*.inc`/`*.bak` 등 스크립트 확장자, `files/faceOff`, `files/ruleset` 하위의 `*.html`/`*.xml`/`*.blade.php` (`*.tpl`는 차단 대상 아님).
+- `common/tpl/` 하위 `*.html`/`*.xml`/`*.blade.php` (`common/vendor/`에 대한 차단 규칙은 없음).
 - 모듈 내부의 `queries/*.xml`, `schemas/*.xml`, `ruleset/*.xml` (런타임에 PHP가 읽음).
 
 새 디렉토리 추가 시 같은 차단이 자동 적용되지 않으므로 직접 보호해야 한다 (`Storage::protectDirectory`).

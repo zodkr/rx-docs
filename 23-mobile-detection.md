@@ -11,7 +11,7 @@
 2. Context::get('full_browse') == true 또는 'FullBrowse' 쿠키
    → PC 강제 (사용자가 "PC 버전 보기" 선택)
 
-3. URL 파라미터 m=0/1 (또는 mobile=0/1)
+3. URL 파라미터 m=0/1
    → 명시 지정
 
 4. rx_uatype 쿠키 (이전 판단 결과 캐시)
@@ -43,7 +43,7 @@ Rhymix\Framework\UA::getColorScheme(): string;               // 'light' / 'dark'
 
 // OS/브라우저/디바이스/버전을 한 번에
 $info = Rhymix\Framework\UA::getBrowserInfo(?string $ua = null): UA;
-// $info->os, $info->os_version, $info->device, $info->browser, $info->browser_version
+// $info->os, $info->os_version, $info->device, $info->browser, $info->version
 ```
 
 User-Agent가 비어 있으면 `$_SERVER['HTTP_USER_AGENT']` 사용.
@@ -92,7 +92,7 @@ User-Agent가 비어 있으면 `$_SERVER['HTTP_USER_AGENT']` 사용.
 `modules/<m>/<m>.mobile.php`에 `<Module>Mobile` 클래스가 있으면 모바일 요청 시 우선 인스턴스화된다. 모바일 전용 액션을 작성하기 위함.
 
 ```php
-class FooMobile extends Foo
+class FooMobile extends FooView
 {
     public function dispFooIndex()
     {
@@ -126,10 +126,10 @@ https://example.com/?m=0     ← PC 강제
 
 ## viewport 메타 태그
 
-`config('mobile.viewport')`는 **viewport content 문자열** 자체다. 빈 값이 아니면 모바일 응답에 자동으로 다음 형식의 메타 태그가 삽입된다.
+`config('mobile.viewport')`는 **viewport content 문자열** 자체다. 이 값은 모든 HTML 응답의 공통 레이아웃(`common/tpl/common_layout.html:9`)에 PC/모바일 구분 없이 항상 다음 형식으로 삽입된다. 값이 지정되지 않으면(null) `HTMLDisplayHandler::DEFAULT_VIEWPORT` 상수로 폴백한다 (빈 문자열이면 `content=""`로 출력).
 
 ```html
-<meta name="viewport" content="<config('mobile.viewport') 값 그대로>">
+<meta name="viewport" content="{{ config('mobile.viewport') ?? HTMLDisplayHandler::DEFAULT_VIEWPORT }}" />
 ```
 
 `common/defaults/config.php`의 기본값:
@@ -146,7 +146,7 @@ width=device-width, initial-scale=1.0, user-scalable=yes
 
 ## 봇 분기
 
-`Rhymix\Framework\UA::isRobot()`로 봇 감지. 봇은 PC로 처리되며, `config('seo.*')`로 robots/canonical 처리.
+`Rhymix\Framework\UA::isRobot()`로 봇 감지. 봇은 PC로 처리된다. `seo` 설정에는 robots/canonical 관련 키가 없다 — robots `noindex` 메타 태그는 액션의 `meta-noindex` 속성(`module.xml`)에 따라 `Context::addMetaTag('robots', 'noindex')`로 출력되고(`classes/module/ModuleHandler.class.php:364`; admin 액션도 동일), 모듈의 `robots_tag === 'noindex'` 설정은 이와 별도로 `X-Robots-Tag: noindex` HTTP 헤더를 출력하며(`classes/display/DisplayHandler.class.php:128`), canonical URL은 `HTMLDisplayHandler`에서 `Context::setCanonicalURL()`로 seo 설정과 무관하게 설정된다(`classes/display/HTMLDisplayHandler.php:565`). `config('security.nofollow')`는 이와 별개로 본문 콘텐츠 내 링크에 `rel="nofollow"`를 붙이는 옵션이다(`common/framework/filters/HTMLFilter.php:230`).
 
 ## 다음 문서
 

@@ -21,7 +21,7 @@
 
 ## 동작
 
-언어 선택 시 코어가 `lang_type` 쿠키를 갱신한다. URL prefix 옵션(`config('url.lang_in_url')`) 활성 시 prefix 변경.
+언어 선택 시 스킨의 `doChangeLangType()`(`common/js/common.js:1668-1686`, `@deprecated`)이 코어의 `setLangType()`을 호출해 `lang_type` 쿠키를 갱신한 뒤(`common/js/common.js:108-114`) URL의 `?l=` 파라미터를 제거하거나 페이지를 새로 고친다. 서버 측에서는 `l` 쿼리 파라미터(`?l=en` 등)로도 언어를 지정할 수 있으며, 이 경우 코어가 `lang_type` 쿠키를 함께 갱신한다(`classes/context/Context.class.php:269`, `295-298`). Rhymix에는 언어를 URL 경로 prefix로 표현하는 기능이 없으며, `config('url.lang_in_url')` 같은 설정 키도 존재하지 않는다.
 
 ## 스킨
 

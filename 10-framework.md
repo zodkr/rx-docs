@@ -7,30 +7,30 @@
 | 클래스 | 파일 | 한 줄 요약 |
 |---|---|---|
 | `Cache` | `Cache.php` (434줄) | 정적 캐시 API + 드라이버 자동 폴백 + 그룹 무효화. 상세 → [17-cache-and-queue.md](17-cache-and-queue.md) |
-| `Calendar` | `Calendar.php` (129줄) | 한국 음력 ↔ 양력 변환. |
+| `Calendar` | `Calendar.php` (129줄) | 그레고리력 보조 유틸 — 월 이름, 월 시작 요일, 월 일수, 달력 그리드 생성. |
 | `Config` | `Config.php` (209줄) | dot-notation 설정 get/set, `files/config/config.php` 직렬화. 상세 → [25-config-system.md](25-config-system.md) |
 | `Cookie` | `Cookie.php` (115줄) | `setcookie()` wrapper, SameSite/HttpOnly/Secure 정책. |
 | `DB` | `DB.php` (1603줄) | PDO 기반, prefix 자동, 트랜잭션 카운팅. 상세 → [14-database-and-queries.md](14-database-and-queries.md) |
 | `DateTime` | `DateTime.php` (247줄) | 타임존 변환, formatting, `i18n.php`와 함께 사용. |
 | `Debug` | `Debug.php` (996줄) | 에러/예외 핸들러, 슬로우 쿼리/트리거/위젯 로깅. 상세 → [24-debug-and-logging.md](24-debug-and-logging.md) |
 | `Exception` | `Exception.php` (38줄) | 사용자 메시지 + `getUserFileAndLine()`. 모든 도메인 예외의 부모. |
-| `Formatter` | `Formatter.php` (568줄) | `text2html`, `html2text`, `markdown2html`, `bbcode`, `compileLESS`, `compileSCSS`, `minifyCSS`/`JS`, `concat*`, `convertIECondition`. |
+| `Formatter` | `Formatter.php` (572줄) | `text2html`, `html2text`, `markdown2html`, `bbcode`, `compileLESS`, `compileSCSS`, `minifyCSS`/`JS`, `concat*`, `convertIECondition`. |
 | `HTTP` | `HTTP.php` (336줄) | Guzzle 래퍼, 프록시/타임아웃 추상화. |
 | `Image` | `Image.php` (101줄) | 이미지 메타, animated WebP/GIF 판정. |
-| `Korea` | `Korea.php` (465줄) | 한국 IP 대역, 휴대전화/이메일 검증, 회사명/은행 코드. |
+| `Korea` | `Korea.php` (465줄) | 한국 IP 대역, 휴대전화/이메일 검증, 주민·법인·사업자등록번호 검증. |
 | `Lang` | `Lang.php` (417줄) | `lang_*.php` 로딩, ArrayObject 인터폴레이션. 상세 → [16-i18n-and-lang.md](16-i18n-and-lang.md) |
 | `MIME` | `MIME.php` (208줄) | 확장자 ↔ MIME 타입 매핑. |
 | `Mail` | `Mail.php` (693줄) | SwiftMailer 기반 메일 발송. 상세 → [18-mail-sms-push.md](18-mail-sms-push.md) |
 | `Pagination` | `Pagination.php` (155줄) | 페이지 계산기 (XE 호환은 `classes/page/PageHandler.class.php`). |
-| `Password` | `Password.php` (581줄) | bcrypt + phpass 호환. 상세 → [19-security.md](19-security.md) |
+| `Password` | `Password.php` (587줄) | bcrypt + phpass 호환. 상세 → [19-security.md](19-security.md) |
 | `Push` | `Push.php` (641줄) | APNS/FCM/FCMv1, 토픽, 토큰 관리. |
 | `Queue` | `Queue.php` (535줄) | DB/Redis 백업드 작업 큐, cron 처리. 상세 → [17-cache-and-queue.md](17-cache-and-queue.md) |
 | `Request` | `Request.php` (226줄) | HTTP 메서드/호스트/라우팅 결과 보관. |
 | `Router` | `Router.php` (645줄) | URL ↔ 변수 변환. 상세 → [07-router.md](07-router.md) |
 | `SMS` | `SMS.php` (843줄) | SMS 발송 추상화. |
-| `Security` | `Security.php` (430줄) | CSRF 토큰, 비밀번호 검증, hash_equals 등. |
-| `Session` | `Session.php` (1139줄) | PHP 세션 + 자체 토큰/refresh/SSL 분리 쿠키. 상세 → [15-session-and-auth.md](15-session-and-auth.md) |
-| `Storage` | `Storage.php` (1058줄) | atomic 파일, FTP/SFTP 폴백, umask. 상세 → [20-storage-and-files.md](20-storage-and-files.md) |
+| `Security` | `Security.php` (430줄) | 입력 sanitize, 암호화/서명, 난수 생성, CSRF 검사, hash_equals 상수시간 비교, XXE 방어. |
+| `Session` | `Session.php` (1147줄) | PHP 세션 + 자체 토큰/refresh/SSL 분리 쿠키. 상세 → [15-session-and-auth.md](15-session-and-auth.md) |
+| `Storage` | `Storage.php` (1058줄) | atomic 파일 쓰기, umask 관리, 파일 잠금. 상세 → [20-storage-and-files.md](20-storage-and-files.md) |
 | `Template` | `Template.php` (998줄) | 템플릿 엔진 인스턴스. 상세 → [09-templates-and-skins.md](09-templates-and-skins.md) |
 | `Timer` | `Timer.php` (109줄) | `RX_MICROTIME` 기반 시간 측정. |
 | `UA` | `UA.php` (480줄) | User-Agent 파싱 (모바일/태블릿/봇). |
@@ -106,7 +106,9 @@ XML/구성 파일을 PHP 객체로 변환한다.
 
 모두 `Rhymix\Framework\Exception` 상속. 사용자에게 표시되는 메시지.
 
-| 예외 | 의미 | HTTP |
+아래 표의 `HTTP` 열은 **의미상 권장 코드**이며 예외 객체가 실제로 담는 값이 아니다. 예외 클래스는 기본 메시지만 설정하고 HTTP 상태 코드를 갖지 않는다 (`common/framework/exceptions/*.php`). `ModuleObject::init()`/`proc()`가 예외를 잡아 `stop()` 또는 `BaseObject(-2, getMessage())`로 변환하며 (`classes/module/ModuleObject.class.php:246-249,876-880`), message 모듈이 상태 코드가 200이면 일괄적으로 403으로 렌더링한다 (`modules/message/message.view.php:92-96`). 즉 실제 응답은 대부분 403이다.
+
+| 예외 | 의미 | HTTP(권장) |
 |---|---|---|
 | `DBError` | DB 오류 | 500 |
 | `FeatureDisabled` | 기능 비활성 | 403 |

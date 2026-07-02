@@ -40,22 +40,25 @@
 
 | 테이블 | 정의 파일 | 용도 |
 |---|---|---|
-| `point` | `schemas/point.xml` | 회원별 포인트 (`member_srl`, `point`, `regdate`) |
+| `point` | `schemas/point.xml` | 회원별 포인트 (`member_srl`, `point`) |
 
-(`point_level_config` 같은 별도 테이블은 없다 — 레벨 정의는 회원 모듈 설정에 직렬화 저장된다.)
+(`point_level_config` 같은 별도 테이블은 없다 — 레벨 정의(`level_step`)는 point 모듈 자체의 설정(`ModuleModel::getModuleConfig('point')`)에 직렬화 저장된다.)
 
 ## API
 
 ```php
 $oPointController = getController('point');
-$oPointController->setPoint($member_srl, $points, 'add');     // 가산
+$oPointController->setPoint($member_srl, $points, 'add');     // 가산 (음수 값이면 자동 차감 = 부호 그대로)
 $oPointController->setPoint($member_srl, $points, 'minus');   // 차감
-$oPointController->setPoint($member_srl, $points, 'signed');  // 부호 그대로
+$oPointController->setPoint($member_srl, $points, 'update');  // 절대값으로 설정 (덮어쓰기)
 
 $oPointModel = getModel('point');
+$config = ModuleModel::getModuleConfig('point');
 $current = $oPointModel->getPoint($member_srl);
-$level = $oPointModel->getLevel($member_srl);
+$level = $oPointModel->getLevel($current, $config->level_step);  // getLevel($point, $level_step)
 ```
+
+`setPoint`의 세 번째 인자가 허용하는 모드는 `'add'`,`'plus'`,`'minus'`,`'update'`,`'signup'` 뿐이며(`point.controller.php:673`), 목록에 없는 값은 `'update'`(절대값 덮어쓰기)로 강등된다. `getLevel`은 회원 srl이 아니라 포인트 값과 레벨 설정 배열(`level_step`)을 받는다(`point.model.php:107`).
 
 ## 이 모듈이 hook하는 트리거
 

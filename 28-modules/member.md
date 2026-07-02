@@ -14,7 +14,7 @@
 | `MemberModel` | `member.model.php` | 회원 정보 조회. `getMemberInfo($srl)` 등. |
 | `MemberView` | `member.view.php` | 로그인 폼/회원 정보 페이지. |
 | `MemberMobile` | `member.mobile.php` | 모바일. |
-| `MemberApi` | `member.api.php` | API. |
+| `MemberAPI` | `member.api.php` | API. |
 | `MemberAdminController/Model/View` | `member.admin.*.php` | 관리자 UI. |
 
 ## 주요 액션
@@ -54,7 +54,7 @@
 |---|---|---|
 | `access` | guest | 모듈 접근 |
 
-회원 모듈은 grant보다 sessions 기반 권한이 더 중요. `MemberController::doLogin()` 후 `Session::create($member_info)`.
+회원 모듈은 grant보다 sessions 기반 권한이 더 중요. `MemberController::doLogin()` 내부에서 `Session::login($member_info->member_srl)`로 세션 로그인 처리.
 
 ## DB 스키마
 
@@ -86,28 +86,29 @@
 
 | 이름 | 시점 | 호출 위치 |
 |---|---|---|
-| `member.insertMember` | before/after | `MemberController::insertMember` (`member.controller.php:2892, 3171`) |
-| `member.updateMember` | before/after | `MemberController::updateMember` (`member.controller.php:3190, 3486`) |
-| `member.deleteMember` | before/after | `MemberController::deleteMember` (`member.controller.php:3572, 3638`) |
-| `member.updateMemberEmailAddress` | **after만** | `member.controller.php:3813` (before는 호출되지 않음) |
-| `member.doLogin` | before/after | `MemberController::doLogin` (`member.controller.php:2560, 2776`) |
+| `member.insertMember` | before/after | `MemberController::insertMember` (`member.controller.php:2868, 3147`) |
+| `member.updateMember` | before/after | `MemberController::updateMember` (`member.controller.php:3166, 3462`) |
+| `member.deleteMember` | before/after | `MemberController::deleteMember` (`member.controller.php:3548, 3614`) |
+| `member.updateMemberEmailAddress` | **after만** | `member.controller.php:3789` (before는 호출되지 않음) |
+| `member.doLogin` | before/after | `MemberController::doLogin` (`member.controller.php:2578, 2752`) |
 | `member.doLogout` | before/after | `member.controller.php:124, 132` |
-| `member.doAutoLogin` | before/after | `member.controller.php:2492, 2533` |
+| `member.doAutoLogin` | before/after | `member.controller.php:2510, 2551` |
 | `member.dispMemberSignUpForm` | **before만** | `MemberView::dispMemberSignUpForm` (`member.view.php:319`) |
 | `member.procMemberInsert` | before/after | `member.controller.php:691, 934` |
 | `member.procMemberModifyInfo` | before/after | `member.controller.php:1039, 1230` |
-| `member.procMemberAuthAccount` | before/after | `member.controller.php:1965, 2044` |
+| `member.procMemberAuthAccount` | before/after | `member.controller.php:1974, 2053` |
 | `member.procMemberCheckValue` | before/after | `member.controller.php:621, 673` |
 | `member.procMemberScrapDocument` | before/after | `member.controller.php:244, 258` |
 | `member.deleteScrapDocument` | before/after | `member.controller.php:287, 301` |
-| `member.addMemberToGroup` | before/after | `member.controller.php:2315, 2335` |
-| `member.removeMemberFromGroup` | before/after | `member.controller.php:2361, 2375` |
-| `member.insertGroup` | before/after | `MemberAdminController` (`member.admin.controller.php:1403, 1437`) |
-| `member.updateGroup` | before/after | `member.admin.controller.php:1456, 1488` |
-| `member.deleteGroup` | before/after | `member.admin.controller.php:1511, 1534` |
+| `member.addMemberToGroup` | before/after | `member.controller.php:2333, 2353` |
+| `member.removeMemberFromGroup` | before/after | `member.controller.php:2379, 2393` |
+| `member.insertMemberDevice` | before/after | `Device::procMemberRegisterDevice` (`controllers/Device.php:157, 176`) |
+| `member.insertGroup` | before/after | `MemberAdminController` (`member.admin.controller.php:1402, 1436`) |
+| `member.updateGroup` | before/after | `member.admin.controller.php:1455, 1487` |
+| `member.deleteGroup` | before/after | `member.admin.controller.php:1510, 1533` |
 | `member.getMemberMenu` | before/after | `MemberModel::getMemberMenu` (`member.model.php:248, 321`) |
 
-(`member.insertMemberDevice`/`member.updateMemberEmailAddress` before는 코드에 없다 — 위 표가 실제 호출 위치다.)
+(`member.updateMemberEmailAddress` before는 코드에 없다 — after만 호출된다.)
 
 ## 이 모듈이 hook하는 트리거 (`conf/module.xml`의 `<eventHandlers>`)
 
@@ -119,7 +120,7 @@
 
 ## 확장 변수
 
-`member_extra_info`는 회원 확장 정보 저장소. 관리자 → 회원 설정에서 필드 추가.
+회원 확장 변수(가입 폼 커스텀 필드)는 `member` 테이블의 `extra_vars` 컬럼에 serialize 되어 저장되고, 필드 정의는 `member_join_form` 테이블에 있다. 관리자 → 회원 설정 → 가입 폼에서 필드를 추가한다. (`member_extra_info`는 프로필 이미지/서명 등을 저장하는 files 디렉토리이며 DB 테이블이 아니다.)
 
 ## 회원 그룹과 권한
 
@@ -134,7 +135,7 @@
 
 ## 이메일/SMS 인증
 
-`config('member.signup_check_email')`이 활성이면 가입 시 이메일 인증 메일 발송. `member_auth_mail` 토큰 검증 후 활성화.
+회원 설정의 `enable_confirm`(이메일 인증 사용)이 'Y'이면 가입 시 이메일 인증 메일 발송. `member_auth_mail` 토큰 검증 후 활성화.
 
 ## 소셜 로그인
 

@@ -111,11 +111,20 @@ Install hook:
 | `<description xml:lang="..">` | 다국어 설명 |
 | `<version>` | 모듈 자체 버전. 코어 동봉 모듈은 리터럴 `RX_VERSION` |
 | `<date>` | 빌드 날짜 (`YYYY-MM-DD`). 코어 동봉 모듈은 리터럴 `RX_CORE`. 이 경우 `info->date = ''`로 파싱됨 |
-| `<category>` | `service` / `system` / `extension` (기본 `service`) |
+| `<category>` | 자유 문자열. 미지정 시 기본 `service`. 코어에서는 `system`/`service`/`content`/`member`/`utility` 등을 관용적으로 사용 |
 | `<homepage>`, `<license>`, `<author>` | 메타 |
 | `<author email_address link>` | 속성으로 이메일/링크. 자식 `<name xml:lang>` |
 
-> **v0.1 (구 XE 형식) 참고만**: `<author date="..." description="..." link="...">` 처럼 author 안에 description/date를 두는 구조. 새 모듈에 쓰지 말 것.
+> **v0.1 (구 XE 형식) 참고만**: `date`/`link`는 author의 **속성**, `description`은 author의 **자식 요소**로 둔다. 새 모듈에 쓰지 말 것.
+>
+> ```xml
+> <author date="..." link="...">
+>     <name xml:lang="ko">…</name>
+>     <description xml:lang="ko">…</description>
+> </author>
+> ```
+>
+> description을 속성으로 두면 파서(`ModuleInfoParser.php:61`)가 자식 `<description>`을 읽으므로 빈 문자열이 된다.
 
 ## 3. module.xml
 
@@ -184,7 +193,7 @@ Install hook:
 
 ### 3.1 `<namespaces>` 선언은 보통 필요 없다
 
-코어 `admin`/`board`/`module` 등 v2 모듈도 `<namespaces>` 블록을 **선언하지 않는다**. `class="Controllers\Foo"`만 적으면 ModuleHandler가 자동으로 `Rhymix\Modules\<현재 모듈 이름>\` 접두사를 붙여 풀 클래스명을 만든다 (`ModuleHandler.class.php:435-442`).
+코어 `admin`/`board`/`module` 등 v2 모듈도 `<namespaces>` 블록을 **선언하지 않는다**. `class="Controllers\Foo"`만 적으면 ModuleHandler가 자동으로 `Rhymix\Modules\<현재 모듈 이름>\` 접두사를 붙여 풀 클래스명을 만든다 (`ModuleHandler.class.php:424-431`).
 
 ```php
 // ModuleHandler 내부 동작
@@ -218,7 +227,7 @@ if (isset($xml_info->namespaces) && count($xml_info->namespaces)) {
 
 ### 3.2 액션 디스패치 — 매우 중요
 
-ModuleHandler 디스패치 흐름 (`ModuleHandler.class.php:433-453`, `ModuleObject.class.php:874`):
+ModuleHandler 디스패치 흐름 (`ModuleHandler.class.php:422-441`, `ModuleObject.class.php:874`):
 
 1. `class="Controllers\Index"`가 있으면 위 규칙으로 **`Rhymix\Modules\<Module>\Controllers\Index`** 풀 클래스명 생성.
 2. `class_exists($fullname)` 검사 후 `$fullname::getInstance()` 인스턴스 생성.
@@ -535,7 +544,7 @@ class MyModule extends ModuleObject
 }
 ```
 
-`install` 모듈이 `ModuleModel::getModuleInstallClass()`로 찾아 호출한다(`install.controller.php:582-585`, `install.admin.controller.php:47-50`).
+`install` 모듈이 `ModuleModel::getModuleInstallClass()`로 찾아 호출한다(`install.controller.php:582-585`, `install.admin.controller.php:40-43`).
 
 ## 6. autoloader 매핑 (v2)
 
@@ -614,7 +623,7 @@ use Rhymix\Framework\URL;
 
 같은 모듈 안의 다른 namespace 클래스는 full namespace로 import. **v1 시대의 `IconModel`/`UtilityModel`처럼 "마지막 segment + `Model`" 형식의 호출 코드와 시각적 일관성을 맞추기 위해** `as`로 alias하는 게 코어 admin 모듈의 관용이다(`Models\Icon` → `IconModel`로 묶어 `IconModel::method()`로 호출).
 
-`modules/admin/controllers/SystemConfig/Domains.php:1-17`:
+`modules/admin/controllers/systemconfig/Domains.php:1-17`:
 
 ```php
 <?php
@@ -680,7 +689,7 @@ use Rhymix\Modules\Admin\Controllers\Base;
 
 ## 7. 최소 동작 예제 (v2)
 
-가장 작은 hello world. **4개 파일** (`hello.class.php` 없이도 가능).
+가장 작은 hello world. **5개 파일** (`hello.class.php` 없이 가능하며, `Install.php`도 선택 — 없어도 설치된다. 필수는 `Index.php`·`index.blade.php`·`info.xml`·`module.xml` 4개).
 
 ### `modules/hello/controllers/Install.php`
 
@@ -766,7 +775,7 @@ class Index extends \ModuleObject
 
 설치:
 
-1. 위 4개 파일 작성.
+1. 위 파일 작성 (`Install.php`는 선택 — 없어도 설치됨).
 2. 관리자 → 모듈 → 새 모듈 자동 인식 → 설치.
 3. 페이지(`/admin/menu`)에 mid `hello`로 추가.
 4. `/hello`로 접속 → "Hello, ..." 출력.
@@ -850,7 +859,7 @@ $post = \Rhymix\Modules\MyModule\Models\Post::getById($srl);
 
 ### v2 — 컨트롤러에서 직접 검증
 
-v2(namespace) 모듈에서 `ruleset=` 속성을 쓰면 ModuleHandler가 `trigger_error('Ruleset is deprecated in namespaced modules', E_USER_WARNING)`를 발생시킨다 (`ModuleHandler.class.php:633-637`). v2 컨트롤러는 메서드 안에서 직접 검증한다.
+v2(namespace) 모듈에서 `ruleset=` 속성을 쓰면 ModuleHandler가 `trigger_error('Ruleset is deprecated in namespaced modules', E_USER_WARNING)`를 발생시킨다 (`ModuleHandler.class.php:625`). v2 컨트롤러는 메서드 안에서 직접 검증한다.
 
 ```php
 namespace Rhymix\Modules\Hello\Controllers;

@@ -40,7 +40,7 @@
 | `addons` | `schemas/addons.xml` | 사이트 기본 애드온 설정 (`addon`, `is_used`, `is_used_m`, `is_fixed`, `extra_vars`) |
 | `addons_site` | `schemas/addons_site.xml` | 다중 사이트의 site_srl별 override (`site_srl`, `addon`, `is_used`, `is_used_m`, `extra_vars`) |
 
-(`addons_module` 같은 테이블은 없다 — 애드온 활성화는 사이트 단위, 모듈별 override는 모듈 설정 화면의 별도 컬럼으로 관리.)
+(`addons_module` 같은 테이블은 없다 — 애드온 활성화는 사이트 단위이며, 모듈별 실행 제어는 애드온 설정 화면(`dispAddonAdminSetup`)에서 선택한 `mid_list`(`extra_vars`에 직렬화 저장)로 관리한다. `makeCacheFile`이 이 값을 이용해 현재 `mid`에 따라 실행 여부를 결정한다 — `modules/addon/addon.controller.php:95-128`.)
 
 ## 활성화 단위
 

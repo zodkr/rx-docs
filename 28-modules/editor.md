@@ -15,7 +15,7 @@ CKEditor 4 기반.
 | `EditorController` | `editor.controller.php` |
 | `EditorModel` | `editor.model.php` |
 | `EditorView` | `editor.view.php` |
-| `EditorApi` | `editor.api.php` |
+| `EditorAPI` | `editor.api.php` |
 | `EditorAdminController` | `editor.admin.controller.php` |
 | `EditorAdminView` | `editor.admin.view.php` |
 
@@ -51,8 +51,6 @@ $option->allow_html = true;
 $option->enable_default_component = true;
 $option->enable_component = true;
 $option->enable_autosave = true;
-$option->resizable = true;
-$option->disable_html_filter = false;
 $option->editor_height = 400;
 
 $html = $oEditor->getEditor($document_srl, $option);
@@ -94,7 +92,7 @@ modules/editor/components/
 
 | 이름 | 시점 |
 |---|---|
-| `editor.deleteSavedDoc` | before/after — 자동 저장본 삭제 |
+| `editor.deleteSavedDoc` | after — 자동 저장본 삭제 |
 
 (그 외 `act:editor.<액션>.before/after`는 코어가 모든 액션에서 자동 발사하는 표준 act 트리거.)
 
@@ -132,7 +130,7 @@ HTML 반환 → 팝업 표시
 
 ## 자동저장
 
-`editor_autosaved` 테이블이 회원 + 문서 키 단위로 작성 중 본문 보관. 글쓰기 폼 진입 시 자동 복원 prompt.
+`editor_autosave` 테이블이 회원 + 문서 키 단위로 작성 중 본문 보관. 글쓰기 폼 진입 시 자동 복원 prompt.
 
 ## 이모티콘 팩
 

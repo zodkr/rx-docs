@@ -29,10 +29,11 @@
 | 테이블 | 정의 파일 |
 |---|---|
 | `counter_log` | `schemas/counter_log.xml` — 방문 로그 |
-| `counter_status` | 일/월 통계 |
-| `counter_site_status` | 사이트(도메인) 단위 통계 |
+| `counter_status` | 일별 통계 + 전체 누계(`regdate=0`) 행 (월/년 통계는 이 테이블을 기간 합산하여 산출) |
 
-(`counter`라는 단일 테이블은 없다 — 모든 데이터는 위 3개 테이블에 분산.)
+(`counter_site_status` 테이블은 삭제됨 — `schemas/counter_site_status.xml`이 `deleted="true"`이고, `counter.class.php:59-61`의 `moduleUpdate()`가 기존 설치본에서 `dropTable('counter_site_status')`로 제거한다.)
+
+(`counter`라는 단일 테이블은 없다 — 모든 데이터는 `counter_log`, `counter_status` 2개 테이블에 저장된다.)
 
 ## 동작
 

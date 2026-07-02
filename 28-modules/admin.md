@@ -43,7 +43,7 @@
 |---|---|
 | `dispAdminIndex` | 대시보드 (index) |
 | `procAdminLogout` | 로그아웃 |
-| `dispAdminConfigGeneral` | 도메인 관리(시스템 설정 진입, admin_index) |
+| `dispAdminConfigGeneral` | 도메인 관리(시스템 설정 진입, menu_index) |
 | `dispAdminInsertDomain` / `dispAdminCopyDomain` | 도메인 추가/복사 |
 | `procAdminInsertDomain` / `procAdminUpdateDomainConfig` / `procAdminDeleteDomain` | 도메인 CRUD |
 | `dispAdminConfigNotification` / `procAdminUpdateNotification` | 알림 설정 |
@@ -65,7 +65,7 @@
 
 ## 권한
 
-`is_admin === 'Y'` 회원만 접근. `*-managers` 권한도 일부 허용.
+`is_admin === 'Y'` 회원(관리자)만 접근 가능. 모든 admin 컨트롤러는 `init()`에서 `isAdmin()`을 검사해 관리자가 아니면 `NotPermitted` 예외를 던진다 — namespace 컨트롤러 및 `AdminAdminView`는 `Base::init()`(`controllers/Base.php:23-25`), 레거시 `AdminAdminController`는 자체 init override에서 동일 체크(`admin.admin.controller.php:13-19`). `module.xml`의 `<grants />`는 비어 있고(`conf/module.xml:3`), `getSiteAllList`만 추가로 root 권한을 요구한다(`conf/module.xml:53`). 모듈 매니저(`*-managers`)에게 부분 허용하는 액션은 없다.
 
 ## DB 스키마
 

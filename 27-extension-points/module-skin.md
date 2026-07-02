@@ -60,15 +60,19 @@ extra_vars/colorset 구조는 레이아웃과 동일. 자세히는 [layout.md](l
 
 | 템플릿 | 용도 |
 |---|---|
-| `list.html` | 글 목록 |
-| `view.html` | 글 상세 |
+| `list.html` | 글 목록 (글 상세는 별도 템플릿 없이 `_read.html`을 include) |
+| `_read.html` | 글 상세 본문 (`list.html`이 `$oDocument->isExists()`일 때 include) |
 | `write_form.html` | 글쓰기 폼 |
+| `comment.html` | 댓글 목록 |
 | `comment_form.html` | 댓글 폼 |
-| `comment_list.html` | 댓글 목록 |
-| `delete_form.html` | 삭제 확인 |
+| `input_password_form.html` | 비밀글 비밀번호 입력 |
+| `delete_form.html` | 글 삭제 확인 |
 | `delete_comment_form.html` | 댓글 삭제 |
-| `rss.html`, `atom.html` | RSS/Atom |
-| `consultation_list.html` | 상담형 게시판 |
+| `delete_trackback_form.html` | 트랙백 삭제 |
+| `tag_list.html` | 태그 목록 |
+| `_header.html`, `_footer.html`, `_comment.html` | 부분 템플릿 |
+
+글 상세는 `view.html` 같은 별도 진입 템플릿이 없다. `list.html`이 문서가 존재하면 `_read.html`을 include해 목록과 같은 진입점에서 상세를 렌더한다 (`board.view.php:224` → `list.html:2`). 댓글 목록 템플릿명은 `comment.html`이며 `board.view.php:844`에서 지정된다. RSS/Atom은 board 스킨이 아니라 별도 `rss` 모듈이 처리한다.
 
 ### member (회원)
 
@@ -77,8 +81,8 @@ extra_vars/colorset 구조는 레이아웃과 동일. 자세히는 [layout.md](l
 | `login_form.html` | 로그인 |
 | `signup_form.html` | 가입 |
 | `member_info.html` | 회원 정보 |
-| `modify_info_form.html` | 정보 수정 |
-| `find_account.html` | 계정 찾기 |
+| `modify_info.html` | 정보 수정 |
+| `find_member_account.html` | 계정 찾기 |
 
 ### page (페이지)
 

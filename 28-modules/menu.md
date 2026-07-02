@@ -48,19 +48,19 @@
 
 ## 메뉴 캐시
 
-메뉴 트리는 `files/cache/menu/<menu_srl>.xml.php`로 캐싱되어 빠르게 로드된다. `MenuAdminController::makeXmlFile()`가 갱신.
+`MenuAdminController::makeXmlFile()`가 메뉴 트리를 캐싱한다. 이때 `<menu_srl>.xml.php`(XML 데이터)와 `<menu_srl>.php`(실행형 PHP 캐시) 두 파일을 함께 갱신한다 (`menu.admin.controller.php:1778-1779`).
 
-`ModuleHandler::displayContent`이 레이아웃 처리 시 이 캐시를 include해서 `$GNB`/`$LNB` 등 메뉴 객체를 컨텍스트에 주입 (`ModuleHandler.class.php:1135-1180`).
+`ModuleHandler::displayContent`이 레이아웃 처리 시 이 중 `<menu_srl>.php`(`$menu->php_file`)를 include해서 `$GNB`/`$LNB` 등 메뉴 객체를 컨텍스트에 주입 (`ModuleHandler.class.php:1163`).
 
 ## 홈 메뉴
 
-`menu_srl == -1`은 도메인의 홈 메뉴를 가리킨다. `MenuAdminController::getHomeMenuCacheFile()`로 도메인별 홈 메뉴 파일 경로 획득.
+`menu_srl == -1`은 도메인의 홈 메뉴를 가리킨다. `MenuAdminController::getHomeMenuCacheFile()`로 홈 메뉴 캐시 파일(`files/cache/menu/homeSitemap.php`, 사이트 전역 단일 파일) 경로 획득.
 
 ## 이 모듈이 정의하는 트리거
 
 | 이름 | 시점 | 호출 위치 |
 |---|---|---|
-| `menu.getModuleListInSitemap` | **after만** | `MenuAdminModel::getModuleListInSitemap` (`menu.admin.model.php:427`) |
+| `menu.getModuleListInSitemap` | **after만** | `MenuAdminModel::getModuleListInSitemap` (`menu.admin.model.php:423`) |
 
 이 트리거는 `MenuAdminModel`이 사이트맵 데이터를 만들 때 한 번 발사된다 (before는 없다). board 등 콘텐츠 모듈이 hook해서 자체 게시판/페이지 목록을 사이트맵에 추가한다.
 

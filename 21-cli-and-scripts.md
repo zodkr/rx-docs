@@ -10,14 +10,14 @@ php index.php <plugin>.<script>
 
 `<plugin>` = `common` 또는 모듈명. `<script>` = 디렉토리 내 스크립트 파일명(확장자 제외).
 
-경로 규칙 (`ModuleHandler.class.php:1247`):
+경로 규칙 (`ModuleHandler.class.php:1236`):
 
 ```
 common.<name>    → common/scripts/<name>.php
 <module>.<name>  → modules/<module>/scripts/<name>.php
 ```
 
-자동으로 `common/scripts/common.php`가 먼저 require되어 부트스트랩이 완성된다 (`:1254`).
+자동으로 `common/scripts/common.php`가 먼저 require되어 부트스트랩이 완성된다 (`:1243`).
 
 ## 동봉 스크립트
 
@@ -26,13 +26,13 @@ common.<name>    → common/scripts/<name>.php
 | 스크립트 | 호출 | 용도 |
 |---|---|---|
 | `cron.php` | `php index.php common.cron` | 큐 워커 (예약 작업 실행) |
-| `clean_empty_dirs.php` | `php index.php common.clean_empty_dirs` | 빈 첨부 디렉토리 정리 |
-| `clean_garbage_files.php` | `php index.php common.clean_garbage_files` | 고아 첨부 파일 정리 |
-| `clean_message_files.php` | `php index.php common.clean_message_files` | 메시지 첨부 정리 |
-| `clean_old_logs.php` | `php index.php common.clean_old_logs` | 오래된 로그 정리 |
-| `clean_old_notifications.php` | `php index.php common.clean_old_notifications` | 알림 정리 |
-| `clean_old_thumbnails.php` | `php index.php common.clean_old_thumbnails` | 썸네일 캐시 정리 |
-| `update_all_modules.php` | `php index.php common.update_all_modules` | 모든 모듈 일괄 업데이트 |
+| `clean_empty_dirs.php` | `php index.php common.clean_empty_dirs` | **@deprecated** — `file.cleanEmptyDirs` wrapper (빈 첨부 디렉토리 정리) |
+| `clean_garbage_files.php` | `php index.php common.clean_garbage_files` | **@deprecated** — `file.cleanGarbageFiles` wrapper (고아 첨부 파일 정리) |
+| `clean_message_files.php` | `php index.php common.clean_message_files` | **@deprecated** — `communication.cleanMessageFiles` wrapper (메시지 첨부 정리) |
+| `clean_old_logs.php` | `php index.php common.clean_old_logs` | **@deprecated** — `module.cleanMiscLogs` wrapper (오래된 로그 정리) |
+| `clean_old_notifications.php` | `php index.php common.clean_old_notifications` | **@deprecated** — `ncenterlite.cleanNotifications` wrapper (알림 정리) |
+| `clean_old_thumbnails.php` | `php index.php common.clean_old_thumbnails` | **@deprecated** — `file.cleanThumbnails` wrapper (썸네일 캐시 정리) |
+| `update_all_modules.php` | `php index.php common.update_all_modules` | **@deprecated** — `module.updateAllModules` wrapper (모든 모듈 일괄 업데이트) |
 
 ### 모듈 스크립트
 
@@ -45,7 +45,7 @@ common.<name>    → common/scripts/<name>.php
 | `modules/file/scripts/cleanThumbnails.php` | `php index.php file.cleanThumbnails` |
 | `modules/communication/scripts/cleanMessageFiles.php` | `php index.php communication.cleanMessageFiles` |
 
-(`common/scripts/clean_*.php`의 일부는 모듈 단위 정리 로직을 호출하기 위한 wrapper다 — 직접 모듈 스크립트를 부르는 것과 동등.)
+(`cron.php`를 제외한 `common/scripts` 스크립트는 모두 `@deprecated`된 wrapper이며, 대응 모듈 스크립트를 직접 부르는 것과 동등하다. 각 파일 docblock이 권장 호출을 지시한다. 신규 cron 등록에는 위 모듈 스크립트를 직접 사용한다.)
 
 ## cron 등록
 
@@ -58,15 +58,15 @@ common.<name>    → common/scripts/<name>.php
 ### 매일 새벽 정리
 
 ```cron
-0 4 * * * /usr/bin/php /var/www/rhymix/index.php common.clean_old_logs > /dev/null 2>&1
-30 4 * * * /usr/bin/php /var/www/rhymix/index.php common.clean_garbage_files > /dev/null 2>&1
-0 5 * * * /usr/bin/php /var/www/rhymix/index.php common.clean_old_thumbnails > /dev/null 2>&1
+0 4 * * * /usr/bin/php /var/www/rhymix/index.php module.cleanMiscLogs > /dev/null 2>&1
+30 4 * * * /usr/bin/php /var/www/rhymix/index.php file.cleanGarbageFiles > /dev/null 2>&1
+0 5 * * * /usr/bin/php /var/www/rhymix/index.php file.cleanThumbnails > /dev/null 2>&1
 ```
 
 ### 매주
 
 ```cron
-0 6 * * 0 /usr/bin/php /var/www/rhymix/index.php common.clean_empty_dirs
+0 6 * * 0 /usr/bin/php /var/www/rhymix/index.php file.cleanEmptyDirs
 ```
 
 ### HTTP 폴백 (cron 없을 때)
@@ -84,11 +84,10 @@ https://example.com/common/scripts/cron.php?key=<config('queue.key')>
 `common/scripts/cron.php`는 다음 작업을 수행한다:
 
 1. `RXQUEUE_CRON` 상수 정의 (큐 워커 모드 마커).
-2. 시그널 핸들러 등록 (SIGTERM/SIGINT → 안전 종료).
+2. 시그널 핸들러 등록 (SIGINT/SIGHUP/SIGTERM/SIGQUIT/SIGUSR1/SIGUSR2 → 안전 종료) — CLI 전용 (`cron.php:60`).
 3. `Rhymix\Framework\Queue::process($index, $count, $timeout)` 호출 — timeout(초)까지 큐 처리.
-4. 처리 결과 stderr 로깅.
 
-CLI/HTTP 모두 같은 흐름. HTTP의 경우 `key` 인증 필수.
+핵심 큐 처리(`Queue::process`)는 CLI/HTTP 동일하다. 다만 시그널 핸들러 등록(`cron.php:60`)과 멀티프로세스 fork(`cron.php:73`, `process_count > 1`일 때)는 CLI 전용이며, HTTP 호출 시에는 이 둘을 건너뛰고 단일 프로세스 `Queue::process(0, 1, $timeout)`(`cron.php:116`)만 실행한다. HTTP의 경우 `key` 인증 필수. 정상 처리 결과를 stderr로 로깅하는 단계는 없고, fork 실패(`RxQueue: could not fork!`)나 태스크 핸들러 오류만 `error_log`에 남는다.
 
 ## 새 스크립트 작성
 
@@ -136,7 +135,7 @@ $user_srl = isset($argv[2]) ? (int)$argv[2] : 0;
 
 ### 환경
 
-CLI 모드에서는 `index.php:65`에서 `Rhymix\Framework\Debug::disable()`이 호출되어 에러 핸들러가 minimal 모드로 동작한다 (`error_log`로 출력).
+CLI 모드에서는 `index.php:65`에서 `Rhymix\Framework\Debug::disable()`이 호출되어 인메모리 디버그 로그 수집이 꺼진다(CLI에는 디버그 툴바가 없어 불필요). 이때 일반 경고/에러는 `addError()`가 조기 return하여 기록되지 않으며(`Debug.php:349-353`), 미처리 예외와 치명적 오류만 `config('debug.write_error_log') !== 'none'`일 때 `error_log`로 남는다(`Debug.php:672-704`).
 
 ### 출력
 

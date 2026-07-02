@@ -15,7 +15,7 @@ addons/<name>/                # 코어/사용자 영역
 └── tpl/                      # [선택]
 ```
 
-코어 동봉: `addons/`. 사용자 영역: `plugins/<name>/` 형태로도 가능.
+애드온은 코어 동봉이든 사용자 추가든 모두 `addons/<name>/` 아래에만 위치한다. (`plugins/`에 둔 애드온은 인식되지 않는다.)
 
 ## info.xml
 
@@ -56,14 +56,8 @@ addons/<name>/                # 코어/사용자 영역
 | `text` | 한 줄 텍스트 |
 | `textarea` | 여러 줄 텍스트 |
 | `select` | 드롭다운 (options 필요) |
-| `radio` | 라디오 버튼 |
-| `checkbox` | 체크박스 (다중) |
-| `image` | 이미지 업로드 |
-| `filebox` | 파일 업로드 |
-| `color` | 컬러 피커 |
-| `date` | 날짜 선택 |
 
-관리자 UI에서 자동으로 입력 폼이 생성된다.
+애드온 설정 화면(`setup_addon.html`)은 위 3종만 입력 폼으로 렌더링한다 (`modules/addon/tpl/setup_addon.html:70-74`의 `text`/`textarea`/`select` cond 분기). radio/checkbox/image/filebox/color/date 등 다른 타입은 애드온 설정 UI에서 지원되지 않는다.
 
 ## hook 위치
 
@@ -199,8 +193,10 @@ $api_key = $addon_info->api_key;
 
 무효화 조건:
 
-- 애드온 활성/비활성 토글.
-- 애드온 파일 mtime 변경 시 (자동 재컴파일 트리거).
+- 애드온 활성/비활성 토글 또는 설정 저장 시 (관리자 컨트롤러가 `makeCacheFile` 호출 — `procAddonAdminToggleActivate`/`procAddonAdminSaveActivate`/`procAddonAdminSetupAddon`).
+- 캐시 파일이 없거나 `addon.controller.php`(코어 파일)의 mtime이 캐시보다 새로울 때 (`getCacheFilePath`가 자동 재컴파일 — `modules/addon/addon.controller.php:42`).
+
+> 캐시 파일은 애드온 코드를 인라인하지 않는다. 대신 `$addon_file = RX_BASEDIR . 'addons/<name>/<name>.addon.php';` 경로를 기록한 뒤 실행 시 `include($addon_file)`로 불러온다 (`modules/addon/addon.controller.php:111,132`). 따라서 개별 애드온 파일(`<name>.addon.php`)의 **코드를 수정하면 캐시를 재생성하지 않아도 다음 요청에서 곧바로 반영**된다. 캐시 재생성이 필요한 경우는 활성 애드온 목록·설정(extra_vars)·실행 mid 조건·활성/비활성 상태가 바뀔 때뿐이며, 이때는 위의 무효화 조건(관리자 토글/설정 저장, 또는 `addon.controller.php` mtime 갱신)을 거친다.
 
 ## 활성화 단위
 

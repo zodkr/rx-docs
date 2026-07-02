@@ -10,7 +10,7 @@ layouts/<name>/                # PC
 ├── layout.html                # [필수] 진입 템플릿
 ├── <name>.layout.css          # [선택]
 ├── <name>.layout.js           # [선택]
-├── thumbnail.png              # [권장] 미리보기 (240x180 권장)
+├── thumbnail.png              # [권장] 미리보기 (180x135 권장)
 └── images/, css/, js/         # [선택] 자원
 
 m.layouts/<name>/              # 모바일 (동일 구조)
@@ -54,11 +54,6 @@ m.layouts/<name>/              # 모바일 (동일 구조)
             <options value="YES"><title xml:lang="ko">'나눔고딕' 사용</title></options>
         </var>
     </extra_vars>
-
-    <colorset>
-        <color name="white"><title xml:lang="ko">화이트</title></color>
-        <color name="dark"><title xml:lang="ko">다크</title></color>
-    </colorset>
 </layout>
 ```
 
@@ -78,13 +73,13 @@ m.layouts/<name>/              # 모바일 (동일 구조)
 | 속성 | 의미 |
 |---|---|
 | `name` | 변수 ID. 템플릿에서 `$layout_info->{name}` |
-| `type` | `image`/`text`/`textarea`/`select`/`filebox`/`color`/`date`/`radio`/`checkbox` |
+| `type` | `image`/`text`/`textarea`/`select`/`checkbox`/`radio`/`colorpicker` |
 
 옵션이 있는 type은 `<options>` 또는 `<options value="...">` 자식.
 
-### `<colorset>`
+### 색상 테마 (컬러셋)
 
-색상 테마. 관리자가 선택. 템플릿에서 `$layout_info->colorset` 또는 `$colorset`.
+레이아웃에는 최상위 `<colorset>` 요소가 없다 (`LayoutInfoParser`는 파싱하지 않음 — 최상위 `<colorset>`은 스킨 전용 기능이다). 색상 테마는 `type="select"`인 `<extra_vars>`로 구현하며, 관례상 `name="colorset"`을 쓴다 (`m.layouts/colorCode/conf/info.xml`). 템플릿에서는 `$layout_info->colorset`으로 접근한다.
 
 ## layout.html
 
@@ -96,7 +91,7 @@ m.layouts/<name>/              # 모바일 (동일 구조)
 <!doctype html>
 <html lang="{$lang_type}">
 <head>
-    <title>{$site_title}</title>
+    <title>{Context::getSiteTitle()}</title>
     <load target="default.layout.css" />
 </head>
 <body>
@@ -135,7 +130,7 @@ m.layouts/<name>/              # 모바일 (동일 구조)
 <!doctype html>
 <html lang="{{ $lang_type }}">
 <head>
-    <title>{{ $site_title }}</title>
+    <title>{{ Context::getSiteTitle() }}</title>
     @load('default.layout.css')
 </head>
 <body>
@@ -174,10 +169,9 @@ m.layouts/<name>/              # 모바일 (동일 구조)
 | `$is_logged` | 로그인 여부 |
 | `$module_info` | 현재 모듈 정보 |
 | `$site_module_info` | 현재 도메인 루트 모듈 |
-| `$user` | 사용자 객체 |
-| `$colorset` | 선택된 컬러셋 |
+| `$layout_info->colorset` | 선택된 컬러셋 (extra_var로 정의한 경우) |
 | `$mid` | 현재 mid |
-| `$site_title` | 사이트 제목 |
+| `Context::getSiteTitle()` | 사이트 제목 (독립 변수 `$site_title`은 없음) |
 | `$module_info->browser_title` | 현재 페이지 타이틀 |
 | `$<menu_name>` | `<menus>`에 정의된 메뉴 (예: `$GNB`, `$LNB`) |
 
@@ -192,8 +186,8 @@ $GNB->list = [
         'text' => '메뉴1',
         'open_window' => 'N',
         'list' => [ /* 하위 메뉴 */ ],
-        'selected' => true,         // 현재 페이지가 이 메뉴인가
-        'expand' => true,
+        'selected' => 1,            // 1/0, 현재 페이지가 이 메뉴인가
+        'expand' => 'Y',            // 'Y'/'N'
     ],
     ...
 ];
@@ -204,12 +198,13 @@ $GNB->list = [
 ```html
 <load target="default.layout.css" media="screen" />
 <load target="default.layout.js" type="body" />
-<load target="./external.css" />
+<load target="./css/extra.css" />        <!-- 레이아웃 디렉토리 기준 -->
+<load target="^/common/js/common.js" />  <!-- 사이트 루트(RX_BASEDIR) 기준 -->
 ```
 
-상대 경로면 레이아웃 디렉토리 기준. 절대 경로(`./`로 시작)면 `RX_BASEDIR` 기준.
+`./` 또는 접두사 없는 경로는 모두 레이아웃 디렉토리 기준이다 (`./css/extra.css` → `layouts/<name>/css/extra.css`). 사이트 루트(`RX_BASEDIR`) 자원은 `^/`(예: `^/common/js/foo.js`) 접두사나 `../../`(예: `../../common/css/xeicon/xeicon.min.css`)로 접근한다.
 
-자동으로 mtime 쿼리스트링(`?v=12345`) 부여 → 캐시 무효화.
+자동으로 mtime 쿼리스트링(`?t=12345`) 부여 → 캐시 무효화.
 
 ## 모바일 레이아웃
 
@@ -224,7 +219,7 @@ $module_info->mlayout_srl      // 모바일 레이아웃 srl
 
 ## 사용자 편집 레이아웃
 
-레이아웃 자체를 관리자가 드래그앤드롭으로 편집 가능 (`modules/layout/`). 편집 결과는 `files/cache/layout/edited_<srl>.html`에 저장되며 `ModuleObject::edited_layout_file`로 적용.
+레이아웃 자체를 관리자가 드래그앤드롭으로 편집 가능 (`modules/layout/`). 편집 결과는 `files/faceOff/<numbering>/layout.html`에 저장되며(예: `layout_srl=5` → `files/faceOff/005/layout.html`; `getNumberingPath`는 3자리 0채움, 1000 이상부터 디렉토리를 중첩) `ModuleObject::edited_layout_file`로 적용된다. `files/cache/layout/`는 컴파일 캐시(`*.cache.php`)와 관리자 미리보기용 `tmp.tpl` 전용이다.
 
 ## 최소 예제
 
@@ -257,7 +252,7 @@ $module_info->mlayout_srl      // 모바일 레이아웃 srl
 <html>
 <head>
     <meta charset="utf-8">
-    <title>{$layout_info->SITE_TITLE ?: $site_title}</title>
+    <title>{$layout_info->SITE_TITLE ?: Context::getSiteTitle()}</title>
 </head>
 <body>
     <header>

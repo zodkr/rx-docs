@@ -59,7 +59,7 @@
 | 테이블 | 정의 파일 |
 |---|---|
 | `member_message` | `schemas/member_message.xml` — 쪽지 |
-| `member_friend` | `schemas/member_friend.xml` — 친구 (양방향) |
+| `member_friend` | `schemas/member_friend.xml` — 친구 (단방향 — `addFriend`가 `member_srl`→`target_srl` 한 행만 삽입) |
 | `member_friend_group` | `schemas/member_friend_group.xml` — 친구 그룹 |
 
 (테이블 이름이 `communication_*`가 아니라 `member_*` prefix — XE 시대부터의 명명 관습.)
@@ -80,7 +80,7 @@
 
 | 트리거 (시점) | 메서드 | 용도 |
 |---|---|---|
-| `moduleHandler.init` (before) | `triggerModuleHandlerBefore` (controller) | 요청 초기에 쪽지 알림(`procCommunicationNewMessage`) 카운트 갱신 |
+| `moduleHandler.init` (before) | `triggerModuleHandlerBefore` (controller) | 회원 로그인 정보 메뉴(`addMemberMenu`)에 쪽지함 보기(`cmd_view_message_box`)·친구목록(`cmd_view_friend`) 항목 추가. `enable_friend`가 꺼져 있으면 `allow_message_type`에서 `'F'` 항목 제거 |
 | `member.getMemberMenu` (before) | `triggerMemberMenu` (controller) | 회원 메뉴에 쪽지보내기/친구추가 항목 추가 |
 
 ## 관련

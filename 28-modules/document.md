@@ -39,13 +39,13 @@ $oDoc->getThumbnail($width = 80, $height = 0, $thumbnail_type = '');
 $oDoc->getCommentCount();
 $oDoc->getComments(?int $page = null);   // 댓글 트리 (getCommentList 아님)
 $oDoc->getExtraValue($idx);     // 확장 변수
-$oDoc->getExtraVars();          // 전체 (ValueCollection)
+$oDoc->getExtraVars();          // 전체 (extravar Value 객체 배열)
 $oDoc->getUrl();
 $oDoc->getPermanentUrl();
 $oDoc->getTags();
 ```
 
-> 첨부 파일은 `DocumentItem`에 메서드가 없다 — `FileModel::getFiles($document_srl)` 등 file 모듈을 직접 호출한다.
+> 첨부 파일은 `$oDoc->hasUploadedFiles()`, `$oDoc->getUploadedFiles($sortIndex = 'file_srl')`로 조회한다(내부적으로 `FileModel::getFiles(..., 'doc', ...)` 호출).
 
 ## 주요 액션
 
@@ -67,13 +67,7 @@ $oDoc->getTags();
 
 ## 권한 (grants)
 
-- `view` (guest) — 보기
-- `list` (guest) — 목록
-- `write_document` (guest)
-- `write_comment` (guest)
-- `vote_log_view` (member)
-
-(board와 유사)
+document 모듈은 `conf/module.xml`에 `<grants />`(비어 있음)만 두어 자체 권한을 정의하지 않는다. 목록/열람/글·댓글 작성/추천인 보기 등의 권한은 document를 사용하는 board(`modules/board/conf/module.xml`) 같은 콘텐츠 모듈이 정의한다.
 
 ## DB 스키마
 
@@ -116,9 +110,9 @@ $oDoc->getTags();
 | `document.insertCategory` | before/after | `document.controller.php:2551, 2568` |
 | `document.updateCategory` | before/after | `document.controller.php:2627, 2643` |
 | `document.deleteCategory` | before/after | `document.controller.php:2670, 2703` |
-| `document.manage` | before/after | `DocumentController::triggerManageDocument` (`document.controller.php:3517, 3611`) |
-| `document.getComments` | after | `DocumentItem::getComments` (`document.item.php:1066`) |
-| `document.getThumbnail` | before | `DocumentItem::getThumbnail` (`document.item.php:1160`) |
+| `document.manage` | before/after | `DocumentController::procDocumentManageCheckedDocument` (`document.controller.php:3517, 3611`) |
+| `document.getComments` | after | `DocumentItem::getComments` (`document.item.php:1070`) |
+| `document.getThumbnail` | before | `DocumentItem::getThumbnail` (`document.item.php:1164`) |
 
 ## 이 모듈이 hook하는 트리거 (`conf/module.xml`의 `<eventHandlers>`)
 
@@ -136,7 +130,7 @@ $oDoc->getTags();
 
 ```php
 $value = $oDoc->getExtraValue('my_field');
-$all = $oDoc->getExtraVars();   // ValueCollection
+$all = $oDoc->getExtraVars();   // extravar Value 객체 배열
 ```
 
 ## status

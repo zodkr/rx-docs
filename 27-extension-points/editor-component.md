@@ -8,7 +8,7 @@
 modules/editor/components/<name>/
 ├── <name>.class.php           # [필수] EditorHandler 상속
 ├── info.xml                   # [필수]
-├── component_icon.gif         # [필수] 에디터 도구바 아이콘 (24x24)
+├── component_icon.gif         # [필수] 에디터 도구바 아이콘 (32x32)
 ├── icon.gif                   # [선택] 본문 내 placeholder 아이콘
 ├── tpl/
 │   ├── popup.html             # 팝업 UI
@@ -17,7 +17,7 @@ modules/editor/components/<name>/
 ├── css/, js/, images/         # [선택]
 ```
 
-외부 플러그인은 `plugins/<plugin>/editor/components/<name>/`도 가능.
+에디터 컴포넌트는 `modules/editor/components/<name>/`에만 배치할 수 있다. 목록 생성 `makeCache()`가 `RX_BASEDIR . 'modules/editor/components'`만 readDir 하고(`modules/editor/editor.controller.php:425`), 객체 생성 `getComponentObject()`가 경로를 `./modules/editor/components/%s/`로 하드코딩하기 때문(`modules/editor/editor.model.php:587`). `plugins/` 하위에 두어도 인식되지 않는다.
 
 ## info.xml
 
@@ -52,13 +52,17 @@ modules/editor/components/<name>/
 ```php
 class EditorHandler extends BaseObject
 {
-    // 부모 BaseObject가 #[AllowDynamicProperties] — 다음 속성은 동적 할당
+    // 자식 컴포넌트는 반드시 생성자를 정의해야 한다.
+    // EditorModel::getComponentObject가 `new $component($editor_sequence, $component_path)`로
+    // 객체를 만들기 때문(editor.model.php:593). 생성자에서 두 인자를 받아 $this에 저장하지 않으면
+    // BaseObject::__construct($error, $message)가 대신 호출되어 error=$editor_sequence로 세팅되고,
+    // dispEditorPopup의 $oComponent->toBool() 검사(editor.view.php:77)에서 실패한다.
     // $editor_sequence  : 동일 페이지의 에디터 인스턴스 식별자
-    // $component_path   : 컴포넌트 디렉토리 경로
-    // $info             : 컴포넌트 메타 (info.xml + 사용자 설정)
+    // $component_path   : 컴포넌트 디렉토리 경로 (`./modules/editor/components/<name>/`)
 
     // 정의된 메서드 — setInfo만 부모 클래스에 있다.
-    public function setInfo($info);     // info->extra_vars의 var 값들을 $this->{key}로 펼침
+    // extra_vars의 각 var 값을 $this->{key}로 펼치고, 메타 전체는 Context 변수 `component_info`로 노출.
+    public function setInfo($info);       // Context::set('component_info', $info) + 값 펼침
 
     // 자식이 구현 (이 두 메서드는 EditorHandler에 정의 안 됨)
     public function getPopupContent();    // 팝업 HTML 반환
@@ -72,6 +76,13 @@ class EditorHandler extends BaseObject
 <?php
 class Emoticon extends EditorHandler
 {
+    // 필수: getComponentObject가 `new $component($editor_sequence, $component_path)`로 생성.
+    public function __construct($editor_sequence, $component_path)
+    {
+        $this->editor_sequence = $editor_sequence;
+        $this->component_path = $component_path;
+    }
+
     public function getPopupContent()
     {
         Context::set('emoticon_list', $this->getEmoticonList());
@@ -108,13 +119,15 @@ class Emoticon extends EditorHandler
 `$xml_obj` 구조:
 
 ```php
-$xml_obj->name = 'img';
 $xml_obj->attrs = (object)[
     'editor_component' => 'emoticon',
     'emoticon_code' => 'smile',
     // ...컴포넌트 마크업의 다른 속성
 ];
+$xml_obj->body = null;   // div형 컴포넌트의 내부 HTML. <img> 형태면 null
 ```
+
+`transEditorComponent`(`modules/editor/editor.controller.php:268-275`)가 마커의 속성들을 `$xml_obj->attrs`(stdClass)에, `<div ...>...</div>` 형태 컴포넌트의 내부 HTML을 `$xml_obj->body`에 담아 넘긴다. `->name` 속성은 설정되지 않는다.
 
 ## CKEditor 통합
 
@@ -125,10 +138,9 @@ $xml_obj->attrs = (object)[
 1. CKEditor 초기화 시 `config.xe_component_arrays`에 컴포넌트 목록을 주입.
 2. `xe_component` 플러그인이 각 컴포넌트마다 도구바 버튼 생성.
 3. 버튼 클릭 → `window.openComponent(component_name, editor_sequence)` 호출.
-4. `modules/editor/tpl/js/editor_common.js`의 `openComponent`가 PHP의 `procEditorGetComponentPopup`을 ajax 호출.
-5. PHP가 컴포넌트의 `getPopupContent()` 실행 → HTML 반환.
-6. JS가 팝업 띄움.
-7. 사용자가 팝업에서 옵션 선택 → 컴포넌트 마크업을 에디터에 삽입.
+4. `modules/editor/tpl/js/editor_common.js`의 `openComponent`(`:205`)가 `?module=editor&act=dispEditorPopup&editor_sequence=...&component=...` URL을 팝업 창(PC는 `popopen()`)이나 모달 iframe(모바일은 `openModalIframe()`)으로 연다 — ajax 호출이 아니다.
+5. `dispEditorPopup` 액션(`modules/editor/editor.view.php:54`)이 컴포넌트의 `getPopupContent()`를 실행 → 팝업 HTML을 렌더.
+6. 사용자가 팝업에서 옵션 선택 → 컴포넌트 마크업을 에디터에 삽입.
 
 ### 본문에 삽입되는 마크업
 
@@ -142,7 +154,7 @@ $xml_obj->attrs = (object)[
 
 ## transHTML 호출 시점
 
-문서 출력 시 `Context::transContent()` 또는 `DocumentItem`의 콘텐츠 처리에서 본문을 파싱하면서 `<img editor_component="...">`를 발견하면 해당 컴포넌트의 `transHTML`을 호출한다.
+문서 출력 시 `DocumentItem::getTransContent()`(`modules/document/document.item.php:796`, 위젯은 `modules/widget/widget.controller.php:576`)가 `getController('editor')->transComponent()`를 호출한다. `editor.controller.php`의 `transComponent`가 본문을 파싱하다가 `<div|img ... editor_component="...">`를 발견하면 콜백 `transEditorComponent`가 해당 컴포넌트의 `transHTML`을 호출한다(`modules/editor/editor.controller.php:290`). (구 API인 `Context::transContent()`는 `@deprecated` no-op이라 `$content`를 그대로 반환하며 컴포넌트를 변환하지 않는다.)
 
 본문 저장 단계에서는 마커가 그대로 DB에 보관됨 — 표시 시점에 transHTML로 변환.
 
@@ -167,6 +179,13 @@ $xml_obj->attrs = (object)[
 <?php
 class MyHello extends EditorHandler
 {
+    // 필수: getComponentObject가 `new $component($editor_sequence, $component_path)`로 생성.
+    public function __construct($editor_sequence, $component_path)
+    {
+        $this->editor_sequence = $editor_sequence;
+        $this->component_path = $component_path;
+    }
+
     public function getPopupContent()
     {
         return '<form id="myhello_form">
@@ -174,10 +193,14 @@ class MyHello extends EditorHandler
             <button type="button" onclick="myhelloInsert()">삽입</button>
         </form>
         <script>
+            // 팝업은 popopen으로 열린 별도 창이므로 window.parent가 아니라 opener를 사용한다.
             function myhelloInsert() {
                 var n = document.querySelector("[name=name]").value;
-                window.parent.editorReplace("myhello", { name: n });
-                window.parent.closePopup();
+                var html = "<img src=\"../../../../common/img/blank.gif\" editor_component=\"myhello\" name=\"" + n + "\" />";
+                opener.editorFocus(opener.editorPrevSrl);
+                var iframe = opener.editorGetIFrame(opener.editorPrevSrl);
+                opener.editorReplaceHTML(iframe, html);
+                window.close();
             }
         </script>';
     }
@@ -192,7 +215,7 @@ class MyHello extends EditorHandler
 
 ### `modules/editor/components/myhello/component_icon.gif`
 
-24x24 GIF 아이콘.
+32x32 GIF 아이콘.
 
 설치:
 1. 파일 작성.

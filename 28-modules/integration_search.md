@@ -3,7 +3,7 @@
 ## 개요
 
 - **카테고리**: service
-- **역할**: 사이트 전체에서 문서/회원/태그를 검색. 다른 모듈의 검색을 통합.
+- **역할**: 사이트 전체에서 문서/댓글/멀티미디어(이미지)/첨부파일을 통합 검색. 다른 모듈의 검색을 통합. (태그는 문서 검색의 세부 대상 중 하나이며, 회원 검색은 지원하지 않는다.)
 
 ## 주요 클래스
 
@@ -15,6 +15,7 @@
 | `Integration_searchMobile` | `integration_search.mobile.php` |
 | `Integration_searchAdminController` | `integration_search.admin.controller.php` |
 | `Integration_searchAdminView` | `integration_search.admin.view.php` |
+| `\Rhymix\Modules\Integration_Search\Models\FileSearchResult` | `models/FileSearchResult.php` |
 
 (`integration_search.controller.php`, `integration_search.admin.model.php`, `integration_search.api.php`는 없다.)
 
@@ -30,7 +31,7 @@
 
 ## 동작
 
-- 검색어를 받아 document/comment/member 모듈의 model을 호출 → 결과 통합.
+- 검색어를 받아 document(`DocumentModel`)·comment(`CommentModel`)·file(`FileAdminModel`) 모듈의 model을 호출 → 결과 통합. (멀티미디어·첨부파일 검색도 파일 모델을 사용하며 member 모델은 호출하지 않는다.)
 - 게시판별 권한 검증.
 - 페이지네이션.
 
@@ -44,4 +45,4 @@
 
 ## 관련
 
-- document/comment/member 모듈.
+- document/comment/file 모듈.

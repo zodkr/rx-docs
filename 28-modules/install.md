@@ -17,7 +17,7 @@
 
 (`install.admin.model.php`/`view.php`/`mobile.php`/`api.php`는 없다.)
 
-## 주요 액션 (10개)
+## 주요 액션 (9개)
 
 | 액션 | 비고 |
 |---|---|
@@ -25,7 +25,6 @@
 | `dispInstallCheckEnv` | 환경 검사 |
 | `dispInstallDBConfig` | DB 정보 입력 |
 | `dispInstallOtherConfig` | 사이트/관리자 정보 입력 |
-| `getInstallFTPList` | (root) FTP 모드 목록 |
 | `procInstallLicenseAgreement` | 라이센스 동의 처리 |
 | `procDBConfig` | DB 연결 테스트/저장 |
 | `procInstall` | 설치 실행 (ruleset=install) |
@@ -45,11 +44,11 @@
 5. **사이트 정보** — 사이트 제목/관리자 이메일.
 6. **테이블 생성** — 모든 코어 모듈의 `schemas/*.xml` 일괄 실행.
 7. **`files/config/config.php`** — 자동 생성.
-8. **완료** → 관리자 페이지로 이동.
+8. **완료** → 홈페이지(`RX_BASEURL`)로 이동 (`success_return_url`이 지정된 경우 해당 URL).
 
 ## 코어 모듈 일괄 설치
 
-설치 마지막 단계에서 `modules/` 하위의 모든 모듈을 순회하며 `moduleInstall()` 호출 + `schemas/*.xml` 실행.
+설치 마지막 단계에서 `installDownloadedModule()`이 `modules/`를 순회하되 `Context::isDefaultPlugin($module, 'module')`로 걸러 기본 플러그인(코어 모듈)만 대상으로 삼는다 (`install.controller.php:466-538`). `module` 모듈을 먼저 설치한 뒤 system → content → member 카테고리 순서로 각 모듈을 설치하며, 각 설치는 `schemas/*.xml` 실행(`createTable`) + `moduleInstall()` 호출로 이뤄진다 (`installModule()`, `install.controller.php:543-588`). 모든 설치가 끝나면 설치한 순서대로 `updateModule()`을 호출해 각 모듈의 `checkUpdate()`/`moduleUpdate()` 업데이트 로직을 수행한다.
 
 ## 보안
 

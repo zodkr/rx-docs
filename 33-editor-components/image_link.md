@@ -27,13 +27,13 @@
 
 | 속성 | 처리 |
 |---|---|
-| `src` | URL. `&` → `&amp;`, `"` → `&qout;`(원본 그대로 — 오타). `./`로 시작하면 `RX_BASEURL` prepend. `/`나 `http(s)?://`로 시작하지 않으면 `RX_BASEURL` prepend |
+| `src` | URL. `&` → `&amp;`, `"` → `&qout;`(원본 그대로 — 오타). `./`로 시작하면 `RX_BASEURL` prepend. `/`나 `http:`/`https:`(정규식 `^https?:` — 슬래시 `//`는 검사하지 않음)로 시작하지 않으면 `RX_BASEURL` prepend |
 | `alt` | 항상 출력 (escape 없음) |
 | `title` | 있을 때만 출력 (escape 없음) |
 | `width` / `height` | 있을 때만 속성 출력 |
 | `align` | 있을 때만 |
-| `border` | `(int)`. 양수면 기존 `style`의 `border-*` 속성을 제거하고 `border-style: solid; border-width:<n>px;` 추가 |
-| `margin` | `(int)`. 양수면 기존 `margin*` 속성을 제거하고 `margin:<n>px;` 추가 |
+| `border` | `(int)`. 값이 0이 아니면(음수 포함) 기존 `style`의 `border-*` 속성을 제거하고 `border-style: solid; border-width:<n>px;` 추가 |
+| `margin` | `(int)`. 값이 0이 아니면(음수 포함) 기존 `margin*` 속성을 제거하고 `margin:<n>px;` 추가 |
 | `style` | 그대로 사용 + 위 border/margin 가공 |
 | `link_url` | 있으면 `<a href="..." [target=_blank rel=noopener]><img/></a>`로 감쌈 |
 | `open_window` | `'Y'`이면 `target="_blank" rel="noopener"` 추가 |

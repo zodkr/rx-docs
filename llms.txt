@@ -62,7 +62,8 @@ CLI 모드는 `ModuleHandler::procCommandLineArguments($argv)`로 분기 ([21-cl
 
 - `ModuleObject::getInstance()`가 `$GLOBALS['_module_instances_']`에 캐싱.
 - `getController('member')`, `getModel('document')` 등 헬퍼는 모두 이 캐시 경유 (`common/legacy.php`).
-- 모든 모듈/위젯 조상 `BaseObject`(`classes/object/Object.class.php`)는 `error`/`message`/`variables` 상태와 `setError`/`get`/`add`/`toBool` API 제공. 에러는 `toBool()`로 평가되어 트리거/액션 중단을 결정.
+- 모든 모듈의 조상 `BaseObject`(`classes/object/Object.class.php`)는 `error`/`message`/`variables` 상태와 `setError`/`get`/`add`/`toBool` API 제공. 모듈은 `ModuleObject extends BaseObject`(`classes/module/ModuleObject.class.php:8`) 계보다. 에러는 `toBool()`로 평가되어 트리거/액션 중단을 결정.
+- 위젯은 `BaseObject` 계보가 아니다. `WidgetHandler`(`classes/widget/WidgetHandler.class.php:8`)를 상속할 뿐이며 `setError`/`get`/`add`/`toBool` API가 없다.
 
 ### XML 메타데이터
 
@@ -89,7 +90,8 @@ CLI 모드는 `ModuleHandler::procCommandLineArguments($argv)`로 분기 ([21-cl
 | `BoardAdminView` | `modules/board/board.admin.view.php` |
 | `BoardMobile` | `modules/board/board.mobile.php` |
 | `BoardApi` | `modules/board/board.api.php` |
-| `BoardWap` | `modules/board/board.wap.php` |
+
+autoloader 정규식(`common/autoload.php:75`)은 `Wap` kind(`BoardWap` → `modules/board/board.wap.php`)도 인식하지만 코어에는 실제 `*.wap.php` 파일이 없는 잔재다.
 
 신형 namespace 모듈은 `Rhymix\Modules\Board\Controllers\Foo` 형식이며 `module.xml`의 `<action class="Controllers\Foo" />`로 등록.
 

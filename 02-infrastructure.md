@@ -97,7 +97,7 @@ Rhymix를 실행/배포할 때 필요한 PHP 환경, DB, 드라이버, 웹서버
 
 - `index.php`로 모든 요청 라우팅.
 - `.git`, `.ht*`, `composer.*` 차단.
-- `files/`, `common/vendor/`, 보호 디렉토리의 `.html`/`.xml`/`.json` 등 차단.
+- `files/`(attach·config·cache 내 실행형 확장자), 보호 디렉토리(addons·modules·themes·widgets 등)의 `.html`/`.xml`/`.blade.php` 차단.
 
 ### nginx
 
@@ -106,7 +106,7 @@ Rhymix를 실행/배포할 때 필요한 PHP 환경, DB, 드라이버, 웹서버
 - `common/manual/server_config/rhymix-nginx.conf` — 단독 도메인.
 - `common/manual/server_config/rhymix-nginx-subdir.conf` — 서브 디렉토리 설치.
 
-각 파일에 보호 패턴(`location ~* /\.`, `location ~* /files/.*\.(php|html|inc|tpl)$` 등)이 포함된다.
+각 파일에 보호 패턴(`location ~ ^/(\.git|\.ht|\.travis|codeception\.|composer\.|...)`로 dotfile/설정파일 차단, `location ~ ^/files/(attach|config|cache)/.+\.(ph(p|t|ar)?[0-9]?|p?html?|cgi|pl|exe|[aj]spx?|inc|bak)$`로 업로드 디렉토리 내 실행형 파일 차단, `location ~ ^/(addons|common/tpl|modules|themes|widgets|...)/.+\.(html|xml|blade\.php)$` 등)이 포함된다.
 
 ## 설정 파일
 
@@ -123,8 +123,7 @@ Rhymix를 실행/배포할 때 필요한 PHP 환경, DB, 드라이버, 웹서버
 ## 권장 디렉토리 권한
 
 - `files/`: 웹서버 사용자가 쓰기 가능 (보통 0755 디렉토리 + 0644 파일).
-- umask: `config('file.umask')` 값을 8진수로 해석해 사용한다 (`common/framework/Storage.php:920-927`). 미설정 시 `0`(umask 적용 안 함). 설치 환경에 적절한 값은 `Storage::recommendUmask()`(`:940-`)가 제안한다 — Windows면 `0000`, 그 외엔 웹서버/스크립트 UID 비교 결과에 따라 `0022`/`0002`/`0000`.
-- FTP 폴백을 쓰면(`config('ftp')` 활성화) 권한 부족한 작업이 FTP 경로로 위임된다 (`common/libraries/ftp.php`).
+- umask: `config('file.umask')` 값을 8진수로 해석해 사용한다 (`common/framework/Storage.php:920-927`). 미설정 시 `0`(umask 적용 안 함). 설치 환경에 적절한 값은 `Storage::recommendUmask()`(`:940-`)가 제안한다 — Windows면 `0000`, 그 외엔 파일 소유자 UID(`fileowner(__FILE__)`)와 PHP 프로세스 UID(`getServerUID()`)가 같으면 `0022`, 다르면 `0000`.
 
 런타임 생성 디렉토리는 [03-directory-structure.md](03-directory-structure.md)의 `files/` 절 참고.
 

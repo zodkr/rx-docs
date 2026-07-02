@@ -24,14 +24,14 @@
 |---|---|
 | `poll_srl` | `intval()`로 강제 |
 | `skin` | 빈 값이면 `'default'`로 fallback. `widgets/pollWidget/skins/<skin>/` 경로로 사용 |
-| `style` | `width([^digit]+)([0-9]+)` regex로 width 추출. 없으면 400 → `style="width:<n>px"` 형식으로 컨텍스트에 주입 |
+| `style` | `width([^[:digit:]]+)([0-9]+)` regex(대소문자 무시 `/i`)로 width 추출. 없으면 400 → `style="width:<n>px"` 형식으로 컨텍스트에 주입 |
 
 ## 컨텍스트로 전달되는 변수
 
 | 키 | 값 |
 |---|---|
 | `poll_data` | `PollModel::_getPollinfo($args->poll_srl)` (`modules/poll/poll.model.php:20`) |
-| `colorset` | `$args->colorset ?? null` (마커에 colorset 속성이 있으면 사용) |
+| `colorset` | `$args->colorset ?? null` (코드가 `$xml_obj->attrs->colorset`가 아니라 `$args->colorset`를 읽는데 `$args->colorset`는 어디에서도 대입되지 않아 **항상 null**이다. 즉 마커의 colorset 속성은 실제로 반영되지 않는다.) |
 | `poll_srl` | 정수 변환된 srl |
 | `style` | `width:<n>px` 문자열 |
 

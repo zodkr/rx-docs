@@ -151,7 +151,7 @@ v1으로 작성하고 싶다면 처음부터 `.html` 확장자를 사용한다.
 | 8 | `_convertClassAliases` | `<use>` / `@use` (PSR-4 별칭) |
 | 9 | `_convertIncludes` | `<include>` / `@include` / `@each` |
 | 10 | `_convertResource` | `<load>` / `@load` / `@unload` |
-| 11 | `_convertLoopDirectives` | `@if`/`@foreach` 등 32종 |
+| 11 | `_convertLoopDirectives` | `@if`/`@foreach` 등 34종 |
 | 12 | `_convertInlineDirectives` | `@checked` / `@selected` / `@class` 등 |
 | 13 | `_convertMiscDirectives` | `@csrf` / `@json` / `@lang` / `@dump` 등 |
 | 14 | `_convertEchoStatements` | `{{ }}`, `{!! !!}`, `{$var}` |
@@ -596,7 +596,7 @@ XE-style:
 6. **`@verbatim`은 마크다운/Vue/Handlebars 같은 다른 템플릿 문법과 충돌**할 때 사용.
 7. **상대 경로 자동 변환을 막으려면** `data:`/`http:`/`{...}` 등으로 시작하거나 `^/...`로 명시.
 8. **v1과 v2 마이그레이션은 점진적으로 가능**. 같은 디렉토리에 `.html` (v1)과 `.blade.php` (v2)을 섞어도 동작.
-9. **컨버터 파일(`Template.php`/`TemplateParser_v2.php`) mtime이 캐시 키에 포함**된다. 코어 업데이트 시 전체 템플릿 캐시가 무효화될 수 있음을 인지.
+9. **컨버터 파일(`Template.php`) mtime이 캐시 무효화 판정에 반영**된다 (`Template.php:94`의 `filemtime(__FILE__)`). `TemplateParser_v2.php`만 수정하고 `Template.php`를 건드리지 않으면 기존 캐시가 무효화되지 않으니 주의. 코어 업데이트 시에는 보통 함께 갱신된다.
 
 ## 템플릿에서 사용 가능한 기본 변수
 
@@ -609,7 +609,7 @@ XE-style:
 | `$is_logged` | 로그인 여부 |
 | `$module_info` | 현재 모듈 인스턴스 정보 |
 | `$grant` | 권한 객체 (모듈 액션 내) |
-| `$user` | 현재 사용자 (`SessionHelper`) |
+| `$this->user` | 현재 사용자 (`SessionHelper`) — 그냥 `$user`가 아니라 `$this->user`로 접근 |
 | `$mid` | 현재 mid |
 | `$site_module_info` | 현재 도메인 루트 모듈 |
 | `$layout_info` | 현재 레이아웃 (레이아웃 내부) |
@@ -711,18 +711,17 @@ elif Mobile:
 
 ## 컴파일 캐시
 
-- 위치: `files/cache/template/<hash>.php`.
-- 캐시 키: 소스 파일 절대경로 + mtime + 파서 버전.
-- `Config::get('cache.no_template_cache') === true`면 무효화 (개발용).
-- 소스 변경 시 자동 무효화.
+- 위치: `files/cache/template/<상대경로>.compiled.php` (`../`는 `__parentdir/`로 치환, 해시가 아닌 상대 경로 그대로). (`Template.php:211-212`)
+- 무효화 기준: 소스 파일 mtime과 `Template.php` mtime 중 최신값 > 캐시 파일 mtime (`Template.php:355-366`). 소스 변경 시 자동 무효화.
+- 인스턴스별로 `$template->disableCache()`를 호출하면 캐시를 사용하지 않는다 (`$cache_enabled = false`, `Template.php:224-227`). `cache.no_template_cache` 같은 전역 설정은 존재하지 않는다.
 
-`Rhymix\Framework\Template::$_delay_compile` 플래그가 동시성 잠금 역할.
+`Rhymix\Framework\Template::$_delay_compile` (`config('view.delay_compile')`, 초)은 최근 변경된 소스 파일의 재컴파일을 일정 시간 지연시켜 (소스 mtime을 무시하고 `Template.php` mtime만 비교) 캐시 회전을 줄이는 용도다 (`Template.php:96-99, 356-363`). 동시성 잠금과는 무관하다.
 
 ## Template 인스턴스 직접 사용
 
 ```php
 $tpl = new Rhymix\Framework\Template('./modules/foo/tpl', 'index');
-$tpl->vars = ['title' => '제목', 'list' => $list];
+$tpl->setVars(['title' => '제목', 'list' => $list]);   // 배열은 setVars로 넘긴다 (내부에서 객체 변환)
 $html = $tpl->compile();
 echo $html;
 ```

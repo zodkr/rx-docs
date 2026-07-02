@@ -4,12 +4,12 @@
 
 ## 활성화
 
-`config('debug.enabled')` + IP 화이트리스트(`config('debug.allow')`) 또는 `display_to=admin`.
+`config('debug.enabled')` + `display_to`에 따라 판정: `'everyone'`은 항상, `'ip'`는 `config('debug.allow')` 화이트리스트(+localhost/서버 IP), `'admin'`은 관리자 로그인 시.
 
 ```php
 'debug' => [
     'enabled' => true,
-    'display_to' => 'admin',        // 'admin' / 'everyone'
+    'display_to' => 'admin',        // 'admin' / 'ip' / 'everyone'
     'allow' => ['127.0.0.1', '192.168.0.0/16'],
     'display_type' => ['comment', 'panel'],
     'display_content' => ['errors', 'queries', 'slow_queries', 'slow_triggers', 'entries', 'request_info'],
@@ -18,7 +18,7 @@
     'log_slow_widgets' => 0.25,
     'log_slow_remote_requests' => 1.25,
     'write_error_log' => 'fatal',   // 'none'/'fatal'/'all'
-    'log_filename' => null,         // null = files/cache/debug.log
+    'log_filename' => null,         // null = files/debug/YYYYMMDD.php (날짜별 회전)
     'query_comment' => false,
     'query_full_stack' => false,
 ]
@@ -27,7 +27,7 @@
 ## 표시 위치 (`display_type`)
 
 - `comment` — HTML 끝에 `<!-- ... -->` 주석으로 삽입.
-- `panel` — 우하단 고정 디버그 패널 (`common/js/debug.js` + CSS).
+- `panel` — 우하단 고정 디버그 패널 (`common/js/debug.js`, 스타일은 `common/css/rhymix.scss`).
 - `file` — `log_filename`에 기록 (응답에 표시 안 함).
 
 복수 지정 가능 (`['comment', 'panel']`).
@@ -64,10 +64,10 @@
 | 값 | 동작 |
 |---|---|
 | `'none'` | error_log 미사용 |
-| `'fatal'` (기본) | E_ERROR/E_PARSE/E_CORE_ERROR/E_COMPILE_ERROR만 |
+| `'fatal'` (기본) | 미처리 예외 + E_ERROR/E_PARSE (shutdown 시점에 잡히는 치명 오류) |
 | `'all'` | 모든 에러 |
 
-기록 위치: PHP ini의 `error_log` 또는 `log_filename`.
+기록 위치: PHP ini의 `error_log` 설정. (Debug 내 `error_log()` 호출은 목적지 인자 없이 이뤄지므로 `log_filename`과 무관하며, `log_filename`은 `display_type='file'` 출력에만 쓰인다.)
 
 ## 쿼리 로깅
 
@@ -90,12 +90,14 @@ SELECT ... [3.45ms]
 
 ```sql
 SELECT * FROM rx_documents WHERE document_srl = 123
-/* PHP File: modules/board/board.controller.php; Caller: BoardController->procBoardInsertDocument */
+/* board.getDocumentList 127.0.0.1 */
 ```
+
+쿼리 끝에 붙는 형식은 `/* {쿼리 ID} {클라이언트 IP} */`다 (`common/framework/DB.php:373`). 디버그 패널/주석 템플릿 화면에 표시되는 `Caller:`(호출 위치)와는 별개다.
 
 ### 전체 스택
 
-`config('debug.query_full_stack')` = true: 호출 스택 전체를 주석에.
+`config('debug.query_full_stack')` = true: 쿼리 로그 항목의 `backtrace`에 전체 호출 스택을 기록(디버그 패널/파일 출력에서 확인). SQL 주석과는 무관하다.
 
 ### 쿼리 로그 조회
 
@@ -153,14 +155,14 @@ Rhymix\Framework\Debug::disable();
 
 `config('debug.log_filename')`:
 
-- `null` → `files/cache/debug.log`.
+- `null` → `files/debug/YYYYMMDD.php` (날짜별로 회전되는 파일).
 - 사용자 정의 가능.
 
-회전: 외부 logrotate 권장. `common/scripts/clean_old_logs.php`로 mtime 기반 정리 가능.
+회전: 디버그 로그 파일 회전은 외부 logrotate로 처리한다. `common/scripts/clean_old_logs.php`(현재 `module.cleanMiscLogs`로 위임)는 DB에 쌓인 로그(메일러 메일/SMS/푸시, 스팸필터 로그 등)를 regdate 기준 일수(기본 30일)로 삭제하는 스크립트이며 디버그 로그 파일은 대상이 아니다.
 
 ## 외부 시스템 연동
 
-별도의 `common.flushDebugInfo`/`common.writeSlowlog` 트리거는 존재하지 않는다 — Debug는 자체 정적 배열(`$_triggers`/`$_slow_triggers`/`$_queries` 등)에 누적 후 `DisplayHandler::getDebugInfo()`가 직접 출력/로그 파일에 기록한다.
+`common.flushDebugInfo`/`common.writeSlowlog` 트리거는 프레임워크가 능동적으로 호출하지 않는다 — 이름 참조는 `ModuleHandler::triggerCall`의 재귀 방지용 예외 처리로만 남아 있고(`classes/module/ModuleHandler.class.php:1350`), `writeSlowlog()` 함수는 no-op이다(`common/legacy.php:1472`). Debug는 자체 정적 배열(`$_triggers`/`$_slow_triggers`/`$_queries` 등)에 누적 후 `DisplayHandler::getDebugInfo()`가 직접 출력/로그 파일에 기록한다.
 
 외부 시스템(Sentry/Datadog 등)으로 보내려면 `Debug::registerErrorHandlers`가 등록하는 PHP shutdown 핸들러나 `display.after`/`moduleHandler.proc.after` 같은 라이프사이클 트리거에서 직접 송신한다.
 
@@ -168,15 +170,16 @@ Rhymix\Framework\Debug::disable();
 
 - 에러 핸들러는 등록되지만 사용자에게 노출되지 않음.
 - 응답에 디버그 정보 누설 안 함.
-- 슬로우 쿼리/트리거는 `log_filename`이 설정되어 있으면 기록됨.
+- 디버그가 비활성이면(`config('debug.enabled')=false` 또는 `display_to` 불일치) 슬로우 쿼리/트리거도 수집·기록되지 않는다 — `Debug::addQuery`/`addTrigger`가 첫머리에서 즉시 return하고, `DisplayHandler::getDebugInfo`도 `isEnabledForCurrentUser`가 false면 곧바로 `''`를 반환해 파일 기록조차 하지 않는다.
+- 단, `write_error_log`에 의한 치명 오류·미처리 예외의 `error_log` 기록은 `enabled`와 무관하게 동작한다.
 
 ## 슬로우 로그 분석
 
-`log_slow_*` 옵션을 활성화한 채 운영하면 `files/cache/debug.log`에 슬로우 항목이 누적된다. 정기적으로 살펴 병목을 찾는 패턴 유용.
+`enabled=true` + `display_type=['file']` 상태에서 `log_slow_*` 옵션을 켜면 `files/debug/YYYYMMDD.php`(날짜별 회전)에 슬로우 항목이 누적된다. `enabled=false`에서는 아무것도 수집되지 않으므로 `display_to`로 접근을 제한한 채 운영하며 정기적으로 살펴 병목을 찾는 패턴이 유용하다.
 
 ## 디버그 패널 (panel)
 
-`common/js/debug.js` + `common/css/debug.css`가 우하단 토글 패널을 그린다. 관리자 화면에서 매우 유용 — 쿼리/트리거/메모리 사용량 한눈에 파악.
+`common/js/debug.js`(패널 스타일은 `common/css/rhymix.scss`, 마크업은 `common/tpl/common_layout.html`)가 우하단 토글 패널을 그린다. 관리자 화면에서 매우 유용 — 쿼리/트리거/메모리 사용량 한눈에 파악.
 
 ## 환경별 권장
 
@@ -184,7 +187,7 @@ Rhymix\Framework\Debug::disable();
 |---|---|
 | 로컬 개발 | `enabled=true`, `display_type=panel`, `display_content` 전체 |
 | 스테이징 | `enabled=true`, `display_to=admin`, IP 화이트리스트 |
-| 프로덕션 | `enabled=false`, `log_slow_*` 활성, `write_error_log=fatal` |
+| 프로덕션 | `enabled=false`, `write_error_log=fatal` (슬로우 로그가 필요하면 `enabled=true` + `display_type=['file']` + `display_to`로 접근 제한) |
 
 ## 다음 문서
 

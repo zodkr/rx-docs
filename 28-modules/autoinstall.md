@@ -12,40 +12,42 @@
 | 클래스 | 파일 |
 |---|---|
 | `Autoinstall` | `autoinstall.class.php` |
-| `AutoinstallModel` | `autoinstall.model.php` |
 | `AutoinstallAdminController` | `autoinstall.admin.controller.php` |
 | `AutoinstallAdminModel` | `autoinstall.admin.model.php` |
 | `AutoinstallAdminView` | `autoinstall.admin.view.php` |
-| (라이브러리) | `autoinstall.lib.php` — 원격 카탈로그/패키지 유틸 |
+| `Rhymix\Modules\Autoinstall\Models\Package` | `models/Package.php` — 패키지 목록/상세 조회·설치 가능 여부 판정 |
+| `Rhymix\Modules\Autoinstall\Models\Installer` | `models/Installer.php` — ZIP 다운로드·압축 해제·삭제 |
 
 (`autoinstall.controller.php`, `autoinstall.view.php`, `autoinstall.mobile.php`, `autoinstall.api.php`는 없다 — autoinstall은 관리자 전용 모듈.)
 
-## 주요 액션 (15개)
+## 주요 액션 (12개)
+
+`conf/module.xml`에 등록된 순서대로:
 
 | 액션 | 비고 |
 |---|---|
-| `dispAutoinstallAdminIndex` | 설치 가능 패키지 목록 (admin_index, menu_name=easyInstall) |
-| `dispAutoinstallAdminInstall` / `dispAutoinstallAdminUninstall` | 설치/제거 화면 |
-| `dispAutoinstallAdminInstalledPackages` | 설치된 패키지 목록 |
-| `dispAutoinstallAdminConfig` | 설정 |
-| `getAutoinstallAdminMenuPackageList` / `getAutoinstallAdminLayoutPackageList` / `getAutoinstallAdminSkinPackageList` | 카테고리별 패키지 모델 |
-| `getAutoinstallAdminIsAuthed` | 인증 상태 |
-| `getAutoInstallAdminInstallInfo` / `getAutoInstallAdminModuleConfig` | 설치 정보/설정 |
-| `procAutoinstallAdminUpdateinfo` | 카탈로그 업데이트 |
-| `procAutoinstallAdminPackageinstall` / `procAutoinstallAdminUninstallPackage` | 설치/제거 (ruleset=ftp) |
-| `procAutoinstallAdminInsertConfig` | 설정 저장 |
+| `dispAutoinstallAdminIndex` | 추천/카테고리별 패키지 목록·검색 (admin_index, menu_name=easyInstall) |
+| `dispAutoinstallAdminPackageDetail` | 패키지 상세 화면 (menu_name=easyInstall) |
+| `procAutoinstallAdminDownloadPackage` | 패키지 ZIP 다운로드 |
+| `procAutoinstallAdminInstallPackage` | 설치/업데이트 (다운로드된 ZIP 압축 해제) |
+| `procAutoinstallAdminPostInstallPackage` | 모듈 설치 후처리 (`procInstallAdminInstall`/`Update` 호출) |
+| `procAutoinstallAdminUninstallPackage` | 제거 |
+| `getAutoinstallAdminMenuPackageList` / `getAutoinstallAdminLayoutPackageList` / `getAutoinstallAdminSkinPackageList` | 하위호환용 빈 스텁 |
+| `getAutoinstallAdminIsAuthed` / `getAutoInstallAdminInstallInfo` / `getAutoInstallAdminModuleConfig` | 하위호환용 액션 (앞 둘은 고정값 스텁, `getAutoInstallAdminModuleConfig`는 실제 모듈 설정 반환 — 뷰 `init()`에서도 사용) |
+
+카탈로그(패키지 목록) 갱신은 별도 액션이 아니라 관리자 뷰 `init()`에서 마지막 갱신 후 4시간(14400초)이 지났을 때 자동 수행된다 (`autoinstall.admin.view.php:16-26`).
 
 ## 저장소
 
-원격 카탈로그 API로부터 패키지 목록을 가져온다. 기본 저장소는 Rhymix 공식 + xpressengine.org legacy.
+Rhymix PDS API(목록 `https://api.rhymix.org/pds/index.json`, 상세 `https://api.rhymix.org/pds/detail/{srl}.json`)에서 패키지 목록을 가져와 로컬 `autoinstall_packages` 테이블에 캐시한다 (`models/Package.php:18-19`). 관리자 뷰 진입 시 마지막 갱신 후 4시간이 지났으면 `Package::updatePackageList()`가 테이블을 비우고(`TRUNCATE`) 최신 목록으로 다시 채운다 (`models/Package.php:434-488`).
 
 ## DB 스키마
 
 | 테이블 | 정의 파일 |
 |---|---|
-| `autoinstall_packages` | `schemas/autoinstall_packages.xml` |
-| `ai_installed_packages` | `schemas/ai_installed_packages.xml` — 설치된 패키지 |
-| `ai_remote_categories` | `schemas/ai_remote_categories.xml` — 원격 카탈로그 |
+| `autoinstall_packages` | `schemas/autoinstall_packages.xml` — 패키지 카탈로그 캐시 |
+
+과거 테이블 `ai_installed_packages`·`ai_remote_categories`(및 `autoinstall_installed_packages`·`autoinstall_remote_categories`)는 재작성 시 deprecated 처리되어, 모듈 업그레이드 시 `Autoinstall::moduleUpdate()`가 `dropTable()`로 삭제한다 (`autoinstall.class.php:13-18`).
 
 ## 관련
 

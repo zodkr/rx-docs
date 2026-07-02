@@ -3,7 +3,7 @@
 ## 개요
 
 - **카테고리**: (info.xml에 미지정 — 기본 `service`)
-- **역할**: 메일/SMS/푸시 드라이버 설정 + 발송 로깅을 관리.
+- **역할**: 메일/SMS/푸시 발송 로깅, 예외 도메인별 발송 방법 오버라이드, SPF/DKIM 점검, 테스트 발송을 관리 (드라이버 자격증명 설정은 core admin의 알림 설정 `dispAdminConfigNotification`에서 담당).
 
 ## 주요 클래스
 
@@ -43,11 +43,13 @@
 
 (`advanced_mailer_sms_caller_id` 같은 별도 발신번호 테이블은 없다 — SMS 발신번호 정책은 설정 또는 외부 솔루션으로 관리.)
 
-## 드라이버 등록
+## 드라이버 설정 저장 위치
 
-설정값은 `config('mail.*')`, `config('sms.*')`, `config('push.*')`로 저장. 
+설정값은 `config('mail.*')`, `config('sms.*')`, `config('push.*')`로 저장.
 
-각 드라이버의 인증 정보(API 키, SMTP 비밀번호 등)는 `files/config/`에 별도 저장 + 암호화.
+각 드라이버의 인증 정보(API 키, SMTP 비밀번호 등)는 `files/config/config.php`에 평문 PHP 배열로 저장된다(`Rhymix\Framework\Config::save()`가 `var_export`로 기록 — `common/framework/Config.php:158`, `:194` — 별도 암호화 없음).
+
+실제 드라이버 자격증명 입력 UI는 이 모듈이 아니라 core admin의 알림 설정(`dispAdminConfigNotification`, `modules/admin/controllers/systemconfig/Notification.php:20`, 템플릿 `config_notification`)에 있으며, 자격증명은 저장 시 `procAdminUpdateNotification`이 `Config::set('mail.<driver>', ...)` 등으로 config에 기록한다(`:249-250`). advanced_mailer 설정 화면은 이 화면으로 링크만 안내한다.
 
 ## 이 모듈이 hook하는 트리거 (`conf/module.xml`의 `<eventHandlers>`)
 

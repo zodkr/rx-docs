@@ -45,17 +45,17 @@ class BaseObject
 
     public function setError($error);
     public function getError();
-    public function setMessage($message, $type = 'info');
+    public function setMessage($message = 'success', $type = null);  // $type=null이면 setMessageType() 미호출
     public function getMessage();
     public function setMessageType($type);
     public function getMessageType();
 
-    public function add($key, $value);
-    public function set($key, $value);          // add의 alias
+    public function set($key, $value);
+    public function add($key, $value);          // set의 alias
     public function get($key);
     public function gets(...$keys);
     public function getVariables();
-    public function getVariable($key);
+    public function getObjectVars();            // 객체 형태로 반환
     public function unset($key);
 
     public function setHttpStatusCode($code);
@@ -85,8 +85,8 @@ class DB extends Rhymix\Framework\DB {}
 ## CacheHandler
 
 ```php
-class CacheHandler {
-    public static function getInstance($target = 'object') {
+class CacheHandler extends Handler {
+    public static function getInstance($target = null, $info = null, $always_use_file = false) {
         // Rhymix\Framework\Cache 정적 메서드로 위임
     }
     // 모든 메서드가 Cache::xxx로 위임
@@ -120,21 +120,27 @@ class CacheHandler {
 | `returnBytes($val)` | `'2M'`/`'1G'` → bytes |
 | `filesize($size)` | bytes → 사람 가독 ('1.2MB') |
 | `checkImageRotation($filename)` | EXIF 기반 회전 |
-| `getDirectorySize($path)` | 디렉토리 크기 |
 
 상세 동작은 `Storage` 메서드로 위임. → [20-storage-and-files.md](20-storage-and-files.md).
 
 ## FileObject
 
-`classes/file/FileObject.class.php`. 첨부 파일 한 건의 메타데이터.
+`classes/file/FileObject.class.php`. `fopen`/`fread`/`fwrite`를 감싼 저수준 파일 I/O 추상화 클래스.
 
 ```php
 class FileObject extends BaseObject {
-    public function get($key);          // file_srl, source_filename, file_size, ...
-    public function isImage();
-    public function getThumbnail($width, $height, $type);
-    public function getDownloadUrl();
-    public function getRealPath();
+    public $fp = null;    // 파일 디스크립터
+    public $path = null;  // 파일 경로
+    public $mode = 'r';   // 열기 모드
+
+    public function __construct($path, $mode);   // $path != null이면 open() 호출
+    public function open($path, $mode);          // fopen; 이미 열려 있으면 close 후 재열기
+    public function read($size = 1024);          // fread
+    public function write($str);                 // fwrite
+    public function append($file_name);          // 대상 파일 내용을 현재 파일에 이어붙임
+    public function feof();                       // feof
+    public function getPath();                    // 현재 파일 경로
+    public function close();                      // fclose
 }
 ```
 
@@ -142,17 +148,17 @@ class FileObject extends BaseObject {
 
 `classes/frontendfile/FrontEndFileHandler.class.php` (21KB). HTML head/body에 들어갈 `<script>`/`<link>` 태그를 관리한다.
 
-- `loadFile([$path, 'head'|'body', $targetie, $index])` — 자원 등록.
-- `loadJavascriptPlugin($name)` — `common/js/plugins/<name>/plugin.load` 매니페스트 처리.
+- `loadFile([$path, 'head'|'body', $unused, $index])` — 자원 등록 (`$args[2]`는 미사용, 이전 targetIe 자리이며 index는 `$args[3]`).
 - `unloadFile($path)` — 자원 해제.
 - `unloadAllFiles()` — 전체 해제.
-- `getJsFile($type)` / `getCssFile()` — HTML 출력용 결과.
+- `getJsFileList($type='head', $finalize=false)` / `getCssFileList($finalize=false)` — HTML 출력용 결과.
+
+`common/js/plugins/<name>/plugin.load` 매니페스트 처리는 `Context::loadJavascriptPlugin($name)`에 있다(FrontEndFileHandler가 아님).
 
 내부적으로:
 
-- IE 조건부 주석 (`targetie`) 처리.
 - 자동 minify/concat (`config('view.minify_scripts')`, `config('view.concat_scripts')`).
-- LESS/SCSS 자동 컴파일 → `files/cache/css_js/`.
+- LESS/SCSS 자동 컴파일 → `files/cache/assets/`.
 
 ## XEHttpRequest
 
@@ -176,8 +182,8 @@ $oMail->send();
 - `Password` → `Rhymix\Framework\Password`.
 - `Security` → `Rhymix\Framework\Security`.
 - `IpFilter` → `Rhymix\Framework\Filters\IpFilter`.
-- `EmbedFilter` → 자체 구현 (iframe/embed 화이트리스트).
-- `UploadFileFilter` → `Filters\FilenameFilter` + `Filters\FileContentFilter` 종합.
+- `EmbedFilter` → `@deprecated` 스텁. `check`/`checkIframeTag`/`checkObjectTag` 등은 no-op(필터링은 `HTMLFilter`로 이관), 화이트리스트 조회는 `Filters\MediaFilter`로 위임.
+- `UploadFileFilter` → `Filters\FileContentFilter::check`로 위임 (업로드 파일 내용 검사).
 - `Purifier` → `Filters\HTMLFilter` (HTMLPurifier wrapper).
 
 ## TemplateHandler
@@ -200,11 +206,11 @@ $output = $oTemplate->compile($tpl_path, $tpl_file);
 ```php
 $oValidator = new Validator('./modules/board/ruleset/insert.xml');
 if (!$oValidator->validate($_POST)) {
-    $error = $oValidator->getMessage();
+    $last_error = $oValidator->getLastError(); // array('field'=>..., 'msg'=>...)
 }
 ```
 
-JS 검증 스크립트는 `files/ruleset/<module>_<name>.xml.js`로 자동 컴파일된다.
+JS 검증 스크립트는 `files/cache/ruleset/<md5해시>.<언어코드>.js`로 자동 컴파일된다(`md5($version.' '.$xml경로)`).
 
 ## WidgetHandler
 
@@ -224,9 +230,9 @@ class WidgetHandler {
 
 | 클래스 | 용도 |
 |---|---|
-| `XmlParser` | 범용 XML 파싱 (DOMDocument 기반) |
+| `XmlParser` | 범용 XML 파싱 (`@deprecated`, SimpleXML 기반 `XEXMLParser`로 위임) |
 | `XmlGenerator` | XML 문자열 생성 |
-| `XmlJsFilter` | XSS 필터 (XML 노드용) |
+| `XmlJsFilter` | ruleset XML → JavaScript 검증 코드 컴파일러 |
 | `XmlLangParser` | XE legacy lang.xml → PHP |
 | `GeneralXmlParser` | 일반 XML 파일 |
 

@@ -14,8 +14,8 @@
 
 | 속성 | 타입 | 의미 |
 |---|---|---|
-| `request_method` | string | `GET`/`POST`/`XMLRPC`/`JSON`/`JS_CALLBACK`/`RAW` |
-| `response_method` | string | 응답 포맷 (기본 빈 문자열 → `request_method` 따라 결정) |
+| `request_method` | string | `GET`/`POST`/`XMLRPC`/`JSON`/`JS_CALLBACK` |
+| `response_method` | string | 응답 포맷 (기본 빈 문자열 → `request_method` 따라 결정, 값: `HTML`/`XMLRPC`/`JSON`/`JS_CALLBACK`/`RAW`) |
 | `js_callback_func` | string | JSONP 콜백 함수명 |
 | `db_info` | object | DB/URL/세션 설정의 통합 객체 (`loadDBInfo` 결과) |
 | `ftp_info` | object | FTP 설정 |
@@ -54,7 +54,7 @@ $all = Context::getAll();              // 전체
 |---|---|
 | `getRequestMethod()` | `GET`/`POST`/`JSON`/`XMLRPC`/`JS_CALLBACK` |
 | `getResponseMethod()` | 응답 포맷 |
-| `getRequestVars()` | stdClass — 사용자 변수만 추린 객체 |
+| `getRequestVars()` | stdClass — 현재 요청(GET/POST/JSON/XMLRPC) 인자 객체. JSON/XMLRPC POST 본문은 `Context::setRequestArguments()`가 `php://input`(`HTTP_RAW_POST_DATA`)을 파싱해 병합한다 (`classes/context/Context.class.php:1259-1299`) |
 | `getCurrentRequest()` | `Rhymix\Framework\Request` 인스턴스 |
 | `getRequestUrl()` | 현재 요청 전체 URL |
 | `getRequestUri()` | 사이트 base URI |
@@ -62,12 +62,17 @@ $all = Context::getAll();              // 전체
 ### URL 생성
 
 ```php
-Context::getUrl();                                  // 현재 URL
-Context::getUrl(0);                                 // base URL
-Context::getUrl(2, 'mid', 'foo', 'act', 'bar');     // 변수 (개수, key, val, key, val, ...)
-Context::getDefaultUrl();                           // 사이트 기본 URL
-Context::pathToUrl($path);                          // 경로 → URL
+Context::getUrl();                                       // base URL (기존 쿼리 제거, getUrl(0)과 동일)
+Context::getUrl(0);                                      // base URL
+Context::getUrl(1, [['mid' => 'foo', 'act' => 'bar']]);  // 연관 배열은 한 번 더 중첩([[...]])해서 전달
+Context::getUrl(5, ['', 'mid', 'foo', 'act', 'bar']);    // 또는 flat 배열 (첫 원소 '' = 기존 쿼리 제거)
+getUrl('', 'mid', 'foo', 'act', 'bar');                  // 실무 권장: 전역 헬퍼가 가변 인자를 배열로 모아 전달
+Context::getRequestUrl();                                // 현재 요청 전체 URL (base URI + RX_REQUEST_URL, 원본 요청 URL)
+Context::getDefaultUrl();                                // 사이트 기본 URL
+Context::pathToUrl($path);                               // 경로 → URL
 ```
+
+`Context::getUrl`의 두 번째 인자 `$args_list`는 **배열**이어야 한다. `(개수, key, val, key, val, ...)`식 가변 인자 나열은 전역 헬퍼 `getUrl()`(`common/legacy.php:279`, 내부에서 `func_get_args()`를 배열로 모아 `Context::getUrl`에 전달) 전용이다.
 
 ### 언어
 
@@ -89,7 +94,7 @@ Context::replaceUserLang($str);           // {$user_lang->key} 치환
 Context::addHtmlHeader('<script>...</script>');
 Context::addBodyHeader('<div>...</div>');
 Context::addHtmlFooter('<script>...</script>');
-Context::addLink(['rel' => 'preload', 'href' => '...']);
+Context::addLink('https://webfonts.example.com', 'preconnect');  // (url, rel)
 Context::addBodyClass('full-width');
 Context::removeBodyClass('full-width');
 ```
@@ -98,7 +103,8 @@ Context::removeBodyClass('full-width');
 
 ```php
 Context::setBrowserTitle('제목');
-Context::addBrowserTitle('서브 - ');     // prepend
+Context::addBrowserTitle('서브');        // append (기존 제목 뒤에 ' - 서브')
+Context::prependBrowserTitle('서브');    // prepend (기존 제목 앞에 '서브 - ')
 Context::getSiteTitle();
 Context::addMetaTag('description', '...');
 Context::addMetaImage('https://.../og.png');
@@ -125,7 +131,7 @@ $list = Context::getCSSFile();
 Context::setResponseMethod('JSON');
 Context::setCacheControl(0);                                // no-cache
 Context::setCacheControl(3600);                             // max-age=3600
-Context::setCorsPolicy('*', ['Content-Type'], 'GET,POST');
+Context::setCorsPolicy('*', ['GET', 'POST'], ['Content-Type']);  // (origin, methods[], headers[], max_age)
 Context::redirect($url, 302);
 ```
 
@@ -142,8 +148,8 @@ Context::isLocked();           // bool — 점검 모드
 ### 인코딩 / IDN
 
 ```php
-Context::convertEncoding($str);                          // 자동 감지 → UTF-8
-Context::convertEncodingStr($str, 'CP949');              // CP949 → UTF-8
+Context::convertEncodingStr($str);                       // 문자열 자동 감지 → UTF-8 (@deprecated)
+Context::convertEncoding($obj);                          // 객체 내 문자열 프로퍼티 일괄 변환, 자동 감지 → UTF-8 (@deprecated)
 Context::encodeIdna('한글도메인.kr');                     // punycode
 Context::decodeIdna('xn--...');
 ```
@@ -186,7 +192,7 @@ Context::decodeIdna('xn--...');
 
 ## `Context::close()`
 
-`classes/context/Context.class.php:439-452`. 요청 종료 시:
+`classes/context/Context.class.php:435-448`. 요청 종료 시:
 
 1. `DisplayHandler::$debug_printed`가 false면 `DisplayHandler::getDebugInfo()` 호출 — Debug 정보를 출력/기록한다 (별도의 도메인 트리거는 호출하지 않으며, Debug 클래스가 직접 처리).
 2. `Session::checkStart()`이 true면 `Session::close()`로 세션 저장.

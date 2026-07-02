@@ -30,7 +30,7 @@
 
 | 테이블 | 정의 파일 |
 |---|---|
-| `tags` | `schemas/tags.xml` — 태그 ↔ 문서 매핑 (`tag`, `document_srl`, `module_srl`, `regdate`) |
+| `tags` | `schemas/tags.xml` — 태그 ↔ 문서 매핑 (`tag_srl`(PK), `tag`, `document_srl`, `module_srl`, `regdate`) |
 
 ## 동작
 

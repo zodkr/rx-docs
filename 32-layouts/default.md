@@ -23,9 +23,10 @@
             <!-- MAIN_PAGE / SUB_PAGE -->
         </var>
         <var name="VISUAL_USE" type="select">...</var>
-        <var name="VISUAL_IMAGE_1..5" type="image">...</var>
-        <var name="VISUAL_TEXT_1..5" type="text">...</var>
-        <var name="VISUAL_LINK_1..5" type="text">...</var>
+        <var name="VISUAL_IMAGE_1..3" type="image">...</var>
+        <var name="VISUAL_TEXT_1..3" type="text">...</var>
+        <var name="VISUAL_LINK_1..3" type="text">...</var>
+        <var name="FOOTER" type="textarea">...</var>
     </extra_vars>
 </layout>
 ```
@@ -33,14 +34,15 @@
 ## 구조
 
 - 헤더: 로고 + GNB.
-- 비주얼 영역 (`VISUAL_USE=YES`일 때): 5개 비주얼 이미지/텍스트/링크.
+- 비주얼 영역 (`VISUAL_USE=YES`일 때): 3개 비주얼 이미지/텍스트/링크.
 - 콘텐츠: 1단(MAIN_PAGE) 또는 2단(SUB_PAGE) 레이아웃.
-- 푸터.
+- 푸터: `FOOTER` 변수 출력. 비어 있으면 "Powered by Rhymix" 문구가 출력됨.
 
 ## 자원
 
 - `default.layout.css`, `default.layout.js`.
-- 이미지 자원: `images/`.
+- `default.layout.webfont.css` (WEB_FONT=='YES'일 때 조건부 로드).
+- 이미지 자원: 레이아웃 루트에 직접 위치 (`visual.main.1~3.jpg`, `visual.sub.jpg`, `siteTitle.png`, `slideNav.png` 등).
 
 ## 관련
 

@@ -31,10 +31,9 @@ if ($called_position == 'after_module_proc' && Context::getResponseMethod() == "
 
 ## extra_vars
 
-- `target_selector` — 어느 영역의 이미지만 대상 (예: `.xe_content`).
-- `min_width` / `min_height` — 최소 크기 (작은 이미지는 제외).
-- `show_caption` — 캡션 표시 여부.
-- `pinch_to_close` — 모바일 제스처.
+- `display_name` (select) — 라이트박스 하단 캡션(파일이름) 표시 여부. 옵션: `block`(사용, 기본값) / `none`(사용 안함). 애드온 코드에서 `.pswp__caption__center`의 CSS `display` 값으로 주입된다 (`addons/photoswipe/photoswipe.addon.php:25`).
+
+`conf/info.xml`에 정의된 extra_var는 `display_name` 하나뿐이다 (`addons/photoswipe/conf/info.xml:23-38`). 대상 이미지 셀렉터 `.rhymix_content, .xe_content`는 extra_var가 아니라 `addons/photoswipe/rx_photoswipe.js:267`에 하드코딩되어 있다.
 
 ## 외부 라이브러리
 

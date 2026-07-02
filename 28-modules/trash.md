@@ -3,7 +3,7 @@
 ## 개요
 
 - **카테고리**: content
-- **역할**: 문서/댓글/파일을 즉시 삭제하지 않고 휴지통으로. 일정 기간 후 영구 삭제 또는 복구.
+- **역할**: 문서/댓글을 즉시 삭제하지 않고 휴지통으로 이동. 관리자가 수동으로 영구 삭제(비우기)하거나 복구.
 
 ## 주요 클래스
 
@@ -15,7 +15,7 @@
 | `TrashView` | `trash.view.php` |
 | `TrashAdminController` | `trash.admin.controller.php` |
 | `TrashAdminView` | `trash.admin.view.php` |
-| `Rhymix\Modules\Trash\Model\TrashVO` | `model/TrashVO.php` (휴지통 항목 VO) |
+| `TrashVO` | `model/TrashVO.php` (휴지통 항목 VO, 네임스페이스 없는 전역 클래스. `trash.class.php:3`이 `require_once`로 로드하며 document/comment 컨트롤러도 사용 전 동일하게 require_once한다) |
 
 (`trash.admin.model.php`, `trash.mobile.php`, `trash.api.php`는 없다.)
 
@@ -37,9 +37,11 @@
 
 (`trash_module_srls`는 스키마에 없다.)
 
-## 상태 코드
+## 상태 코드 (미사용)
 
-휴지통 항목은 `RX_STATUS_TRASH` (4). 검색/목록에서 자동 제외.
+휴지통 이동은 상태 플래그를 쓰지 않는다. 원본 문서/댓글은 해당 테이블에서 완전히 삭제되고(`document.controller.php:1657`의 `executeQuery('document.deleteDocument', ...)`, `comment.controller.php:1440`의 `executeQuery('comment.deleteComment', ...)`), 직렬화된 사본이 별도의 `trash` 테이블에 저장된다. `trash` 테이블에는 status 컬럼 자체가 없다 (`schemas/trash.xml`). 목록/검색에서 사라지는 것은 상태 필터 때문이 아니라 원본이 삭제되었기 때문이다.
+
+`RX_STATUS_TRASH`(값 4, `common/constants.php:161`) 상수는 존재하지만 문서/댓글 상태 코드로만 쓰이며 trash 모듈 항목에는 적용되지 않는다.
 
 ## 트리거
 

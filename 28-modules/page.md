@@ -11,7 +11,7 @@
 |---|---|
 | `WIDGET` | 위젯 페이지 — 본문에 위젯 마크업 작성 |
 | `ARTICLE` | 일반 문서 |
-| `OUTSIDE` | 외부 URL iframe |
+| `OUTSIDE` | 외부 URL 또는 내부 파일 — 외부 URL은 서버가 원격 페이지를 가져와 인라인 삽입, 내부 경로는 PHP/템플릿으로 실행해 삽입 |
 
 ## 주요 클래스
 
@@ -21,7 +21,7 @@
 | `PageController` | `page.controller.php` |
 | `PageView` | `page.view.php` |
 | `PageMobile` | `page.mobile.php` |
-| `PageApi` | `page.api.php` |
+| `PageAPI` | `page.api.php` |
 | `PageAdminController` | `page.admin.controller.php` |
 | `PageAdminView` | `page.admin.view.php` |
 
@@ -50,11 +50,11 @@
 
 ## DB
 
-`modules/page/schemas/`는 비어 있어 페이지 자체 테이블이 없다. 본문 등은 `module_extra_vars` 또는 `document`(ARTICLE 페이지의 경우) 테이블에 저장.
+`modules/page/`에는 `schemas/` 디렉토리 자체가 없어 페이지 전용 테이블이 없다. 본문 등은 `module_extra_vars` 또는 `document`(ARTICLE 페이지의 경우) 테이블에 저장.
 
 ## 위젯 페이지
 
-본문에 위젯 마크업을 입력하면 `Context::transContent()`가 위젯을 실행해 결과 HTML로 치환한다.
+본문에 위젯 마크업을 입력하면 `WidgetController::transWidgetCode()`가 위젯을 실행해 결과 HTML로 치환한다 (`page.view.php:150-151`). 결과는 `page_caching_interval`에 따라 `files/cache/page/`에 캐시된다.
 
 ## 관련
 

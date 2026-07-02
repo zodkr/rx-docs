@@ -14,11 +14,12 @@
 | `BoardController` | `board.controller.php` | 글/댓글 처리 (`procBoardInsertDocument` 등). |
 | `BoardModel` | `board.model.php` | 게시판 메타 조회. |
 | `BoardView` | `board.view.php` | HTML 렌더 (`dispBoardContent`, `dispBoardWrite`). |
-| `BoardApi` | `board.api.php` | JSON/API. |
+| `BoardAPI` | `board.api.php` | JSON/API. |
 | `BoardMobile` | `board.mobile.php` | 모바일 분기. |
 | `BoardAdminController` | `board.admin.controller.php` | 게시판 관리 액션. |
 | `BoardAdminModel` | `board.admin.model.php` | 관리자 조회. |
 | `BoardAdminView` | `board.admin.view.php` | 관리자 UI. |
+| `Features` | `models/Features.php` | 네임스페이스 모델(`Rhymix\Modules\Board\Models\Features`). 스킨용 게시판 기능 요약(추천/비추천/추천 로그/신고/이력 등). |
 
 ## 주요 액션
 
@@ -36,7 +37,7 @@
 | `dispBoardModifyComment` / `dispBoardDeleteComment` | `write_comment` | `/<mid>/comment/$comment_srl/edit`/`/delete` |
 | `procBoardInsertDocument` / `procBoardDeleteDocument` / `procBoardRevertDocument` | `write_document` / `update_view` | (POST) |
 | `procBoardInsertComment` / `procBoardDeleteComment` | `write_comment` | (POST) |
-| `procBoardVoteDocument` | `view` | (POST) — 추천/비추천 통합 |
+| `procBoardVoteDocument` | `view` | (POST) — 추천(vote up)만 처리. `DocumentController::procDocumentVoteUp()`에 위임 |
 | `procBoardVerificationPassword` | `view` | (POST) — 비밀글 비밀번호 |
 
 ### 관리자 (Admin)
@@ -62,7 +63,7 @@
 
 ## DB 스키마
 
-board 모듈은 **자체 스키마 테이블이 전혀 없다** (`modules/board/schemas/`는 비어 있음). 모든 데이터는 `document`/`comment`/`file`/`document_categories` 등 다른 모듈 테이블을 그대로 사용한다.
+board 모듈은 **자체 스키마 테이블이 전혀 없다** (`modules/board/`에 `schemas/` 디렉토리 자체가 없음). 모든 데이터는 `document`/`comment`/`file`/`document_categories` 등 다른 모듈 테이블을 그대로 사용한다.
 
 ## 이 모듈이 hook하는 트리거 (`conf/module.xml`의 `<eventHandlers>`)
 
@@ -88,7 +89,7 @@ board 모듈은 **자체 스키마 테이블이 전혀 없다** (`modules/board/
 
 ## 확장 포인트
 
-- **스킨**: `modules/board/skins/<skin>/` (PC), `m.skins/<mskin>/` (모바일). 표준 진입 템플릿: `list.html`, `view.html`, `write_form.html`, `comment_form.html`, `delete_form.html`, ...
+- **스킨**: `modules/board/skins/<skin>/` (PC), `m.skins/<mskin>/` (모바일). 표준 진입 템플릿: `list.html`, `write_form.html`, `comment_form.html`, `delete_form.html`, `input_password_form.html`, ... (글 상세는 `dispBoardContent`가 `list.html` + `_read.html` 부분 템플릿으로 렌더 — `board.view.php:224`)
 - **카테고리**: 관리자 UI로 트리 구조 관리.
 - **상담형 게시판**: `consultation_read` grant + 별도 템플릿.
 

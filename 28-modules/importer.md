@@ -23,31 +23,45 @@
 |---|---|
 | `dispImporterAdminImportForm` | 이전 폼 (admin_index, menu=importer) |
 | `procImporterAdminImport` | 이전 실행 |
-| `procImporterAdminPreProcessing` | 사전 처리 (파일 검사 등) |
+| `procImporterAdminPreProcessing` | 사전 추출·캐싱 (XML을 항목별 캐시 파일로 분리하고 index 생성) |
 | `procImporterAdminSync` | 동기화 |
 | `procImporterAdminCheckXmlFile` | XML 파일 검증 |
 
 ## XML 포맷
 
-XE 호환 export XML 형식. document/comment/file/member 노드를 포함.
+XE 호환 export XML 형식. 타입에 따라 최상위 노드가 다르다.
+
+| 타입 | 최상위 / 항목 노드 | 위치 |
+|---|---|---|
+| 회원 | `<members>` / `<member>` | `importer.admin.controller.php:160` |
+| 쪽지 | `<messages>` / `<message>` | `importer.admin.controller.php:164` |
+| 모듈 게시글 | `<posts>` / `<post>` | `importer.admin.controller.php:232` |
+
+`<post>` 내부에는 `<comments>`, `<trackbacks>`, `<attaches>`, `<extra_vars>` 노드가 중첩된다. `title`·`content` 등 각 필드 값은 base64로 인코딩되어 있으며 임포트 시 `base64_decode`로 복원한다 (`importer.admin.controller.php:738`). 게시글 XML에는 `<module_srl>`이 없고, 대상 모듈은 임포트 화면에서 지정한 `target_module`로 결정된다 (`importer.admin.controller.php:265`, `:684`).
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<documents>
-    <document>
-        <module_srl>1</module_srl>
-        <title>제목</title>
-        <content>본문</content>
-        ...
-    </document>
-</documents>
+<posts module="...">
+    <post>
+        <title><!-- base64 --></title>
+        <content><!-- base64 --></content>
+        <regdate>...</regdate>
+        <comments>
+            <comment>...</comment>
+        </comments>
+        <attaches>
+            <attach>...</attach>
+        </attaches>
+        <extra_vars>...</extra_vars>
+    </post>
+</posts>
 ```
 
 ## 동작
 
 - 대용량 처리를 위해 청크 단위로 처리.
 - 진행률 표시.
-- 실패 시 롤백 가능.
+- 트랜잭션/롤백은 지원하지 않는다. 청크 단위로 즉시 커밋되고 처리 완료된 임시 캐시 파일은 삭제되므로 (`importer.admin.controller.php:346`, `:838`) 중단 시 이미 입력된 데이터는 남는다.
 
 ## 관련
 

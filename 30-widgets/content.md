@@ -32,7 +32,7 @@
 | `show_secret` | select | `N` (기본) / `Y` | 비밀글 포함 여부. (`Y`일 때만 status에 `SECRET` 추가, 댓글은 `is_secret='N'` 필터 해제.) |
 | `duration_new` | text | 기본 12 (시간 단위) | NEW 표시 유지 시간. |
 | `order_target` | select | `regdate` / `list_order` / `update_order` (그 외 값은 `regdate`로 강제) | 정렬 기준. |
-| `order_type` | select | `asc` / `desc` (그 외 값은 `asc`로 강제) | 정렬 방향. **단** `list_order`/`update_order`인 경우 `proc()`이 의미를 반전한다 (`desc`로 지정하면 SQL은 `asc`). |
+| `order_type` | select | `asc` / `desc` (그 외 값은 `asc`로 강제) | 정렬 방향. **단** `order_target`이 `list_order`/`update_order`이고 content_type이 document(기본)인 경우 `_getDocumentItems`(`content.class.php:250-253`)가 의미를 반전한다 (`desc`로 지정하면 SQL은 `asc`). 이 반전은 문서 추출에만 적용되며 comment(`_getCommentItems`는 `sort_index`만 전달)·image·rss(`getRssItems`는 `order_type=='asc'` 여부로 ksort/krsort) 분기에는 없다. |
 | `thumbnail_type` | select | `fill` (기본) / `crop` / `ratio` | 썸네일 생성 방식. |
 | `thumbnail_width` | text | 기본 100 (`proc()` fallback) | 썸네일 너비. |
 | `thumbnail_height` | text | 기본 75 (`proc()` fallback) | 썸네일 높이. |

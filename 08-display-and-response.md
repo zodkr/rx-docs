@@ -47,13 +47,12 @@
 
 1. `$oModule->getTemplatePath()` + `getTemplateFile()`로 스킨 템플릿 컴파일 → 본문 HTML.
 2. `$oModule->getLayoutPath()` + `getLayoutFile()`로 레이아웃 템플릿 컴파일.
-   - 레이아웃 본문에 `{$content}` 또는 `<!--#Content-->` 자리에 본문 삽입.
+   - 레이아웃 템플릿의 `{!! $content !!}` 자리에 본문 삽입(`Context::set('content', ...)`).
 3. `Context::get('html_header')` 등 모든 head/body 자원 합성.
 4. 표준 메타 태그 추가 (`<meta charset>`, viewport, canonical, OpenGraph, robots).
 5. `Context::getJsFile()`/`getCSSFile()` 결과로 `<link>`/`<script>` 태그 자동 삽입.
 6. 디버그 모드면 본문 끝에 주석으로 디버그 정보 추가.
-7. gzip 처리(`gzhandler_enable && config('view.compress_output')`).
-8. Partial Page Rendering 처리 (XHR 요청 시 일부만 응답).
+7. Partial Page Rendering 처리 (XHR 요청 시 일부만 응답).
 
 ### JSONDisplayHandler (`JSONDisplayHandler.php`)
 
@@ -63,8 +62,8 @@
 
 ### JSCallbackDisplayHandler
 
-- JSONP 응답. `$_GET['callback']` 또는 `Context::js_callback_func`를 callback 함수명으로.
-- `callback({...json...});` 형식.
+- JSONP 응답. `$_GET['xe_js_callback']` 또는 `$_POST['xe_js_callback']`(`Context::getJSCallbackFunc()`)를 callback 함수명으로.
+- `<script>//<![CDATA[ func({...json...}); //]]></script>` 형식의 HTML 스크립트 블록으로 감싸 반환(Content-Type은 text/html).
 
 ### XMLDisplayHandler
 
@@ -74,12 +73,12 @@
 ### VirtualXMLDisplayHandler
 
 - `xeVirtualRequestMethod=xml` — XE 시절 일부 ajax 호환.
-- HTML을 XML 형식으로 감싸 반환.
+- error/message/redirect_url을 바탕으로 alert 및 opener/parent 리다이렉트 스크립트가 담긴 HTML 문서를 생성해 반환 (iframe 폼 전송 호환용).
 
 ### RawDisplayHandler
 
 - `Context::get('response_content_type')`로 임의 Content-Type.
-- `$oModule`의 `content` 변수 또는 raw output을 그대로 반환.
+- `getTemplatePath()`+`getTemplateFile()`로 스킨 템플릿만 컴파일해 레이아웃 없이 반환(경로/파일 없으면 빈 문자열).
 - 파일 다운로드/이미지 출력에 사용.
 
 ## 트리거 시퀀스 (응답 단계)
@@ -112,7 +111,7 @@ display.after              → echo 직전
 | 500 | Internal Server Error |
 | 503 | Service Unavailable |
 
-200/403 외의 상태 코드는 본문 템플릿이 `http_status_code` 템플릿으로 강제된다 (`ModuleHandler::displayContent` `:1067-1070`).
+200/403 외의 상태 코드는 본문 템플릿이 `http_status_code` 템플릿으로 강제된다 (`ModuleHandler::displayContent` `:1056-1059`).
 
 ## 보안/SEO 헤더
 
@@ -136,8 +135,12 @@ Context::set('page_navigation', $pageHandler);
 템플릿에서:
 
 ```html
-<paginate from="$page_navigation->first_page" to="$page_navigation->last_page" />
+<block loop="$page_no=$page_navigation->getNextPage()">
+  <a href="{getUrl('page',$page_no)}">{$page_no}</a>
+</block>
 ```
+
+처음/끝 링크는 `$page_navigation->first_page`, `$page_navigation->last_page` 프로퍼티를 사용한다.
 
 ## 다음 문서
 

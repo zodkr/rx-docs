@@ -36,27 +36,30 @@ extravar는 **완전한 v2 namespace 모듈**이다 (`modules/extravar/`에 `<na
 
 회원 모듈/게시판 관리자 UI에서 확장 필드를 추가:
 
-- 타입: `text`/`select`/`radio`/`checkbox`/`textarea`/`tel`/`date`/`address`/`country`/`email_address`/`homepage`/`kr_zip`/`color`/`url`/`image`/`file`.
+- 타입 (관리자 선택 목록 `$lang->column_type_list`, `common/lang/ko.php:320`): `text`/`textarea`/`password`/`select`/`radio`/`checkbox`/`tel`/`tel_v2`/`tel_intl`/`tel_intl_v2`/`homepage`(URL)/`email_address`/`kr_zip`(한국 주소·우편번호)/`country`/`language`/`date`/`time`/`timezone`/`number`/`file`.
 - 필수/선택.
 - 기본값/허용값.
 
 ### 저장
 
-`DocumentItem::getExtraValue` / `getExtraVars`로 접근.
+`DocumentItem::getExtraEidValue`(필드명=eid) / `getExtraValue`(숫자 var_idx) / `getExtraVars`로 접근.
 
 ```php
-$value = $oDoc->getExtraValue('my_custom_field');
-$all = $oDoc->getExtraVars();
-foreach ($all->getAll() as $value_obj) {
+$value = $oDoc->getExtraEidValue('my_custom_field'); // eid(필드명)로 조회
+$value = $oDoc->getExtraValue($idx);                 // 숫자 var_idx로 조회
+$all = $oDoc->getExtraVars();                         // var_idx로 키가 매겨진 Value 객체 배열
+foreach ($all as $value_obj) {
     echo $value_obj->name . ': ' . $value_obj->value;
 }
 ```
 
-회원도 동일:
+`getExtraValue($idx)`(`modules/document/document.item.php:943`)는 숫자 var_idx로 조회하므로 필드명 문자열을 넘기면 빈 문자열이 반환된다. 필드명(eid)으로 조회하려면 `getExtraEidValue($eid)`(`document.item.php:955`)를 쓴다.
+
+회원은 최상위 프로퍼티로 접근한다. `getMemberInfo()`가 부르는 `arrangeMemberInfo()`(`modules/member/member.model.php:506`)는 `extra_vars`를 unserialize한 뒤 `unset($info->extra_vars)`로 제거하고 각 항목을 `$info->{$key}`로 최상위에 승격한다. 따라서 `$member->extra_vars`는 존재하지 않는다.
 
 ```php
 $member = MemberModel::getMemberInfo($member_srl);
-$value = $member->extra_vars->my_field;
+$value = $member->my_field;
 ```
 
 ## DB 스키마 사용
@@ -65,7 +68,10 @@ $value = $member->extra_vars->my_field;
 |---|---|
 | `document_extra_keys` | 게시판별 확장 변수 정의 |
 | `document_extra_vars` | 게시판 확장 변수 값 |
-| `member_extra_info` | 회원 확장 정보 |
+| `member_join_form` | 회원 가입 확장 필드(항목) 정의 (`modules/member/schemas/member_join_form.xml`) |
+| `member` 테이블의 `extra_vars` 컬럼 | 회원 확장 변수 값 (serialized text, `modules/member/schemas/member.xml:30`) |
+
+> `member_extra_info`는 DB 테이블이 아니라 `files/` 하위 파일 저장 디렉토리(프로필 이미지·서명 등)다.
 
 ## 관련
 

@@ -93,7 +93,7 @@ SELECT * FROM rx_documents WHERE document_srl = 123
 /* board.getDocumentList 127.0.0.1 */
 ```
 
-쿼리 끝에 붙는 형식은 `/* {쿼리 ID} {클라이언트 IP} */`다 (`common/framework/DB.php:373`). 디버그 패널/주석 템플릿 화면에 표시되는 `Caller:`(호출 위치)와는 별개다.
+쿼리 끝에 붙는 형식은 `/* {쿼리 ID} {클라이언트 IP} */`다 (`common/framework/DB.php:384`). 디버그 패널/주석 템플릿 화면에 표시되는 `Caller:`(호출 위치)와는 별개다.
 
 ### 전체 스택
 

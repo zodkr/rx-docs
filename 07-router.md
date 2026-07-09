@@ -31,7 +31,7 @@
 | `files/download/$file_srl/$file_key/$filename` | … | `act=procFileOutput` | 0 |
 | `common/rewrite/test/$test` | … | `act=dispAdminRewriteTest` | 0 |
 
-priority가 높은 라우트가 먼저 매칭된다.
+이 라우트들은 정의된 순서대로 매칭을 시도하며, priority는 매칭 순서가 아니라 URL 생성 시(`getURL`, `_getBestMatchingRoute`) 가장 잘 맞는 라우트를 고르는 데 쓰인다 (아래 '모듈별 라우트' 참고).
 
 ## 변수 타입
 

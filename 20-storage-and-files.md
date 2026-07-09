@@ -54,7 +54,7 @@
 | 메서드 | 비고 |
 |---|---|
 | `Storage::copy($source, $destination, ?int $destination_perms=null)` | |
-| `Storage::move($source, $destination)` | rename 우선, 안 되면 copy+delete |
+| `Storage::move($source, $destination)` | rename만 수행하며, 실패하면 false 반환 (copy+delete 폴백 없음) |
 | `Storage::moveUploadedFile($source, $destination, $type='')` | **첫 인자는 `$_FILES['x']['tmp_name']`** (임시 경로) |
 | `Storage::delete($path)` | |
 | `Storage::copyDirectory($source, $destination, $exclude_regexp='')` | 재귀 |

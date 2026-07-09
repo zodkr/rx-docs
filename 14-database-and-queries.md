@@ -88,7 +88,7 @@ $list = executeQueryArray('board.getBoardList', $args)->data ?? [];
 
 ### Query ID 포맷
 
-`DB::executeQuery()` (`common/framework/DB.php:289-302`)는 `query_id`를 `.`로 split한 뒤:
+`DB::executeQuery()` (`common/framework/DB.php:299-304`)는 `query_id`를 `.`로 split한 뒤:
 
 - 2조각이면 앞에 `'modules'`를 자동 prepend → `board.getList` → `modules/board/queries/getList.xml`
 - 3조각이면 그대로 → `widgets.content.getMids` → `widgets/content/queries/getMids.xml`, `addons.<name>.<query>` 등 비-모듈 플러그인도 같은 식으로 호출 가능
@@ -390,7 +390,7 @@ $seq = getNextSequence();       // rx_sequence 테이블에서 발급
 
 ### 쿼리 주석
 
-`config('debug.query_comment') = true`면 실행되는 모든 SQL의 끝에 `/* <query_id> <클라이언트 IP> */` 형태의 주석이 자동 부착된다 (예: `/* board.getBoardList 1.2.3.4 */`). 직접 `prepare()` / `query()` / `_query()`로 실행하는 경우에는 query_id 대신 각각 `prepare()` / `query()` / `_query()` 라벨이 들어간다 (`DB.php:373`, `DB.php:236`, `DB.php:198`, `DB.php:1398`).
+`config('debug.query_comment') = true`면 실행되는 모든 SQL의 끝에 `/* <query_id> <클라이언트 IP> */` 형태의 주석이 자동 부착된다 (예: `/* board.getBoardList 1.2.3.4 */`). 직접 `prepare()` / `query()` / `_query()`로 실행하는 경우에는 query_id 대신 각각 `prepare()` / `query()` / `_query()` 라벨이 들어간다 (`DB.php:384`, `DB.php:236`, `DB.php:198`, `DB.php:1425`).
 
 ### 전체 스택
 
@@ -405,7 +405,7 @@ $slow = Rhymix\Framework\Debug::getSlowQueries(); // 슬로우 쿼리
 // { query_id, query_string, query_time, query_connection, message, error_code, file, line, method, backtrace, count, time, type }
 ```
 
-`Debug::getQueryLog()`는 존재하지 않는다. `DB::getQueryLog($query, $elapsed_time)`는 로그 항목 하나를 만드는 DB 인스턴스 내부용 빌더다 (`DB.php:1262`).
+`Debug::getQueryLog()`는 존재하지 않는다. `DB::getQueryLog($query, $elapsed_time)`는 로그 항목 하나를 만드는 DB 인스턴스 내부용 빌더다 (`DB.php:1289`).
 
 ## 헬퍼
 

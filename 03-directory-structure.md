@@ -115,7 +115,7 @@ rhymix/
 | `files/env/` | 환경 캐시 (mid info 등) | 자동 |
 | `files/member_extra_info/` | 회원 부가 정보 (프로필 이미지/서명) | — |
 | `files/faceOff/` | 레이아웃 소스 편집(faceOff)이 레이아웃별 layout.html/layout.css 저장 | — |
-| `files/ruleset/` | 컴파일된 ruleset JS | 자동 |
+| `files/ruleset/` | 생성·커스터마이즈된 ruleset XML (런타임에 PHP가 읽음) | 자동 |
 | `files/thumbnails/` | 문서 썸네일 | `common/scripts/clean_old_thumbnails.php` |
 | `files/cache/tmp/` | 일시 작업 디렉토리 | — |
 | `files/debug/YYYYMMDD.php` | 디버그 로그 (옵션, 경로는 설정 `debug.log_filename`) | 수동/날짜별 파일 로테이션 |

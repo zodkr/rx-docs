@@ -94,7 +94,7 @@ if (!$output->toBool()) {
 
 ### DB 등록
 
-모듈 설치 시 `ModuleController::registerEventHandlers($module_name)`(`modules/module/module.controller.php:1467`)이 `module.xml`의 `event_handlers` 배열을 순회하며 새 항목은 `insertTrigger($trigger_name, $module, $class_name, $method, $position)`(`:75`)로 추가하고, 더 이상 정의되지 않은 핸들러는 `deleteTrigger(...)`(`:100`)로 제거한다. 저장 테이블은 **`module_trigger`**(`schemas/module_trigger.xml`)이며 `executeQuery('module.insertTrigger', $args)`를 사용한다. 캐시 키는 `'triggers'`. 기록 후 그 모듈이 비활성화되지 않는 한 모든 트리거 호출 시 자동 실행된다.
+모듈 설치 시 `ModuleController::registerEventHandlers($module_name)`(`modules/module/module.controller.php:1467`)이 `module.xml`의 `event_handlers` 배열을 순회하며 새 항목은 `insertTrigger($trigger_name, $module, $class_name, $method, $position)`(`:75`)로 추가하고, 더 이상 정의되지 않은 핸들러는 `deleteTrigger(...)`(`:100`)로 제거한다. 저장 테이블은 **`module_trigger`**(`modules/module/schemas/module_trigger.xml`)이며 `executeQuery('module.insertTrigger', $args)`를 사용한다. 캐시 키는 `'triggers'`. 기록 후 그 모듈이 비활성화되지 않는 한 모든 트리거 호출 시 자동 실행된다.
 
 ### 런타임 등록 (코드 단)
 

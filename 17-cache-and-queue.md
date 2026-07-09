@@ -15,7 +15,7 @@
 | `file` | — | `files/cache/store/` 디렉토리 |
 | `memcached` | ext-memcached | 분산 |
 | `redis` | ext-redis | 분산 + persistence |
-| `sqlite` | ext-pdo_sqlite | 단일 파일 DB |
+| `sqlite` | ext-sqlite3 | 단일 파일 DB |
 
 선택은 `config('cache.type')` (단일 드라이버 문자열). 선택한 드라이버를 사용할 수 없으면 `dummy` 드라이버로 폴백 (`redis 실패 시 file로` 같은 체인 폴백 없음).
 

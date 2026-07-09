@@ -143,12 +143,12 @@ Mobile:
 |---|---|
 | `$module_info` | 모듈 인스턴스 정보 (extra_vars 포함, skin_vars 동기화됨) |
 | `$skin_vars` | extra_vars로 정의된 값 (= `$module_info`의 부분집합) |
-| `$colorset` | 선택된 컬러셋 |
+| `$module_info->colorset` | 선택된 컬러셋 |
 | `$lang` | 다국어 객체 |
-| `$logged_info`, `$is_logged`, `$user` | 사용자 정보 |
+| `$logged_info`, `$is_logged` | 사용자 정보 |
 | `$grant` | 현재 사용자 권한 |
 | `$mid` | 현재 mid |
-| 모듈 액션이 `Context::set`한 변수들 | 예: `$documents`, `$page_navigation`, `$document`, ... |
+| 모듈 액션이 `Context::set`한 변수들 | 예: `$documents`, `$page_navigation`, `$oDocument`, ... |
 
 ## 게시판 스킨 표준 변수 (예시)
 
@@ -163,13 +163,15 @@ Mobile:
 | `$module_info->use_category` | 카테고리 사용 여부 |
 | `$grant->write_document` | 쓰기 권한 |
 
-`$document`(상세 화면) 예:
+`$oDocument`(상세 화면) 예:
 
 ```html
-<h1>{$document->getTitle()}</h1>
-<div class="content">{$document->getContent()|noescape}</div>
-<div class="author">{$document->getNickName()}</div>
+<h1>{$oDocument->getTitle()}</h1>
+<div class="content">{$oDocument->getContent(false)|noescape}</div>
+<div class="author">{$oDocument->getNickName()}</div>
 ```
+
+board 상세 화면(`_read.html`)은 `Context::set('oDocument', ...)`로 전달된 `$oDocument`를 사용한다. `$document`는 목록 루프 안에서만 쓰이는 반복 변수다.
 
 ## 자원 로드
 
@@ -180,10 +182,10 @@ Mobile:
 
 스킨 디렉토리 내 경로. `Context::loadFile`이 자동 처리.
 
-컬러셋 기반 CSS:
+컬러셋 기반 CSS. `<load>`의 target은 `{$...}` 템플릿 변수를 치환하지 않으므로 `<load target="css/style.{$module_info->colorset}.css" />`처럼 쓰면 동작하지 않는다. 컬러셋별 CSS는 조건부 load로 나눠 쓰거나 모듈 코드에서 `Context::loadFile()`로 직접 로드한다:
 
 ```html
-<load target="css/style.{$module_info->colorset}.css" />
+<load target="css/style.dark.css" cond="$module_info->colorset=='dark'" />
 ```
 
 ## 최소 예제
@@ -217,9 +219,13 @@ Mobile:
 </ul>
 
 <div class="pagination">
-    {@$page_navigation}
+    <!--@foreach($page_navigation as $page_no)-->
+    <a href="{getUrl('page', $page_no)}">{$page_no}</a>
+    <!--@end-->
 </div>
 ```
+
+`{@ ... }`는 값을 출력하지 않는 PHP 코드 블록이므로 `{@$page_navigation}`은 페이지네이션을 그리지 못한다 (`PageHandler`에는 `__toString`도 없다). `$page_navigation` 객체를 순회해서 그려야 한다.
 
 ## 모바일 스킨
 

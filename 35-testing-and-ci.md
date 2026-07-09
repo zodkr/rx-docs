@@ -98,7 +98,7 @@ php codecept.phar run unit
 php codecept.phar run unit framework/RouterTest.php
 
 # 특정 메서드
-php codecept.phar run unit framework/RouterTest.php:testParseUrl
+php codecept.phar run unit framework/RouterTest.php:testParseURL
 ```
 
 ### install 스위트만
@@ -154,7 +154,7 @@ CI(`.github/workflows/ci.yml:24`)는 위와 같이 파이프라인을 `if ... th
 php codecept.phar run unit --debug
 
 # 단일 테스트 + step 출력
-php codecept.phar run unit framework/RouterTest.php:testParseUrl --debug
+php codecept.phar run unit framework/RouterTest.php:testParseURL --debug
 
 # 커버리지 리포트
 php codecept.phar run unit --coverage --coverage-html

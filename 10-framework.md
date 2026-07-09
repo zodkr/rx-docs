@@ -10,7 +10,7 @@
 | `Calendar` | `Calendar.php` (129줄) | 그레고리력 보조 유틸 — 월 이름, 월 시작 요일, 월 일수, 달력 그리드 생성. |
 | `Config` | `Config.php` (209줄) | dot-notation 설정 get/set, `files/config/config.php` 직렬화. 상세 → [25-config-system.md](25-config-system.md) |
 | `Cookie` | `Cookie.php` (115줄) | `setcookie()` wrapper, SameSite/HttpOnly/Secure 정책. |
-| `DB` | `DB.php` (1603줄) | PDO 기반, prefix 자동, 트랜잭션 카운팅. 상세 → [14-database-and-queries.md](14-database-and-queries.md) |
+| `DB` | `DB.php` (1630줄) | PDO 기반, prefix 자동, 트랜잭션 카운팅. 상세 → [14-database-and-queries.md](14-database-and-queries.md) |
 | `DateTime` | `DateTime.php` (247줄) | 타임존 변환, formatting, `i18n.php`와 함께 사용. |
 | `Debug` | `Debug.php` (996줄) | 에러/예외 핸들러, 슬로우 쿼리/트리거/위젯 로깅. 상세 → [24-debug-and-logging.md](24-debug-and-logging.md) |
 | `Exception` | `Exception.php` (38줄) | 사용자 메시지 + `getUserFileAndLine()`. 모든 도메인 예외의 부모. |
@@ -34,7 +34,7 @@
 | `Template` | `Template.php` (998줄) | 템플릿 엔진 인스턴스. 상세 → [09-templates-and-skins.md](09-templates-and-skins.md) |
 | `Timer` | `Timer.php` (109줄) | `RX_MICROTIME` 기반 시간 측정. |
 | `UA` | `UA.php` (480줄) | User-Agent 파싱 (모바일/태블릿/봇). |
-| `URL` | `URL.php` (286줄) | `getCurrentURL`, `getCurrentDomain`, `modifyURL`, `isInternalURL`, `getCanonicalURL`. |
+| `URL` | `URL.php` (320줄) | `getCurrentURL`, `getCurrentDomain`, `modifyURL`, `isInternalURL`, `getCanonicalURL`. |
 | `i18n` | `i18n.php` (185줄) | 다국어 날짜/숫자 포맷. |
 
 ## 드라이버 (`drivers/`)

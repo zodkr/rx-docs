@@ -44,7 +44,7 @@ require_once __DIR__ . '/legacy.php';      // XE 호환 헬퍼
 
 | 상수 | 의미 |
 |---|---|
-| `RX_VERSION` | 현재 버전 (예: `2.1.34`) |
+| `RX_VERSION` | 현재 버전 (예: `2.1.35`) |
 | `RX_MICROTIME` | 스크립트 시작 microtime |
 | `RX_TIME` | 시작 unix time (int) |
 | `RX_BASEDIR` | 서버측 절대경로 (trailing `/`) |

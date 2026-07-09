@@ -253,7 +253,7 @@ XML의 `method=` 속성은 **PHP 메서드명이 아니라 허용 HTTP 메서드
 | `type` | `view`/`controller`/`model`/`mobile`/`api`/`wap`/`class`/`auto`. 미지정 + `class=` 있으면 접두사로 자동(`disp*`→`view`, `proc*`→`controller`, 그 외→`auto`) |
 | `class` | PSR-4 클래스 경로. `<namespaces>` 첫 항목 또는 표준 `Rhymix\Modules\<Module>` 기준 상대. 예: `Controllers\Index` |
 | `permission` | `guest`/`member`/`not_member`/`manager`/`root`/`manager:scope`/`*-managers` 또는 `<grants>` ID. 콤마로 다중 grant(모두 통과해야 허용) |
-| `check_var`(=`check-var`) | permission이 grant ID일 때 권한 확인 대상 module_srl을 읽어올 Context 변수명 |
+| `check_var`(=`check-var`) | 지정하면 permission 검사 대상을 현재 모듈이 아니라 이 Context 변수에서 읽은 대상 module_srl(들)로 바꾼다(현재 모듈이 아닌 다른 모듈의 권한을 검사). 코어에서는 주로 manager 계열 권한(내장 `manager(:scope)` 또는 `default="manager"`인 커스텀 grant, 예: page의 `modify`)과 함께 쓰여 대상 모듈(예: 특정 게시판)의 관리자 권한을 확인한다. 값은 콤마 또는 `\|@\|`로 다중 지정 가능. |
 | `check_type`(=`check-type`) | 권한 확인 대상 모듈 타입(스코프) |
 | `grant` | 액션의 grant 이름 (기본 `guest`) — `<grants>`에 정의되지 않은 임의 값 가능 |
 | `method` | 허용 HTTP 메서드. `\|` 또는 `,`로 다중 (`GET,POST`/`GET\|POST\|PUT`). **미지정 시 자동 결정** — 아래 표 |
@@ -319,7 +319,7 @@ v2 컨트롤러에서 자주 발생하는 경우:
 </action>
 ```
 
-priority 큰 순서로 매칭. 미지정 시 `0`.
+priority는 요청 매칭 순서가 아니라 URL 생성 시(`getURL`) 가장 잘 맞는 라우트를 고르는 기준이다. 요청 매칭은 정의된 순서대로 시도되며, 미지정 시 `0`.
 
 변수 타입(`ModuleActionParser.php:13-22`):
 
@@ -473,7 +473,7 @@ mid 없이 도메인 루트에서 직접 도달할 추가 URL prefix.
 </prefixes>
 ```
 
-→ `https://example.com/foobar/...`로 들어오는 요청을 mid 매칭과 동등하게 이 모듈로 라우팅. (Router는 일단 mid를 우선 시도하므로 충돌 시 mid가 이긴다.)
+→ `<prefixes>`는 현재 코어에 라우팅 로직이 구현되어 있지 않다. 파서가 `info->prefixes`로 읽지만, 설치 시 호출되는 `ModuleController::registerPrefixes()`가 아직 `// TODO` 스텁이고 Router도 `prefixes`를 참조하지 않으므로 `<prefix name="foobar" />`만 선언해서는 `/foobar/...`가 이 모듈로 라우팅되지 않는다. mid 없이 도메인 루트에서 모듈에 직접 도달하려면 현재로서는 모듈 이름 자체를 URL 최상위 경로로 쓰거나(`_getActionInfoByModule`) mid를 생성해야 한다.
 
 ## 4. 권한 체계
 
@@ -596,7 +596,7 @@ class Dashboard extends Base
     public function dispAdminIndex()
     {
         $oDocumentModel = getModel('document');
-        Context::set('total_document_count', $oDocumentModel->getDocumentCount());
+        Context::set('total_document_count', $oDocumentModel->getDocumentCount($module_srl));
         // …
     }
 }
@@ -895,13 +895,8 @@ class Index extends \ModuleObject
 <!-- modules/hello/ruleset/insert.xml -->
 <ruleset version="1.5.0">
     <fields>
-        <field name="title" required="true">
-            <rule rule="minlength" arg="2" />
-            <rule rule="maxlength" arg="100" />
-        </field>
-        <field name="email" required="true">
-            <rule rule="email" />
-        </field>
+        <field name="title" required="true" length="2:100" />
+        <field name="email" required="true" rule="email" />
     </fields>
 </ruleset>
 ```
@@ -946,7 +941,7 @@ modules/<name>/
 | `MyModuleMobile` | `modules/mymodule/mymodule.mobile.php` |
 | `MyModuleApi` | `modules/mymodule/mymodule.api.php` |
 
-(정규식상 `<Module>Wap`/`<Module>Item`도 인식되지만 실사용 없음 — 새 모듈에 만들지 말 것.)
+(정규식상 `<Module>Wap`도 인식되지만 실사용 없음. `<Module>Item`(`.item.php`)은 `DocumentItem`/`CommentItem`처럼 코어 도메인 객체로 실사용되나(둘 다 여전히 `BaseObject`를 상속하는 v1 클래스), v2 관례상 엔티티는 `Models\` 네임스페이스에 두는 방향 — 둘 다 새 모듈에 만들지 말 것.)
 
 ### module.xml (v1)
 

@@ -107,7 +107,7 @@ mysql -uroot -e "CREATE DATABASE rhymix; CREATE USER 'rhymix'@'localhost' IDENTI
 php codecept.phar build
 php codecept.phar run unit
 php codecept.phar run unit framework/RouterTest.php
-php codecept.phar run unit framework/RouterTest.php:testParseUrl
+php codecept.phar run unit framework/RouterTest.php:testParseURL
 php codecept.phar run --debug --fail-fast
 # install 스위트는 PHP dev 서버 필요
 php -S localhost:8000 &

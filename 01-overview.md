@@ -72,7 +72,7 @@ class DB extends Rhymix\Framework\DB {}
 
 ## 버전과 호환성
 
-- 현재 버전: **2.1.34** (`common/constants.php:6`).
+- 현재 버전: **2.1.35** (`common/constants.php:6`).
 - 최소 PHP: **7.4** (`common/autoload.php:14-19`에서 런타임 강제). 참고로 `common/composer.json`의 `require.php`는 `>=7.2.5`로 더 느슨하다.
 - 권장 PHP: **8.1+**.
 - CI 매트릭스: PHP **7.4 ~ 8.5** (`.github/workflows/ci.yml`).

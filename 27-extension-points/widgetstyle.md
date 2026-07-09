@@ -51,6 +51,7 @@ widgetstyles/<name>/
 ### v1 예시
 
 ```html
+<!--%import("style.css")-->
 <div class="widget-box" style="border: 1px solid {$widgetstyle_extra_var->border_color}; background: {$widgetstyle_extra_var->background_color};">
     <!--@if($widgetstyle_extra_var->ws_title)-->
         <h3 class="widget-title">
@@ -70,6 +71,7 @@ widgetstyles/<name>/
 ### v2 예시
 
 ```blade
+@load('style.css')
 <div class="widget-box" style="border:1px solid {{ $widgetstyle_extra_var->border_color }};">
     @if($widgetstyle_extra_var->ws_title)
         <h3>{{ $widgetstyle_extra_var->ws_title }}</h3>
@@ -121,7 +123,7 @@ widgetstyles/<name>/
      skin="default" />
 ```
 
-위젯스타일 `extra_vars`의 var id와 이름이 같은 속성만 `$widgetstyle_extra_var`로 전달된다 (`widget.controller.php:877-883`). 코어 `simple` 스타일은 var를 `ws_`로 시작하도록 지었기 때문에 속성명도 `ws_title`·`ws_more_url` 형태가 된다. 위젯 여백은 위젯스타일이 아니라 위젯 래퍼의 `widget_padding_*` 속성으로 지정한다.
+위젯스타일 `extra_vars`의 var id와 이름이 같은 속성만 `$widgetstyle_extra_var`로 전달된다 (`widget.controller.php:811-814`). 코어 `simple` 스타일은 var를 `ws_`로 시작하도록 지었기 때문에 속성명도 `ws_title`·`ws_more_url` 형태가 된다. 위젯 여백은 위젯스타일이 아니라 위젯 래퍼의 `widget_padding_*` 속성으로 지정한다.
 
 ## 최소 예제
 
@@ -140,6 +142,7 @@ widgetstyles/<name>/
 ### `widgetstyles/myboxstyle/widgetstyle.html`
 
 ```html
+<!--%import("style.css")-->
 <div class="my-box">
     <div class="content">{$widget_content}</div>
 </div>

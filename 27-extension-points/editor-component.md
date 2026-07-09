@@ -37,13 +37,13 @@ modules/editor/components/<name>/
     <extra_vars>
         <var name="default_skin" type="select" default="basic">
             <title xml:lang="ko">기본 스킨</title>
-            <options>
-                <option value="basic"><title xml:lang="ko">기본</title></option>
-            </options>
+            <options value="basic"><title xml:lang="ko">기본</title></options>
         </var>
     </extra_vars>
 </component>
 ```
+
+`select` 타입의 선택지는 각각을 별도의 `<options>` 요소로 표기한다. 값은 `value` 속성(또는 `<value>` 자식), 라벨은 `<title>` 자식으로 넣으며, 선택지가 여러 개면 `<options>` 요소를 그만큼 반복한다. `<options>`로 `<option>` 자식들을 감싸면 파서가 인식하지 못해 빈 옵션만 만들어진다.
 
 ## EditorHandler API
 
@@ -54,9 +54,13 @@ class EditorHandler extends BaseObject
 {
     // 자식 컴포넌트는 반드시 생성자를 정의해야 한다.
     // EditorModel::getComponentObject가 `new $component($editor_sequence, $component_path)`로
-    // 객체를 만들기 때문(editor.model.php:593). 생성자에서 두 인자를 받아 $this에 저장하지 않으면
-    // BaseObject::__construct($error, $message)가 대신 호출되어 error=$editor_sequence로 세팅되고,
-    // dispEditorPopup의 $oComponent->toBool() 검사(editor.view.php:77)에서 실패한다.
+    // 객체를 만들기 때문(editor.model.php:593). 생성자를 아예 정의하지 않으면
+    // 상속된 BaseObject::__construct($error, $message)가 대신 호출되어 error=$editor_sequence로
+    // 세팅되고(정수 문자열이 아니면 -1, editor.model.php:593), dispEditorPopup의 $oComponent->toBool()
+    // 검사(editor.view.php:77)에서 실패해 component_not_founded 템플릿이 출력된다. 반면 생성자를
+    // 정의하되 두 인자를 $this에 저장하지 않으면 부모 생성자는 자동 호출되지 않고 error는 0으로
+    // 남아 toBool()은 통과한다. 이 경우 실패는 toBool이 아니라 이후 getPopupContent에서 발생하며,
+    // $this->component_path 등이 채워지지 않은 채(대개 빈 문자열 기본값) 잘못된 경로/URL로 동작이 깨진다.
     // $editor_sequence  : 동일 페이지의 에디터 인스턴스 식별자
     // $component_path   : 컴포넌트 디렉토리 경로 (`./modules/editor/components/<name>/`)
 
@@ -236,7 +240,8 @@ class MyHello extends EditorHandler
 ## 권한
 
 - 컴포넌트 사용 권한은 에디터 모듈 단에서 관리.
-- 각 게시판/모듈에서 컴포넌트별 활성화 토글 가능.
+- 게시판/모듈별 에디터 설정에서는 그룹 단위로 기본/확장 컴포넌트 사용 권한(`enable_default_component_grant`/`enable_component_grant`)만 부여한다(컴포넌트별 토글은 없음).
+- 개별 컴포넌트의 활성화 및 노출 범위(사용 그룹 `target_group`, 노출 모듈 `mid_list`)는 컴포넌트 관리 화면에서 전역으로 설정하며, `mid_list`로 특정 게시판에만 노출되도록 제한할 수 있다.
 
 ## 코어 컴포넌트 (4종)
 

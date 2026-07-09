@@ -206,7 +206,7 @@ $api_key = $addon_info->api_key;
 
 ### 2) 모듈별
 
-각 모듈 설정에서 사이트 기본을 override 가능.
+애드온 설정 화면(setup_addon.html)에서 대상 모듈(mid)을 선택해 특정 모듈에서만 실행(`run_selected`)하거나 특정 모듈만 제외하고 실행(`no_run_selected`)하도록 범위를 지정 가능. 설정은 각 모듈 관리 화면이 아니라 애드온 관리 모듈의 개별 애드온 설정에서 이뤄진다.
 
 ### 3) PC/모바일 별도
 
@@ -261,7 +261,7 @@ if ($called_position == 'before_display_content' && Context::getResponseMethod()
 
 - **모든 요청에서 실행되므로 매우 가볍게 작성**.
 - 무거운 작업은 큐로 분리.
-- 다른 애드온과의 순서가 중요하면 우선순위 설정.
+- 애드온 실행 순서는 애드온 폴더명의 알파벳 오름차순으로 고정되며(우선순위 설정 없음), 순서가 중요하면 폴더명으로 조정한다.
 - `$output`을 직접 가공할 때는 정규식 대신 DOM 파싱 권장 (큰 페이지 오버헤드 주의).
 - HTML 응답이 아닌 경우(JSON/RAW 등) `before_display_content`에서 분기 필수.
 

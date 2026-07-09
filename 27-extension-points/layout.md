@@ -106,7 +106,7 @@ m.layouts/<name>/              # 모바일 (동일 구조)
         <nav>
             <ul>
                 <!--@foreach($GNB->list as $key => $item)-->
-                <li><a href="{$item['url']}">{$item['link']}</a></li>
+                <li><a href="{$item['href']}">{$item['link']}</a></li>
                 <!--@end-->
             </ul>
         </nav>
@@ -145,7 +145,7 @@ m.layouts/<name>/              # 모바일 (동일 구조)
         <nav>
             <ul>
                 @foreach($GNB->list as $key => $item)
-                <li><a href="{{ $item['url'] }}">{{ $item['link'] }}</a></li>
+                <li><a href="{{ $item['href'] }}">{{ $item['link'] }}</a></li>
                 @endforeach
             </ul>
         </nav>
@@ -182,7 +182,8 @@ $GNB->list = [
     'menu_srl_1' => [
         'node_srl' => 1,
         'link' => '메뉴1',
-        'url' => '/free',
+        'href' => '/free',          // getSiteUrl로 생성된 완성 링크 (rewrite 설정에 따라 값이 달라짐)
+        'url' => 'free',            // 관리자 입력 원본값: 내부 메뉴는 슬래시 없는 mid 문자열. 링크에는 href를 사용.
         'text' => '메뉴1',
         'open_window' => 'N',
         'list' => [ /* 하위 메뉴 */ ],
@@ -219,7 +220,7 @@ $module_info->mlayout_srl      // 모바일 레이아웃 srl
 
 ## 사용자 편집 레이아웃
 
-레이아웃 자체를 관리자가 드래그앤드롭으로 편집 가능 (`modules/layout/`). 편집 결과는 `files/faceOff/<numbering>/layout.html`에 저장되며(예: `layout_srl=5` → `files/faceOff/005/layout.html`; `getNumberingPath`는 3자리 0채움, 1000 이상부터 디렉토리를 중첩) `ModuleObject::edited_layout_file`로 적용된다. `files/cache/layout/`는 컴파일 캐시(`*.cache.php`)와 관리자 미리보기용 `tmp.tpl` 전용이다.
+레이아웃 자체를 관리자가 드래그앤드롭으로 편집 가능 (`modules/layout/`). 편집 결과는 `files/faceOff/<numbering>/layout.html`에 저장되며(예: `layout_srl=5` → `files/faceOff/005/layout.html`; `getNumberingPath`는 3자리 0채움, 1000 이상부터 디렉토리를 중첩) `ModuleObject::edited_layout_file`로 적용된다. `files/cache/layout/`에는 info.xml 파싱 결과(레이아웃 정보 객체) 캐시인 `*.cache.php`와 관리자 미리보기용 `tmp.tpl`이 저장된다. (레이아웃 템플릿 자체의 컴파일 캐시는 `files/cache/template/*.compiled.php`에 별도로 저장된다.)
 
 ## 최소 예제
 
@@ -259,7 +260,7 @@ $module_info->mlayout_srl      // 모바일 레이아웃 srl
         <h1>{$layout_info->SITE_TITLE}</h1>
         <nav>
             <!--@foreach($GNB->list as $item)-->
-            <a href="{$item['url']}">{$item['link']}</a>
+            <a href="{$item['href']}">{$item['link']}</a>
             <!--@end-->
         </nav>
     </header>

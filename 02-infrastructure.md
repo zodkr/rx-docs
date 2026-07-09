@@ -54,7 +54,7 @@ Rhymix를 실행/배포할 때 필요한 PHP 환경, DB, 드라이버, 웹서버
 | `file` | `files/cache/store/` 디렉토리 사용 |
 | `memcached` | `ext-memcached` 필요 |
 | `redis` | `ext-redis` 필요 |
-| `sqlite` | `ext-pdo_sqlite` 필요 |
+| `sqlite` | `ext-sqlite3` 필요 |
 
 ### 메일 (`common/framework/drivers/mail/`)
 
@@ -86,7 +86,7 @@ Rhymix를 실행/배포할 때 필요한 PHP 환경, DB, 드라이버, 웹서버
 | 드라이버 | 비고 |
 |---|---|
 | `db` | RDBMS 백엔드 (기본) |
-| `redis` | Redis ZSet 기반 |
+| `redis` | Redis List 기반 (lPush/rPush, lpop/blpop) |
 | `dummy` | 즉시 무시 |
 
 ## 웹서버

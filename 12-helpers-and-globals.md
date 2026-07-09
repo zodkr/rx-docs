@@ -8,7 +8,7 @@
 
 | 상수 | 의미 | 정의 위치 |
 |---|---|---|
-| `RX_VERSION` | 현재 Rhymix 버전 (예: `'2.1.34'`) | `:6` |
+| `RX_VERSION` | 현재 Rhymix 버전 (예: `'2.1.35'`) | `:6` |
 | `RX_MICROTIME` | 스크립트 시작 microtime (float) | `:11` |
 | `RX_TIME` | 시작 unix time (int) | `:16` |
 | `RX_BASEDIR` | 서버측 절대 경로 (trailing `/`) | `:21` |

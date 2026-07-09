@@ -36,7 +36,7 @@ extravar는 **완전한 v2 namespace 모듈**이다 (`modules/extravar/`에 `<na
 
 회원 모듈/게시판 관리자 UI에서 확장 필드를 추가:
 
-- 타입 (관리자 선택 목록 `$lang->column_type_list`, `common/lang/ko.php:320`): `text`/`textarea`/`password`/`select`/`radio`/`checkbox`/`tel`/`tel_v2`/`tel_intl`/`tel_intl_v2`/`homepage`(URL)/`email_address`/`kr_zip`(한국 주소·우편번호)/`country`/`language`/`date`/`time`/`timezone`/`number`/`file`.
+- 타입 (관리자 선택 목록 `$lang->column_type_list`, `common/lang/ko.php:321`): `text`/`textarea`/`password`/`select`/`radio`/`checkbox`/`tel`/`tel_v2`/`tel_intl`/`tel_intl_v2`/`homepage`(URL)/`email_address`/`kr_zip`(한국 주소·우편번호)/`country`/`language`/`date`/`time`/`timezone`/`number`/`file`.
 - 필수/선택.
 - 기본값/허용값.
 

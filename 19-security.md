@@ -8,7 +8,7 @@ Rhymix가 제공하는 보안 메커니즘 일람. **보안 취약점 보고는 
 
 - POST/PUT/DELETE 등 비-안전 메서드는 자동 CSRF 검증.
 - 면제: `ModuleHandler::$_nocsrf_methods` = `['GET', 'HEAD', 'OPTIONS']`.
-- `_rx_csrf_token` 파라미터 또는 헤더, Origin/Referer 검증.
+- 기본값 `security.check_csrf_token=false`에서는 토큰 검사를 생략하고 `Sec-Fetch-Site`·Origin·Referer로 same-origin을 검증한다. 이 설정을 `true`로 켜면 로그인 사용자의 `_rx_csrf_token` 파라미터 또는 `X-CSRF-Token` 헤더도 필수로 검증한다 (`common/framework/Security.php:327-380`).
 
 ### 액션별 비활성
 
@@ -135,9 +135,11 @@ $temp = Rhymix\Framework\Password::getRandomPassword(16);   // 16자 (기본)
 
 ### `Rhymix\Framework\Filters\FileContentFilter`
 
-- 매직 바이트 (file signature) 검사.
-- PHP 코드 패턴 검출 (`<?php`, `<?=`).
-- SVG/XML의 스크립트·이벤트 핸들러 등 위험 패턴을 정규식으로 탐지해 거부(`_checkSVG`). (`enshrined/svg-sanitize` 기반 정화는 `Security::sanitize($str, 'svg')`에서 수행)
+- JPEG/PNG/GIF/WebP 및 지정된 audio/video 확장자는 `fileinfo`로 판별한 대분류가 선언 확장자와 맞는지 검사한다.
+- SVG 또는 XML/HTML로 보이는 콘텐츠는 스크립트·이벤트 핸들러·외부 entity 등 위험 패턴을 정규식으로 탐지한다.
+- PHP 태그 검출(`<?`, XML 선언 제외)은 HTML 또는 XML-like 콘텐츠에 적용되는 `_checkHTML()` 단계의 규칙이다. 임의 확장자의 모든 파일을 PHP 코드 스캐너처럼 검사하는 것은 아니다 (`common/framework/filters/FileContentFilter.php:36-96,138-155`).
+
+(`enshrined/svg-sanitize` 기반 정화는 `Security::sanitize($str, 'svg')`에서 수행한다.)
 
 ### `UploadFileFilter` (legacy)
 
@@ -161,9 +163,9 @@ $ranges = ['192.168.0.0/24', '10.*.*.*', '203.0.113.5'];
 $blocked = Rhymix\Framework\Filters\IpFilter::inRanges(RX_CLIENT_IP, $ranges);
 ```
 
-### 기본 차단 목록
+### 기본 IP 차단 목록
 
-`common/defaults/blacklist.php` — 알려진 악성 IP 대역.
+코어에는 알려진 악성 IP를 자동 차단하는 기본 목록이 없다. `IpFilter::inRanges()`에는 호출자가 설정한 범위를 전달해야 한다. 이름이 비슷한 `common/defaults/blacklist.php`는 IP 목록이 아니라 호환되지 않는 **deprecated addon/module/widget** 목록이다.
 
 ### 한국 IP 대역
 
@@ -226,11 +228,9 @@ XE 호환. iframe/object/embed/applet 화이트리스트.
 
 ## 로봇 / SEO
 
-### 로봇 차단
+### 로봇 판별
 
-`config('security.robot_user_agents')` — UA 패턴 차단.
-
-기본 차단 봇은 거의 없음. 어뷰징 봇 추가 시 사용.
+`config('security.robot_user_agents')`는 `UA::isRobot()`이 로봇으로 **분류**할 추가 부분 문자열 목록이다 (`common/framework/UA.php:156-190`). 이 설정만으로 요청을 차단하지는 않는다. 차단이 필요하면 웹서버, 애드온, 스팸필터 등에서 `UA::isRobot()` 결과나 별도 정책을 사용한다.
 
 ### 외부 링크 nofollow
 
@@ -272,10 +272,11 @@ $decoded = JWT::decode($token, new Key($key, 'HS256'));
 ## SQL Injection
 
 - 모든 XML 쿼리는 PDO prepared statement로 실행 — 자동 보호.
-- 동적 SQL이 필요하면 `DB::addQuotes()` 또는 `escape_sqstr()` 사용.
+- 동적 SQL이 필요하면 `DB::query($sql, ...$args)`의 placeholder나 `prepare()`/bound parameter를 사용한다. `DB::addQuotes()`는 레거시 호환용이므로 prepared statement가 우선이다. `escape_sqstr()`는 **PHP의 single-quoted 문자열 리터럴**을 만들기 위한 함수이지 SQL 이스케이프 함수가 아니다 (`common/functions.php:228-238`).
 
 ## Open Redirect
 
+- `Rhymix\Framework\URL::isInternalURL()`은 상대 경로를 내부 URL로 인정하고, 절대 URL은 현재 요청의 host(포트 포함) 또는 `domains` 테이블에 등록된 도메인과 일치해야 통과시킨다. 등록 도메인의 비표준 HTTP/HTTPS 포트도 해당 scheme의 설정 포트와 정확히 일치해야 한다. 역슬래시는 `/`로 정규화하며, `http`/`https` 외의 명시적 scheme(`javascript:`, `data:`, `file:`, `ftp:`, `mailto:` 등)은 거부한다 (`common/framework/URL.php:106-158`, `tests/unit/framework/URLTest.php:123-151`).
 - `Context`의 요청 변수 필터링(`_filterRequestVar()`) 단계에서 `success_return_url`/`error_return_url`을 검증한다. 단, **이 검증은 GET이 아닌 요청(POST 등)에만 적용된다.** `_filterRequestVar()`의 `elseif` 체인에서 GET 요청은 앞선 분기(`classes/context/Context.class.php:1525`)에 먼저 걸려 값이 escape만 되고, `Rhymix\Framework\URL::isInternalURL()` 검증(`classes/context/Context.class.php:1533-1541`)까지 도달하지 못한다.
 - 비(非)GET 요청에서 외부 URL이 감지되면 값을 null로 제거하고 `security_check`를 `DENY ALL`로 설정해 요청 전체를 차단한다.
 - 따라서 `?success_return_url=https://...`처럼 **GET 파라미터로 전달된 리다이렉트 URL은 이 단계에서 내부 URL 여부가 검사되지 않으므로**, 그 값을 소비해 리다이렉트하는 쪽에서 별도로 내부 URL임을 보장해야 한다.
@@ -286,6 +287,8 @@ $decoded = JWT::decode($token, new Key($key, 'HS256'));
 Rhymix\Framework\Storage::protectDirectory($path);
 // .htaccess (Deny from all) + index.html (빈 파일) 생성
 ```
+
+이는 Apache가 `.htaccess`를 허용하는 경우에만 효과가 있는 best-effort 보조 수단이다. nginx 등에서는 별도 서버 설정으로 민감한 디렉토리를 차단해야 한다 (`common/framework/Storage.php:876-913`).
 
 ## 보안 체크 패턴 (`Context::_check_patterns`)
 

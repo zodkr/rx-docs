@@ -19,6 +19,8 @@ common.<name>    → common/scripts/<name>.php
 
 자동으로 `common/scripts/common.php`가 먼저 require되어 부트스트랩이 완성된다 (`:1243`).
 
+이 공통 부트스트랩은 CLI가 아니면 종료하고, root UID 실행도 거부한다. 또한 `files/config/config.php`가 있으면 현재 UID가 그 파일의 소유 UID와 같아야 한다 (`common/scripts/common.php:18-45`). 따라서 cron은 root가 아니라 평소 웹서버가 Rhymix 파일을 소유·작성하는 동일 사용자로 등록한다.
+
 ## 동봉 스크립트
 
 ### common/scripts/
@@ -44,6 +46,7 @@ common.<name>    → common/scripts/<name>.php
 | `modules/file/scripts/cleanGarbageFiles.php` | `php index.php file.cleanGarbageFiles` |
 | `modules/file/scripts/cleanThumbnails.php` | `php index.php file.cleanThumbnails` |
 | `modules/communication/scripts/cleanMessageFiles.php` | `php index.php communication.cleanMessageFiles` |
+| `modules/ncenterlite/scripts/cleanNotifications.php` | `php index.php ncenterlite.cleanNotifications` |
 
 (`cron.php`를 제외한 `common/scripts` 스크립트는 모두 `@deprecated`된 wrapper이며, 대응 모듈 스크립트를 직접 부르는 것과 동등하다. 각 파일 docblock이 권장 호출을 지시한다. 신규 cron 등록에는 위 모듈 스크립트를 직접 사용한다.)
 
@@ -95,7 +98,8 @@ https://example.com/common/scripts/cron.php?key=<config('queue.key')>
 
 - 코어 영역: `common/scripts/` (보통 코어 PR로만).
 - 모듈 영역: `modules/<module>/scripts/`.
-- 플러그인 영역: 자체 `<plugin>/scripts/`.
+
+CLI dispatcher가 직접 찾는 경로는 위 두 종류뿐이다. `addons/`, `plugins/`, `widgets/` 등의 임의 `<plugin>/scripts/`는 자동 탐색하지 않으므로, 별도 진입점이 필요하면 모듈 스크립트 또는 독립 실행 파일로 제공해야 한다 (`ModuleHandler.class.php:1221-1245`).
 
 ### 템플릿
 
@@ -120,9 +124,16 @@ $list = $oDocumentModel->getDocumentList((object)['module_srl' => 1]);
 
 ### 인자 받기
 
-`procCommandLineArguments`가 첫 2개 토큰만 명령으로 쓰고, 나머지는 `$args`로 전달하지만 스크립트 내부에서 명시적으로 접근하지 않으면 사용되지 않는다.
+`procCommandLineArguments`는 `$argv[1]`의 단일 `<module>.<script>` 토큰을 명령으로 사용하고, `$argv[2]` 이후를 배열로 잘라 로컬 `$args`에 담은 상태에서 스크립트를 require한다 (`ModuleHandler.class.php:1223-1224`). 따라서 스크립트는 `$args[0]`부터 바로 사용할 수 있다.
 
-전역 `$argv` 사용:
+```php
+<?php
+// modules/foo/scripts/run.php
+$user_srl = isset($args[0]) ? (int)$args[0] : 0;
+// php index.php foo.run 123
+```
+
+원본 CLI 인덱스까지 필요하면 전역 `$argv`도 사용할 수 있다.
 
 ```php
 <?php

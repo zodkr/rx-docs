@@ -23,8 +23,9 @@ return [
         ],
     ],
     'cache' => [
-        'type' => ['file'],
+        'type' => 'redis',
         'ttl' => 86400,
+        'servers' => ['redis://127.0.0.1:6379#0'],
     ],
     // ...
 ];
@@ -57,7 +58,7 @@ return [
 | `config_version` | 설정 파일 스키마 버전 (`'2.0'`) |
 | `db.*` | DB 연결 정보 |
 | `cache.*` | 캐시 드라이버 |
-| `ftp.*` | FTP 폴백 |
+| `ftp.*` | XE 호환용 legacy 기본값 (현재 코어와 Storage 쓰기 폴백에서 사용하지 않음) |
 | `crypto.*` | 암호화 키 |
 | `locale.*` | 시간대, 언어 |
 | `url.*` | 라우팅, 도메인 |
@@ -105,17 +106,17 @@ Rhymix\Framework\Config::save();
 `files/config/config.php`에 직렬화 저장 (`common/framework/Config.php:137`):
 
 1. 기존 `config.php`가 있으면 `config.php.backup.<시각>.php`로 복사 백업하고 원본과 크기가 일치하는지 확인 (불일치 시 `false` 반환·중단).
-2. 직렬화한 설정을 `config.php`에 직접 기록하고, 기록된 크기가 예상과 일치하는지 확인 (불일치·실패 시 `false` 반환).
+2. 직렬화한 설정을 `Storage::write()`로 기록하고, 기록된 크기가 예상과 일치하는지 확인 (불일치·실패 시 `false` 반환). `Storage::write()`는 일반적인 조건에서 임시 파일+rename을 사용한다.
 3. 성공 시 백업 파일 삭제.
 4. XE 호환 더미 파일 `files/config/db.config.php`·`files/config/ftp.config.php`를 경고 주석과 함께 갱신.
 
-(임시 파일·rename·PHP 로드 검증·실패 시 백업 복구는 하지 않는다.)
+(PHP 로드 검증과 실패 시 백업 자동 복구는 하지 않는다. 쓰기 실패 시 남은 backup 파일은 수동 복구에 활용할 수 있다.)
 
 ## dot-notation
 
 ```php
 config('db.master.host');           // 'localhost'
-config('cache');                    // ['type'=>['file'], 'ttl'=>86400, ...]
+config('cache');                    // ['type'=>'redis', 'ttl'=>86400, ...]
 ```
 
 ## `config.user.inc.php` (코드 override)
@@ -127,13 +128,13 @@ config('cache');                    // ['type'=>['file'], 'ttl'=>86400, ...]
 // config/config.user.inc.php
 config('debug.enabled', true);
 config('debug.display_to', 'admin');
-config('cache.type', ['file']);
+config('cache.type', 'redis');
 
 // 환경 변수 활용
 if (getenv('APP_ENV') === 'production') {
     config('debug.enabled', false);
-    config('cache.type', ['redis', 'file']);
-    config('cache.servers', [getenv('REDIS_HOST') . ':6379']);
+    config('cache.type', 'redis');
+    config('cache.servers', ['redis://' . getenv('REDIS_HOST') . ':6379#0']);
 }
 ```
 
@@ -175,9 +176,9 @@ config('url.ssl');                              // 'always'/'optional'/'none'
 ### 캐시
 
 ```php
-config('cache.type');                           // ['redis', 'file']
+config('cache.type');                           // 'apc'/'dummy'/'memcached'/'redis'/'sqlite' 중 하나
 config('cache.ttl');                            // 86400
-config('cache.servers');                        // ['127.0.0.1:6379']
+config('cache.servers');                        // ['redis://127.0.0.1:6379#0']
 ```
 
 ### 보안
@@ -189,7 +190,7 @@ config('security.x_frame_options');             // 'SAMEORIGIN'
 config('security.x_content_type_options');      // 'nosniff'
 config('security.robot_user_agents');           // []
 config('security.nofollow');                    // false
-config('security.check_csrf_token');            // false (false면 폼 토큰 검사 생략)
+config('security.check_csrf_token');            // false (토큰 검사만 생략, same-origin 검사는 계속)
 ```
 
 (`security.password_hashing_cost`/`security.password_hashing_algorithm`은 코어 키가 아니다 — 비밀번호 알고리즘/work factor는 `MemberModel::getMemberConfig()->password_hashing_algorithm`/`password_hashing_work_factor`에서 읽는다. [19-security.md](19-security.md) 참고.)
@@ -205,18 +206,23 @@ config('mobile.viewport');                      // 'width=device-width, initial-
 ### 디버그
 
 ```php
-config('debug.enabled');                        // false (프로덕션)
+config('debug.enabled');                        // true (common/defaults의 초기 기본값, 운영에서는 false 권장)
 config('debug.display_to');                     // 'admin'
 config('debug.allow');                          // IP 화이트리스트
-config('debug.display_type');                   // ['comment', 'panel']
+config('debug.display_type');                   // ['comment'] (초기 기본값, 복수 지정 가능)
 config('debug.log_slow_queries');               // 0.25
 ```
 
 ### 큐
 
 ```php
-config('queue.driver');                         // 'db'/'redis'
+config('queue.enabled');                        // 비동기 알림/예약 작업 활성 여부
+config('queue.driver');                         // 'db'/'redis'/'dummy'
 config('queue.key');                            // HTTP 워커 인증 키
+config('queue.interval');                       // 워커 실행 간격(분)
+config('queue.process_count');                  // CLI 워커 프로세스 수
+config('queue.display_errors');                 // HTTP 워커 오류 표시 여부
+config('queue.redis');                          // Redis 선택 시 host/port/dbnum 등
 ```
 
 ### 회원
@@ -226,13 +232,14 @@ config('queue.key');                            // HTTP 워커 인증 키
 ```php
 $mconf = MemberModel::getMemberConfig();
 $mconf->password_strength;   // 'normal'
-$mconf->identifier;          // 'user_id' 또는 'email_address' ('both'는 없음)
+$mconf->identifiers;         // 로그인 식별자 배열. 기본 ['user_id', 'email_address'], phone_number도 가능
+$mconf->identifier;          // 하위 호환용 대표 식별자(user_id/email_address)로 계산된 값
 $mconf->enable_confirm;      // 'Y'/'N' (이메일 인증 — signup_check_email 키는 없음)
 ```
 
 ## ConfigHelper
 
-`ConfigHelper::consolidate($format)` (`common/framework/Helpers/ConfigHelper.php:24`) — module.xml 등의 설정 포맷 배열을 받아 `common:키`(시스템 config)/`<module>:키`(`getModuleConfig`) 참조와 필터 함수(`strtolower` 등 함수명)를 적용해 여러 소스에서 값을 취합하는 정적 메서드다. 생성자·인스턴스 프로퍼티·`set()`은 없다.
+`ConfigHelper::consolidate($format)` (`common/framework/helpers/ConfigHelper.php:24`) — module.xml 등의 설정 포맷 배열을 받아 `common:키`(시스템 config)/`<module>:키`(`getModuleConfig`) 참조와 필터 함수(`strtolower` 등 함수명)를 적용해 여러 소스에서 값을 취합하는 정적 메서드다. 생성자·인스턴스 프로퍼티·`set()`은 없다.
 
 ```php
 $values = Rhymix\Framework\Helpers\ConfigHelper::consolidate([

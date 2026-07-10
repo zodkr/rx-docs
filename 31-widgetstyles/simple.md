@@ -35,6 +35,8 @@ widgetstyles/simple/
 4. `ws_more_url`이 있으면 (http로 시작하지 않으면 `http://` prepend) `widgetMoreLink` 앵커 추가.
 5. `{$widget_content}` 출력.
 
+현재 `style.css`에는 `.black h2` 규칙이 두 번 선언되어 뒤의 `color:#999`가 앞의 `#333`을 덮어쓰고, `.white h2` 전용 규칙은 없다. 따라서 `white` 클래스는 붙지만 제목 색상에 대한 별도 효과는 없으며, 이 차이는 현재 번들 소스의 동작이다 (`widgetstyles/simple/style.css:4-5`).
+
 `<!--#WidgetContents-->` 같은 매크로가 아니라 단순 변수 `{$widget_content}`를 사용한다 — 위젯스타일은 일반 템플릿 파일이므로 모든 변수 접근은 `$var`/`$obj->prop` 문법.
 
 ## 관련

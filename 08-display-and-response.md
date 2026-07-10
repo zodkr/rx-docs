@@ -96,7 +96,7 @@ display.after              → echo 직전
 
 ## HTTP 상태 코드
 
-`_setHttpStatusMessage($code)` (`ModuleHandler.class.php`)이 상태 메시지 매핑.
+`_setHttpStatusMessage($code)` (`ModuleHandler.class.php`)이 상태 메시지를 매핑한다. 아래는 대표값이며 전체 목록은 `ModuleHandler.class.php:1434-1509`에 있다.
 
 | 코드 | 메시지 |
 |---|---|
@@ -111,7 +111,7 @@ display.after              → echo 직전
 | 500 | Internal Server Error |
 | 503 | Service Unavailable |
 
-200/403 외의 상태 코드는 본문 템플릿이 `http_status_code` 템플릿으로 강제된다 (`ModuleHandler::displayContent` `:1056-1059`).
+`ModuleHandler::$error`를 message object로 변환하는 에러 처리 분기에서는 200/403 외의 상태에 `http_status_code` 템플릿을 사용한다 (`ModuleHandler::displayContent` `:1049-1067`). 모듈이 임의의 non-200 상태를 설정한 모든 응답에 이 템플릿이 보편적으로 강제되는 것은 아니다.
 
 ## 보안/SEO 헤더
 
@@ -140,7 +140,7 @@ Context::set('page_navigation', $pageHandler);
 </block>
 ```
 
-처음/끝 링크는 `$page_navigation->first_page`, `$page_navigation->last_page` 프로퍼티를 사용한다.
+`$page_navigation->first_page`는 현재 표시 window의 첫 페이지이고, `$page_navigation->last_page`는 전체 마지막 페이지다. `getNextPage()`는 `first_page`부터 `page_count` 범위 안에서 `last_page`까지 순회한다 (`PageHandler.class.php:56-78`).
 
 ## 다음 문서
 

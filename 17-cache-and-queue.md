@@ -6,13 +6,13 @@
 
 ### 드라이버
 
-`common/framework/drivers/cache/` 하위 6종. 환경에 따라 자동 폴백.
+`common/framework/drivers/cache/` 하위 구현은 6종이다. 선택한 드라이버를 사용할 수 없을 때는 `dummy`로 폴백한다.
 
 | 드라이버 | 필요 환경 | 특징 |
 |---|---|---|
 | `apc` | ext-apcu | 단일 서버, 매우 빠름 |
-| `dummy` | — | 항상 miss (디버깅) |
-| `file` | — | `files/cache/store/` 디렉토리 |
+| `dummy` | — | 요청 내 메모리 캐시. `$force=true`인 항목만 파일에 영속 저장 |
+| `file` | — | Rhymix 2.1부터 직접 선택 불가. `dummy`의 강제 영속 항목용 내부 구현 |
 | `memcached` | ext-memcached | 분산 |
 | `redis` | ext-redis | 분산 + persistence |
 | `sqlite` | ext-sqlite3 | 단일 파일 DB |
@@ -23,7 +23,7 @@
 'cache' => [
     'type' => 'redis',
     'ttl' => 86400,
-    'servers' => ['127.0.0.1:6379'],
+    'servers' => ['redis://127.0.0.1:6379#0'],
     'truncate_method' => 'delete',       // 'delete' 또는 'empty'
 ]
 ```
@@ -48,6 +48,8 @@ Cache::clearAll(): bool;                          // 전체 비우기
 Cache::getPrefix(): string;                       // 현재 전역 prefix
 Cache::getDriverName(): ?string;                  // 실제 사용 중인 드라이버 이름
 ```
+
+`dummy`도 일반 `set()`/`get()`은 같은 요청 안에서 적중한다. `Cache::set(..., $force=true)`를 사용하면 `dummy`가 부모 file driver에 위임하여 필수 캐시를 `files/cache/store/`에 영속 저장한다 (`drivers/cache/dummy.php:43-87`). `file` driver 자체는 `isSupported()`가 항상 false이므로 직접 설정할 수 없다 (`drivers/cache/file.php:54-62`).
 
 ### 그룹 무효화 메커니즘
 
@@ -95,20 +97,28 @@ PSR-6 호환 라이브러리(예: Symfony Cache 사용자)와 연동 시 유용.
 
 | 드라이버 | 비고 |
 |---|---|
-| `db` | RDBMS (`task_queue` 테이블, 예약 작업은 `task_schedule`). 기본 |
+| `db` | RDBMS (`task_queue` 테이블, 예약 작업은 `task_schedule`) |
 | `redis` | Redis List(lPush/rPush·lpop/blpop) 기반 FIFO. PRIORITY_HIGH만 앞쪽 삽입 |
-| `dummy` | 즉시 무시 |
+| `dummy` | 테스트용 단일 메모리 작업 저장소. 최근 `addTask()` 1개만 보관하고 `getNextTask()`에서 한 번 반환 |
 
 예약 작업(`addTaskAt`/`addTaskAtInterval`)은 드라이버 설정과 무관하게 항상 DB 드라이버(`task_schedule` 테이블)를 사용한다.
+
+신규/미설정 상태의 기본 동작은 DB 큐가 아니라 **비활성**이다. 관리자 화면은 설정이 없으면 `dummy`를 표시하고, `Queue::addTask()`는 유효한 `queue.driver`가 없으면 `FeatureDisabled`를 던진다 (`common/framework/Queue.php:134-148`, `modules/admin/controllers/systemconfig/Queue.php:17-33`).
 
 설정 (`files/config/config.php`):
 
 ```php
 'queue' => [
+    'enabled' => true,
     'driver' => 'db',
-    'key' => '...',           // HTTP 워커 인증 키 (수동 생성 권장)
+    'display_errors' => false,
+    'interval' => 1,          // 워커 실행 간격(분), 관리자 UI 범위 1~10
+    'process_count' => 1,     // CLI 워커 프로세스 수, 관리자 UI 범위 1~10
+    'key' => '...',           // HTTP 워커 인증 키(16자 이상 영숫자)
 ],
 ```
+
+`queue.enabled`는 Mail/SMS/Push의 기본 비동기 발송과 예약 작업 API의 활성 여부를 결정한다. `Queue::addTaskAt()`/`addTaskAtInterval()`은 이 값이 false면 `FeatureDisabled`를 던진다. Redis를 선택하면 `queue.redis`에 `host`/`port`/`dbnum` 등 드라이버별 설정도 저장된다.
 
 ### 작업 추가
 

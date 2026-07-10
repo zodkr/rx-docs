@@ -37,8 +37,8 @@
 | `thumbnail_width` | text | 기본 100 (`proc()` fallback) | 썸네일 너비. |
 | `thumbnail_height` | text | 기본 75 (`proc()` fallback) | 썸네일 높이. |
 | `rss_url0`~`rss_url4` | text | — | 외부 RSS URL 5개 (`content_type=rss`일 때만 사용). |
-| `$args->skin` | (자동) | — | 스킨. |
-| `$args->colorset` | (자동) | — | 컬러셋. |
+| `$args->skin` | 공통 실행 인자 | 호출자가 선택 | 스킨. `content::proc()` 자체에는 fallback이 없으므로 직접 호출할 때도 반드시 유효한 스킨명을 전달한다. |
+| `$args->colorset` | 공통 실행 인자 | 기본 `''` | 컬러셋. `WidgetController::execute()`가 누락값을 빈 문자열로 초기화한다. |
 
 (`cut_title_length`/`cut_content_length`/`module_srl`(단수)/`category_srl`/`cache` 같은 인자는 코어 info.xml에 없다 — 실제 이름은 `subject_cut_size`/`content_cut_size`/`module_srls`다. `tab_top`/`tab_left`도 `tab_top_*` 같은 변형이 아닌 정확히 이 값들이다.)
 
@@ -76,7 +76,7 @@
 
 ## 캐시
 
-위젯 차원의 인자 기반 캐시(`cache=...`)는 코어 info.xml에 없다 — 캐싱이 필요하면 위젯스타일/외부 캐싱 레이어 또는 큐를 활용한다.
+`content` 전용 `cache` extra_var는 없지만, 모든 위젯에 공통인 실행 속성 `widget_cache`를 사용할 수 있다. 예를 들어 `widget_cache="10m"`은 결과 HTML과 실행 중 등록된 CSS/JS 자원을 10분간 함께 캐시한다. `s`/`m`/`h`/`d` 접미사를 지원하고, 접미사 없는 숫자는 분 단위로 해석한다 (`modules/widget/widget.controller.php:397-480`). 자세한 계약은 [위젯 작성 문서](../27-extension-points/widget.md#위젯-캐싱)를 참고한다.
 
 ## 관련
 

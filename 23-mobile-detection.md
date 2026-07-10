@@ -46,7 +46,7 @@ $info = Rhymix\Framework\UA::getBrowserInfo(?string $ua = null): UA;
 // $info->os, $info->os_version, $info->device, $info->browser, $info->version
 ```
 
-User-Agent가 비어 있으면 `$_SERVER['HTTP_USER_AGENT']` 사용.
+`isMobile()`은 인자를 생략하거나 `null`을 넘길 때만 `$_SERVER['HTTP_USER_AGENT']`를 사용하며, 명시적 빈 문자열은 그대로 판정한다. 반면 `isTablet()`, `isRobot()`, `getBrowserInfo()`는 빈 문자열도 헤더로 대체한다 (`common/framework/UA.php:48-64,111-116,156-161,214-218`).
 
 ## 쿠키 캐싱
 
@@ -75,7 +75,8 @@ User-Agent가 비어 있으면 `$_SERVER['HTTP_USER_AGENT']` 사용.
 
 | 값 | 의미 |
 |---|---|
-| `0` 또는 양수 | 지정 레이아웃 |
+| `0` | 레이아웃 없음 |
+| 양수 | 해당 `layout_srl`의 지정 레이아웃 |
 | `-1` | 사이트 기본 |
 | `-2` (mlayout_srl만) | PC 레이아웃 공유 |
 
@@ -89,7 +90,15 @@ User-Agent가 비어 있으면 `$_SERVER['HTTP_USER_AGENT']` 사용.
 
 ### 모바일 컨트롤러
 
-`modules/<m>/<m>.mobile.php`에 `<Module>Mobile` 클래스가 있으면 모바일 요청 시 우선 인스턴스화된다. 모바일 전용 액션을 작성하기 위함.
+`modules/<m>/<m>.mobile.php`에 `<Module>Mobile` 클래스가 있으면 다음 조건을 모두 만족할 때 우선 인스턴스화된다.
+
+- 액션 타입이 `view`.
+- `module.xml` 액션에 별도 `class`가 지정되지 않은 레거시 클래스 해석 경로.
+- 모듈 인스턴스 설정의 `use_mobile === 'Y'`.
+- 현재 요청이 모바일로 판정됨.
+- 모바일 클래스에 현재 액션 메서드가 존재함.
+
+명시적 `class`가 있으면 그 class 분기가 모바일 legacy 분기보다 우선한다. `use_mobile`이 `'Y'`가 아니면 UA 판정이나 `m=1`과 무관하게 PC 모드로 강제한다. 모바일 클래스 또는 액션 메서드가 없으면 PC `view`로 폴백하면서 현재 요청의 모바일 상태도 false로 바꾼다 (`classes/module/ModuleHandler.class.php:404-453`). 모바일 전용 액션을 작성하려면 이 폴백까지 고려해야 한다.
 
 ```php
 class FooMobile extends FooView
@@ -146,7 +155,9 @@ width=device-width, initial-scale=1.0, user-scalable=yes
 
 ## 봇 분기
 
-`Rhymix\Framework\UA::isRobot()`로 봇 감지. 봇은 PC로 처리된다. `seo` 설정에는 robots/canonical 관련 키가 없다 — robots `noindex` 메타 태그는 액션의 `meta-noindex` 속성(`module.xml`)에 따라 `Context::addMetaTag('robots', 'noindex')`로 출력되고(`classes/module/ModuleHandler.class.php:364`; admin 액션도 동일), 모듈의 `robots_tag === 'noindex'` 설정은 이와 별도로 `X-Robots-Tag: noindex` HTTP 헤더를 출력하며(`classes/display/DisplayHandler.class.php:128`), canonical URL은 `HTMLDisplayHandler`에서 `Context::setCanonicalURL()`로 seo 설정과 무관하게 설정된다(`classes/display/HTMLDisplayHandler.php:565`). `config('security.nofollow')`는 이와 별개로 본문 콘텐츠 내 링크에 `rel="nofollow"`를 붙이는 옵션이다(`common/framework/filters/HTMLFilter.php:230`).
+`Rhymix\Framework\UA::isRobot()`로 봇을 별도 감지할 수 있지만, `Mobile::isFromMobilePhone()`에는 로봇을 PC로 강제하는 분기가 없다. 따라서 모바일 패턴과 로봇 패턴을 함께 만족하는 UA는 모바일로 판정될 수 있으며, 필요하면 호출부에서 두 결과를 조합해야 한다 (`classes/mobile/Mobile.class.php:31-78`, `common/framework/UA.php:156-190`).
+
+`seo` 설정에는 robots/canonical 관련 키가 없다 — robots `noindex` 메타 태그는 액션의 `meta-noindex` 속성(`module.xml`)에 따라 `Context::addMetaTag('robots', 'noindex')`로 출력되고(`classes/module/ModuleHandler.class.php:364`; admin 액션도 동일), 모듈의 `robots_tag === 'noindex'` 설정은 이와 별도로 `X-Robots-Tag: noindex` HTTP 헤더를 출력하며(`classes/display/DisplayHandler.class.php:128`), canonical URL은 `HTMLDisplayHandler`에서 `Context::setCanonicalURL()`로 seo 설정과 무관하게 설정된다(`classes/display/HTMLDisplayHandler.php:565`). `config('security.nofollow')`는 이와 별개로 본문 콘텐츠 내 링크에 `rel="nofollow"`를 붙이는 옵션이다(`common/framework/filters/HTMLFilter.php:230`).
 
 ## 다음 문서
 

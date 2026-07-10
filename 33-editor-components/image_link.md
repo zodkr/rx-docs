@@ -38,7 +38,7 @@
 | `link_url` | 있으면 `<a href="..." [target=_blank rel=noopener]><img/></a>`로 감쌈 |
 | `open_window` | `'Y'`이면 `target="_blank" rel="noopener"` 추가 |
 
-(주의: `src`/`alt`/`title`이 별도 escape 없이 속성 값으로 들어가므로, 외부 입력은 컴포넌트 팝업/서버 측에서 사전 정화되어야 한다 — `transHTML`은 이미 저장된 마커를 재구성만 한다.)
+(주의: `src`는 `&`와 `"`에 대해서만 제한적으로 치환하지만, `alt`·`title`·`link_url`은 HTML 속성용 escape 없이 출력된다. 외부 입력은 컴포넌트 팝업/서버 측에서 사전 정화되어야 한다 — `transHTML`은 이미 저장된 마커를 재구성만 한다.)
 
 ## 관련
 

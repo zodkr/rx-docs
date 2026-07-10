@@ -37,7 +37,7 @@
 
 ## 동작
 
-- 동명 애드온([../29-addons/counter.md](../29-addons/counter.md))이 모든 페이지 진입을 기록.
+- 동명 애드온([../29-addons/counter.md](../29-addons/counter.md))은 `before_display_content` 시점의 설치 완료된 HTML 요청 중 관리자 모듈과 crawler를 제외한 방문만 기록한다 (`addons/counter/counter.addon.php:13-17`).
 - 모듈은 집계/표시.
 
 ## 관련 위젯

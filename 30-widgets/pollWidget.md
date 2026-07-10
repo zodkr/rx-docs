@@ -14,8 +14,8 @@
 |---|---|---|
 | `poll_srl` | text | 표시할 설문의 `poll_srl`. `proc()`이 `intval()`로 강제 변환 |
 | `$args->style` | (info.xml에 없음) | `Context::set('style', $args->style)`로 그대로 노출. 스킨이 활용 가능 |
-| `$args->skin` | (자동) | 스킨 |
-| `$args->colorset` | (자동) | 컬러셋 |
+| `$args->skin` | 공통 실행 인자 | 호출자가 선택하는 스킨. `proc()`에는 fallback이 없음 |
+| `$args->colorset` | 공통 실행 인자 | 컬러셋. 누락 시 공통 실행기가 빈 문자열로 초기화 |
 
 (`display_type`/`show_total_count`/`bar_color` 같은 인자는 코어 info.xml에 정의되어 있지 않다.)
 

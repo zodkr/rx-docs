@@ -25,9 +25,9 @@ Rhymix는 **PHP로 작성된 콘텐츠 관리 시스템(CMS)**이며, **XpressEn
 |---|---|
 | `disp*` | HTML 페이지 표시 (View 계열) |
 | `proc*` | 처리/변경 액션 (Controller 계열) |
-| `get*` | 데이터 조회 (Model/API 계열) |
+| `get*` | 데이터 조회에 쓰이는 이름 관례 (v1 Model 액션은 `type="model"` 명시) |
 
-`ModuleActionParser`가 이를 활용해 `module.xml`의 type 속성을 자동 결정한다 (`common/framework/parsers/ModuleActionParser.php`).
+`ModuleActionParser`의 자동 판정은 **사용자 지정 `class`가 있고 `type`을 생략한 액션**에만 적용된다. 이때 `disp*`는 `view`, `proc*`는 `controller`, 그 밖의 이름(`get*` 포함)은 `auto`가 된다 (`common/framework/parsers/ModuleActionParser.php:164-179`).
 
 ### 2. XML 기반 메타데이터
 
@@ -40,7 +40,8 @@ Rhymix는 **PHP로 작성된 콘텐츠 관리 시스템(CMS)**이며, **XpressEn
 | `queries/*.xml` | 선언적 DB 쿼리 |
 | `schemas/*.xml` | DB 테이블 정의 |
 | `ruleset/*.xml` | 입력 검증 규칙 |
-| `skin.xml` | 스킨/레이아웃/위젯스타일 메타와 사용자 변수 |
+| `skins/<skin>/skin.xml`, `widgetstyles/<name>/skin.xml` | 모듈·위젯 스킨/위젯스타일 메타와 사용자 변수 |
+| `(m.)layouts/<name>/conf/info.xml` | PC/모바일 레이아웃 메타와 사용자 변수·메뉴 |
 
 파서는 `common/framework/parsers/`에 모여 있다.
 
@@ -49,7 +50,7 @@ Rhymix는 **PHP로 작성된 콘텐츠 관리 시스템(CMS)**이며, **XpressEn
 - **레거시**: `classes/` 하위, namespace 없음. 모든 모듈은 `ModuleObject`를 상속.
 - **신형**: `common/framework/`, `Rhymix\Framework\*`. PSR-4 스타일.
 
-대부분의 레거시 클래스는 신형의 wrapper다. 예시:
+일부 레거시 클래스는 신형의 wrapper지만, `Context`, `ModuleHandler`, Display 계열처럼 자체 구현을 유지하는 클래스도 많다. wrapper 예시:
 
 ```php
 // classes/db/DB.class.php
@@ -62,7 +63,7 @@ class DB extends Rhymix\Framework\DB {}
 
 ### 5. 통일된 응답 모델
 
-모든 모듈/위젯의 조상인 `BaseObject`(`classes/object/Object.class.php`)는 `error`/`message`/`variables` 상태와 `setError`/`get`/`add`/`toBool` API를 제공한다. 에러 상태는 `toBool()`로 평가되어 트리거/액션 중단을 결정한다.
+모든 모듈의 조상인 `BaseObject`(`classes/object/Object.class.php`)는 `error`/`message`/`variables` 상태와 `setError`/`get`/`add`/`toBool` API를 제공한다. 에러 상태는 `toBool()`로 평가되어 트리거/액션 중단을 결정한다. 위젯은 이 계층에 속하지 않고, `BaseObject`를 상속하지 않으며 `$widget_path` 속성만 가진 `WidgetHandler`를 직접 상속한다 (`classes/widget/WidgetHandler.class.php`).
 
 ## 라이선스
 
@@ -74,9 +75,10 @@ class DB extends Rhymix\Framework\DB {}
 
 - 현재 버전: **2.1.35** (`common/constants.php:6`).
 - 최소 PHP: **7.4** (`common/autoload.php:14-19`에서 런타임 강제). 참고로 `common/composer.json`의 `require.php`는 `>=7.2.5`로 더 느슨하다.
-- 권장 PHP: **8.1+**.
+- 공식 운영 권장 PHP: **8.2 이상** ([공식 설치 환경](https://rhymix.org/manual/introduction/requirements)).
+- 이 문서의 신규 코드 작성 기준: **PHP 8.4**. 단, 코어에 기여하는 코드는 아래 CI 범위와 호환되어야 한다.
 - CI 매트릭스: PHP **7.4 ~ 8.5** (`.github/workflows/ci.yml`).
-- DB: MySQL 5.5+ / MariaDB 10+.
+- DB: MySQL 5.7+ / MariaDB 10.6+ ([공식 설치 환경](https://rhymix.org/manual/introduction/requirements)).
 
 ## 가장 자주 보게 될 디렉토리 5종
 

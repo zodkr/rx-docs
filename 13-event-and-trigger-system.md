@@ -22,7 +22,7 @@ if (!$output->toBool()) {
 - `$trigger_name` — 점(.) 구분 식별자. 예: `moduleHandler.init`, `act:board.dispBoardContent`, `document.insertDocument`.
 - `$position` — `'before'` 또는 `'after'`.
 - `$obj` — 컨텍스트 (모듈 인스턴스, 데이터 객체 등).
-- 반환: `BaseObject`. 핸들러가 false를 리턴하면 `toBool()`이 false가 되어 호출자가 처리를 중단한다.
+- 반환: `BaseObject`. 처리를 거부하려면 DB 등록 핸들러는 `toBool()`이 false인 `BaseObject`를 반환해야 한다. 런타임 콜백도 `toBool()` 메서드가 있고 그 결과가 false인 객체를 반환해야 한다. 단순 boolean `false`는 중단 신호로 처리되지 않는다 (`ModuleHandler.class.php:1365-1368,1420-1423`).
 
 ### 코어가 정의하는 트리거
 
@@ -94,7 +94,7 @@ if (!$output->toBool()) {
 
 ### DB 등록
 
-모듈 설치 시 `ModuleController::registerEventHandlers($module_name)`(`modules/module/module.controller.php:1467`)이 `module.xml`의 `event_handlers` 배열을 순회하며 새 항목은 `insertTrigger($trigger_name, $module, $class_name, $method, $position)`(`:75`)로 추가하고, 더 이상 정의되지 않은 핸들러는 `deleteTrigger(...)`(`:100`)로 제거한다. 저장 테이블은 **`module_trigger`**(`modules/module/schemas/module_trigger.xml`)이며 `executeQuery('module.insertTrigger', $args)`를 사용한다. 캐시 키는 `'triggers'`. 기록 후 그 모듈이 비활성화되지 않는 한 모든 트리거 호출 시 자동 실행된다.
+모듈 설치 시 `ModuleController::registerEventHandlers($module_name)`(`modules/module/module.controller.php:1467`)이 `module.xml`의 `event_handlers` 배열을 순회하며 새 항목은 `insertTrigger($trigger_name, $module, $class_name, $method, $position)`(`:75`)로 추가하고, 더 이상 정의되지 않은 핸들러는 `deleteTrigger(...)`(`:100`)로 제거한다. 단, 현재 구현의 삭제 루프는 새 정의가 1개 이상 있을 때만 실행되므로(`module.controller.php:1487-1510`), 핸들러 정의를 전부 없앤 경우에는 이 메서드만으로 기존 DB 트리거가 정리되지 않는다. 저장 테이블은 **`module_trigger`**(`modules/module/schemas/module_trigger.xml`)이며 `executeQuery('module.insertTrigger', $args)`를 사용한다. 캐시 키는 `'triggers'`. 기록된 트리거는 대상 클래스가 존재하고 블랙리스트 플러그인이 아닌 한 호출된다.
 
 ### 런타임 등록 (코드 단)
 
@@ -234,13 +234,13 @@ flowchart TD
     T8 --> I[toDoc → 본문]
     I --> T9[trigger display.before]
     T9 --> AD4[addon before_display_content]
-    AD4 --> J[echo output]
-    J --> T10[trigger display.after]
+    AD4 --> T10[trigger display.after]
+    T10 --> J[echo output]
 ```
 
 ## 디버깅 팁
 
-- 디버그 모드에서 `display_content`에 `entries` 추가 시 어느 트리거가 발사됐는지 확인 가능.
+- 디버그 화면의 `entries`는 `Debug::addEntry()` 메시지용이다. 화면에서 확인할 수 있는 트리거 항목은 `display_content`의 `slow_triggers`이며 임계값 이상만 표시된다. 현재 요청의 전체 트리거 목록은 코드에서 `Debug::getTriggers()`로 조회한다.
 - `config('debug.log_slow_triggers')`로 느린 트리거 자동 기록.
 - 트리거가 실행되지 않는 듯하면 DB의 `module_trigger` 테이블 확인.
 

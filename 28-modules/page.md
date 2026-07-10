@@ -54,7 +54,10 @@
 
 ## 위젯 페이지
 
-본문에 위젯 마크업을 입력하면 `WidgetController::transWidgetCode()`가 위젯을 실행해 결과 HTML로 치환한다 (`page.view.php:150-151`). 결과는 `page_caching_interval`에 따라 `files/cache/page/`에 캐시된다.
+본문의 위젯 마크업은 `page_caching_interval`에 따라 두 경로로 처리된다 (`page.view.php:132-160`).
+
+- interval이 0보다 크고 캐시가 없거나 만료되면 `PageView::_getWidgetContent()`가 `WidgetController::transWidgetCode()`를 직접 호출해 결과 HTML을 `files/cache/page/`에 저장한다. 유효한 캐시는 변환 없이 읽는다.
+- interval이 0이면 기존 page cache를 삭제하고 마커가 남은 본문을 반환한다. 이후 최종 출력 직전 `display.before`의 widget trigger가 마커를 실행 결과로 치환한다.
 
 ## 관련
 

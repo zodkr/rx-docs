@@ -2,7 +2,7 @@
 
 ## Codeception
 
-Rhymix는 **Codeception 5.x** 기반 테스트를 사용한다. composer dev 의존성이 아니라 **`.phar` 파일을 다운로드**해 실행한다.
+Rhymix는 Composer dev 의존성 대신 **Codeception `.phar` 파일을 다운로드**해 테스트한다. 저장소에는 Codeception 버전이나 checksum이 고정되어 있지 않고, CI가 PHP 버전별 `https://res.rhymix.org/ci/php<버전>/codecept.phar`를 받는다 (`.github/workflows/ci.yml:26-27`). 따라서 정확한 Codeception 버전은 저장소만으로 단정할 수 없으며, 받은 파일에서 `php codecept.phar --version`으로 확인해야 한다.
 
 ### 설정 — `codeception.dist.yml`
 
@@ -47,7 +47,10 @@ coverage:
 
 ### install (`tests/install/`)
 
-설치 시나리오 + autoinstall 등 통합 테스트.
+두 가지 설치 시나리오의 통합 테스트.
+
+- `InstallCept.php` — 라이선스 동의부터 환경 확인, DB 설정, 관리자 생성까지 브라우저로 진행하는 대화형 설치.
+- `AutoinstallCept.php` — `config/install.config.php`를 미리 작성해 설치 화면 없이 진행하는 자동 설치. 여기서 `Autoinstall`은 `modules/autoinstall` 확장 설치 기능이 아니라 unattended core installation을 뜻한다.
 
 - PHP dev server 필요 (`php -S localhost:8000`).
 - MySQL 데이터베이스 `rhymix` (사용자 `rhymix`/비밀번호 `rhymix`) 필요.
@@ -67,7 +70,7 @@ coverage:
 ### 의존성
 
 ```bash
-# Codeception phar 다운로드 (PHP 버전 맞춤)
+# Codeception phar 다운로드 (PHP 8.4용 호스팅 artifact)
 wget https://res.rhymix.org/ci/php8.4/codecept.phar
 ```
 
@@ -130,14 +133,15 @@ if find . -name "*.php" ! -path "./common/vendor/*" -print0 | xargs -0 -n 1 -P 8
 
 CI(`.github/workflows/ci.yml:24`)는 위와 같이 파이프라인을 `if ... then exit 1` 래퍼로 감싼다. 안쪽 파이프라인만 떼어 실행하면 `grep -v` 특성상 exit 코드 의미가 역전되므로(에러가 있으면 grep이 출력되어 exit 0, 에러가 없으면 exit 1) 반드시 이 래퍼와 함께 사용한다.
 
-## 코딩 표준
+## 저장소 포맷 설정
 
-`.editorconfig`:
+`.editorconfig`이 직접 강제하는 항목:
 
-- **PHP**: tabs, BSD-style braces, `<?php` only (short tag 금지).
-- **JSON/YAML/Markdown**: 2-space indent.
-- **JS framework files**: 2-space indent.
-- UTF-8, LF, trim trailing whitespace, final newline.
+- 기본 들여쓰기(따라서 PHP 포함)는 tab.
+- Python은 4-space, JSON·`.yml`·Markdown과 JSX/TSX/Svelte/Vue는 2-space. `.yaml` 확장자에는 별도 규칙이 없다.
+- UTF-8, LF, final newline, 기본적으로 trailing whitespace 제거. Markdown은 hard line break를 보존하기 위해 trailing whitespace 제거 대상에서 제외.
+
+중괄호 위치나 PHP 태그 사용 규칙은 `.editorconfig` 항목이 아니다. 그 규칙은 `CONTRIBUTING.md`가 연결하는 공식 코딩 규칙을 별도로 따른다.
 
 ## PR / 이슈
 

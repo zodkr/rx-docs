@@ -29,7 +29,7 @@
 
 ## JS 위젯
 
-`kr_zip` extravar 타입 필드는 `KrzipModel::getKrzipCodeSearchHtml()`(`krzip.model.php:238`)이 렌더링한다 (호출부: `modules/extravar/skins/default/form_types/kr_zip.blade.php:5`). 설정된 API(`daumapi`/`epostapi`/`postcodify`)에 맞는 `tpl/template.{api}.html`을 컴파일하고, 해당 템플릿이 `modules/krzip/tpl/js/{api}.js`의 `$.fn.Krzip` jQuery 플러그인을 로드한다.
+`kr_zip` extravar 타입 필드는 `KrzipModel::getInstance()->getKrzipCodeSearchHtml($column_name, $values)`(`krzip.model.php:238`)이 렌더링한다 (호출부: `modules/extravar/skins/default/form_types/kr_zip.blade.php:2-5`). 설정된 API(`daumapi`/`epostapi`/`postcodify`)에 맞는 `tpl/template.{api}.html`을 컴파일하고, 해당 템플릿이 `modules/krzip/tpl/js/{api}.js`의 `$.fn.Krzip` jQuery 플러그인을 로드한다.
 
 `common/js/plugins/ui.krzip/krzip_search.js`는 순수 jQuery(jQuery UI 아님)로 작성됐으나 현재 어디서도 로드되지 않는 레거시(고아) 코드다.
 

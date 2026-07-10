@@ -55,7 +55,7 @@
 
 | 트리거 (시점) | 메서드 | 용도 |
 |---|---|---|
-| `mail.send` (before) | `triggerBeforeMailSend` (controller) | 발신자/예외 도메인/SPF 정책 등 적용 |
+| `mail.send` (before) | `triggerBeforeMailSend` (controller) | 예외 주소·도메인별 드라이버 선택 및 발신자·Reply-To 보정 |
 | `mail.send` (after) | `triggerAfterMailSend` (controller) | 발송 로그 기록 |
 | `sms.send` (after) | `triggerAfterSMSSend` (controller) | SMS 로그 기록 |
 | `push.send` (after) | `triggerAfterPushSend` (controller) | 푸시 로그 기록 |

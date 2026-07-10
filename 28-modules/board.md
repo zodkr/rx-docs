@@ -29,7 +29,7 @@
 
 | 액션 | 권한 | 라우트 |
 |---|---|---|
-| `dispBoardContent` | `list` | `/<mid>` (인덱스), `/<mid>/$document_srl`, `/<mid>/category/$cat` |
+| `dispBoardContent` | `list` | `/<mid>` (인덱스), `/<mid>/$document_srl`, `/<mid>/category/$category` |
 | `dispBoardWrite` | `write_document` | `/<mid>/write`, `/<mid>/$document_srl/edit` |
 | `dispBoardDelete` | `write_document` | `/<mid>/$document_srl/delete` |
 | `dispBoardWriteComment` | `write_comment` | `/<mid>/$document_srl/comment` |

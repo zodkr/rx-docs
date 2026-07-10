@@ -14,7 +14,7 @@
 
 | 속성 | 타입 | 의미 |
 |---|---|---|
-| `request_method` | string | `GET`/`POST`/`XMLRPC`/`JSON`/`JS_CALLBACK` |
+| `request_method` | string | Router 지원: `GET`/`POST`/`JSON`/`XMLRPC`/`HEAD`/`OPTIONS`/`PUT`/`PATCH`/`DELETE`/`TRACE`; 호환 모드: `JS_CALLBACK` |
 | `response_method` | string | 응답 포맷 (기본 빈 문자열 → `request_method` 따라 결정, 값: `HTML`/`XMLRPC`/`JSON`/`JS_CALLBACK`/`RAW`) |
 | `js_callback_func` | string | JSONP 콜백 함수명 |
 | `db_info` | object | DB/URL/세션 설정의 통합 객체 (`loadDBInfo` 결과) |
@@ -52,7 +52,7 @@ $all = Context::getAll();              // 전체
 
 | 메서드 | 반환 |
 |---|---|
-| `getRequestMethod()` | `GET`/`POST`/`JSON`/`XMLRPC`/`JS_CALLBACK` |
+| `getRequestMethod()` | Router 지원: `GET`/`POST`/`JSON`/`XMLRPC`/`HEAD`/`OPTIONS`/`PUT`/`PATCH`/`DELETE`/`TRACE`; 호환 모드: `JS_CALLBACK` |
 | `getResponseMethod()` | 응답 포맷 |
 | `getRequestVars()` | stdClass — 현재 요청(GET/POST/JSON/XMLRPC) 인자 객체. JSON/XMLRPC POST 본문은 `Context::setRequestArguments()`가 `php://input`(`HTTP_RAW_POST_DATA`)을 파싱해 병합한다 (`classes/context/Context.class.php:1259-1299`) |
 | `getCurrentRequest()` | `Rhymix\Framework\Request` 인스턴스 |

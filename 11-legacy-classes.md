@@ -1,6 +1,6 @@
 # 11. 레거시 classes/* 인덱스
 
-`classes/` 하위는 XpressEngine 시절의 전역(namespace 없음) 클래스들이다. 대부분이 `Rhymix\Framework\*`의 얇은 wrapper다.
+`classes/` 하위는 XpressEngine 시절의 전역(namespace 없음) 클래스들이다. 일부는 `Rhymix\Framework\*`의 얇은 wrapper지만, 요청·모듈·출력 등 자체 구현을 유지하는 클래스도 많다.
 
 ## 디렉토리 구조
 
@@ -14,22 +14,22 @@
 | `extravar/` | `ExtraVar`, `ExtraItem` | `Rhymix\Modules\Extravar\Models\*`로의 `class_alias` |
 | `file/` | `FileHandler`, `FileObject` | `Storage`/`Image` wrapper + XE 호환 |
 | `frontendfile/` | `FrontEndFileHandler` | `<link>`/`<script>` 태그 관리 |
-| `handler/` | `Handler` | 빈 추상 마커 클래스 |
+| `handler/` | `Handler` | 빈 concrete 기반 클래스 (`abstract` 아님) |
 | `httprequest/` | `XEHttpRequest` | XE 호환 Ajax helper |
 | `mail/` | `Mail` | `Rhymix\Framework\Mail` wrapper |
 | `mobile/` | `Mobile` | 모바일 감지 (별도 문서 → [23-mobile-detection.md](23-mobile-detection.md)) |
 | `module/` | `ModuleHandler`, `ModuleObject` | 라이프사이클 (별도 문서 → [06-module-handler-lifecycle.md](06-module-handler-lifecycle.md)) |
-| `object/` | `BaseObject` | 모든 모듈/위젯의 조상 |
+| `object/` | `BaseObject` | 모든 모듈의 조상 + 일부 레거시 객체의 기반 (`WidgetHandler`는 상속하지 않음) |
 | `page/` | `PageHandler` | XE 호환 페이지네이션 |
 | `security/` | `EmbedFilter`, `Password`, `Security`, `UploadFileFilter`, `IpFilter`, `Purifier` | 보안 wrapper |
 | `template/` | `TemplateHandler` | `Rhymix\Framework\Template` 상속 |
 | `validator/` | `Validator` | ruleset XML 기반 입력 검증 |
-| `widget/` | `WidgetHandler` | 모든 위젯의 부모 (빈 클래스, `$widget_path`만) |
+| `widget/` | `WidgetHandler` | 모든 위젯의 부모 (`$widget_path` 속성만 가짐) |
 | `xml/` | `GeneralXmlParser`, `XmlGenerator`, `XmlJsFilter`, `XmlLangParser`, `XmlParser` | XML 파싱/생성 |
 
 ## BaseObject
 
-`classes/object/Object.class.php`. 모든 모듈/위젯의 조상.
+`classes/object/Object.class.php`. 모든 모듈의 조상이다. 위젯은 `WidgetHandler`를 직접 상속하며 `BaseObject` API를 갖지 않는다.
 
 ```php
 #[AllowDynamicProperties]
@@ -148,7 +148,7 @@ class FileObject extends BaseObject {
 
 `classes/frontendfile/FrontEndFileHandler.class.php` (21KB). HTML head/body에 들어갈 `<script>`/`<link>` 태그를 관리한다.
 
-- `loadFile([$path, 'head'|'body', $unused, $index])` — 자원 등록 (`$args[2]`는 미사용, 이전 targetIe 자리이며 index는 `$args[3]`).
+- `loadFile($args)` — 자원 등록. JS에서는 `[$path, 'head'|'body', $unused, $index]`이며 `$args[2]`는 이전 targetIe 자리다. CSS/LESS/SCSS에서는 `[$path, $media, $source_type_hint, $index, $vars]`로 `$args[2]`를 실제 사용한다.
 - `unloadFile($path)` — 자원 해제.
 - `unloadAllFiles()` — 전체 해제.
 - `getJsFileList($type='head', $finalize=false)` / `getCssFileList($finalize=false)` — HTML 출력용 결과.
@@ -251,7 +251,7 @@ class_alias(Rhymix\Modules\Extravar\Models\Value::class, 'ExtraItem');
 
 ## Editor (`classes/editor/EditorHandler.class.php`)
 
-모든 에디터 컴포넌트의 부모. **`BaseObject` 상속** — 클래스 본문에는 `setInfo($info)`만 정의되어 있다. 생성자나 `editor_sequence`/`component_path` 같은 속성 선언은 없고, BaseObject가 `#[AllowDynamicProperties]`라 자식이 동적 속성으로 추가한다.
+모든 에디터 컴포넌트의 부모. **`BaseObject` 상속** — 부모 클래스 본문에는 `setInfo($info)`만 정의되어 있고 생성자나 `editor_sequence`/`component_path` 속성 선언은 없다.
 
 ```php
 class EditorHandler extends BaseObject {
@@ -263,7 +263,7 @@ class EditorHandler extends BaseObject {
 }
 ```
 
-각 코어 컴포넌트(`modules/editor/components/<name>/<name>.class.php`)는 자체 생성자 `__construct($editor_sequence, $component_path)`를 둬서 두 값을 동적 속성으로 저장한다.
+각 코어 컴포넌트(`modules/editor/components/<name>/<name>.class.php`)는 `editor_sequence`와 `component_path`를 `var`로 명시 선언하고, 자체 생성자 `__construct($editor_sequence, $component_path)`에서 값을 저장한다.
 
 상세: [27-extension-points/editor-component.md](27-extension-points/editor-component.md).
 

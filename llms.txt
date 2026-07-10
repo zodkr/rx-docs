@@ -1,6 +1,6 @@
 # Rhymix
 
-> Rhymix는 XpressEngine 1.8을 fork해 발전시킨 한국 커뮤니티 CMS다. PHP 7.4+에서 동작하며, **레거시 XE 클래스 계층**(`classes/`, 전역 namespace)과 **신형 Rhymix 프레임워크**(`common/framework/`, `Rhymix\Framework\*`)가 공존한다. 두 계층은 `common/autoload.php`의 커스텀 autoloader로 통합되며, 대부분의 레거시 클래스는 신형 framework 클래스의 얇은 wrapper다. 현재 버전은 `common/constants.php:6`의 `RX_VERSION` 상수에 있다.
+> Rhymix는 XpressEngine 1.8을 fork해 발전시킨 한국 커뮤니티 CMS다. PHP 7.4+에서 동작하며, **레거시 XE 클래스 계층**(`classes/`, 전역 namespace)과 **신형 Rhymix 프레임워크**(`common/framework/`, `Rhymix\Framework\*`)가 공존한다. 두 계층은 `common/autoload.php`의 커스텀 autoloader로 통합된다. `DB`, `TemplateHandler`, `Mail` 같은 직접 wrapper와 `Context`, `ModuleHandler`, `FileHandler` 같은 독자 구현 레거시 클래스가 함께 남아 있다. 현재 버전은 `common/constants.php:6`의 `RX_VERSION` 상수에 있다.
 
 이 파일은 LLM/AI 어시스턴트가 Rhymix 코드베이스를 효율적으로 탐색하기 위한 진입 가이드다. 인간 독자는 [README.md](README.md)부터 본다.
 
@@ -62,7 +62,7 @@ CLI 모드는 `ModuleHandler::procCommandLineArguments($argv)`로 분기 ([21-cl
 
 - `ModuleObject::getInstance()`가 `$GLOBALS['_module_instances_']`에 캐싱.
 - `getController('member')`, `getModel('document')` 등 헬퍼는 모두 이 캐시 경유 (`common/legacy.php`).
-- 모든 모듈의 조상 `BaseObject`(`classes/object/Object.class.php`)는 `error`/`message`/`variables` 상태와 `setError`/`get`/`add`/`toBool` API 제공. 모듈은 `ModuleObject extends BaseObject`(`classes/module/ModuleObject.class.php:8`) 계보다. 에러는 `toBool()`로 평가되어 트리거/액션 중단을 결정.
+- 모든 모듈의 조상 `BaseObject`(`classes/object/Object.class.php`)는 `error`/`message`/`variables` 상태와 `setError`/`get`/`add`/`toBool` API 제공. 모듈은 `ModuleObject extends BaseObject`(`classes/module/ModuleObject.class.php:8`) 계보에 속한다. 에러는 `toBool()`로 평가되어 트리거/액션 중단을 결정.
 - 위젯은 `BaseObject` 계보가 아니다. `WidgetHandler`(`classes/widget/WidgetHandler.class.php:8`)를 상속할 뿐이며 `setError`/`get`/`add`/`toBool` API가 없다.
 
 ### XML 메타데이터

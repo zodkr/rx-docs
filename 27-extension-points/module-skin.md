@@ -8,7 +8,8 @@
 modules/<module>/
 ├── skins/<skin>/              # PC
 │   ├── skin.xml               # [필수] 메타 + extra_vars + colorset
-│   ├── list.html              # 모듈마다 다른 진입 템플릿
+│   ├── list.html              # v1 진입 템플릿 (모듈마다 이름이 다름)
+│   ├── list.blade.php         # v2 대안 (같은 basename의 .html과 둘 중 하나)
 │   ├── view.html
 │   ├── _header.html           # 부분 템플릿 (선택)
 │   ├── _footer.html
@@ -50,7 +51,9 @@ modules/<module>/
 </skin>
 ```
 
-extra_vars/colorset 구조는 레이아웃과 동일. 자세히는 [layout.md](layout.md).
+`extra_vars`의 기본 구조는 레이아웃과 비슷하지만 옵션 문법은 `SkinInfoParser` 규칙을 따른다. v0.2에서는 반복되는 `<options value="...">`를 사용한다. 레이아웃과 달리 모듈 스킨은 최상위 `<colorset><color ...>`도 별도로 파싱한다.
+
+현재 모듈 스킨 설정 템플릿은 `extra_vars`가 하나 이상 있을 때만 그 안쪽의 colorset 선택 UI도 렌더링한다. colorset만 선언하고 `extra_vars`가 전혀 없으면 파서는 colorset을 읽지만 관리자 설정 화면에는 선택 항목이 나타나지 않으므로, 관리자 선택이 필요한 스킨은 최소 1개의 실제 extra_var도 함께 정의해야 한다.
 
 ## 모듈별 진입 템플릿명
 
@@ -130,7 +133,7 @@ Mobile:
 <include target="_header.html" />
 <include target="_footer.html" />
 
-<!-- v2 -->
+<!-- v2: .blade.php 파일 또는 첫 줄에 @version(2)을 둔 .html 파일 -->
 @include('_header')
 @include('_footer')
 ```
@@ -141,14 +144,15 @@ Mobile:
 
 | 변수 | 의미 |
 |---|---|
-| `$module_info` | 모듈 인스턴스 정보 (extra_vars 포함, skin_vars 동기화됨) |
-| `$skin_vars` | extra_vars로 정의된 값 (= `$module_info`의 부분집합) |
+| `$module_info` | 모듈 인스턴스 정보. 저장된 스킨 extra_vars가 같은 이름의 기존 모듈 속성을 덮어쓰지 않는 범위에서 병합됨 |
 | `$module_info->colorset` | 선택된 컬러셋 |
 | `$lang` | 다국어 객체 |
 | `$logged_info`, `$is_logged` | 사용자 정보 |
 | `$grant` | 현재 사용자 권한 |
 | `$mid` | 현재 mid |
 | 모듈 액션이 `Context::set`한 변수들 | 예: `$documents`, `$page_navigation`, `$oDocument`, ... |
+
+일반 프런트 스킨에서 `$skin_vars` 객체가 자동 제공되는 것은 아니다. 해당 이름은 주로 관리자 스킨 설정 화면에서 DB 레코드 배열로 쓰인다. 프런트 템플릿은 `$module_info->{var_name}`으로 접근해야 한다. 또한 `skin.xml`의 `default`는 설정 UI의 초기값으로 쓰일 뿐 저장되지 않은 값을 런타임 `$module_info`에 항상 주입하지는 않으므로, 필수값은 템플릿이나 모듈 코드에서도 fallback을 두는 것이 안전하다.
 
 ## 게시판 스킨 표준 변수 (예시)
 

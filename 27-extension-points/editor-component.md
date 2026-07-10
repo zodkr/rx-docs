@@ -1,6 +1,6 @@
 # 27.7 에디터 컴포넌트 (Editor Component)
 
-에디터(CKEditor 기반)에 **버튼 → 팝업 → 본문 삽입**의 흐름으로 동작하는 확장 컴포넌트. 예: 이모티콘, 이미지 갤러리, 투표.
+에디터 본문의 전용 마커를 최종 HTML로 변환하는 확장 컴포넌트. 기본 CKEditor 스킨에서는 **버튼 → 팝업 → 본문 삽입** 흐름까지 제공한다. 예: 이모티콘, 이미지 갤러리, 투표. 다른 에디터 스킨은 같은 도구바 통합을 제공하지 않을 수 있다.
 
 ## 디렉토리 구조
 
@@ -8,7 +8,7 @@
 modules/editor/components/<name>/
 ├── <name>.class.php           # [필수] EditorHandler 상속
 ├── info.xml                   # [필수]
-├── component_icon.gif         # [필수] 에디터 도구바 아이콘 (32x32)
+├── component_icon.gif         # [권장] 도구바 아이콘, 코어 관례 32x32 GIF
 ├── icon.gif                   # [선택] 본문 내 placeholder 아이콘
 ├── tpl/
 │   ├── popup.html             # 팝업 UI
@@ -18,6 +18,8 @@ modules/editor/components/<name>/
 ```
 
 에디터 컴포넌트는 `modules/editor/components/<name>/`에만 배치할 수 있다. 목록 생성 `makeCache()`가 `RX_BASEDIR . 'modules/editor/components'`만 readDir 하고(`modules/editor/editor.controller.php:425`), 객체 생성 `getComponentObject()`가 경로를 `./modules/editor/components/%s/`로 하드코딩하기 때문(`modules/editor/editor.model.php:587`). `plugins/` 하위에 두어도 인식되지 않는다.
+
+`getComponentObject()`는 폴더명과 같은 문자열을 그대로 `new $component(...)`의 클래스명으로 사용한다. 요청 검증 정규식은 하이픈도 허용하지만 PHP 클래스명에는 사용할 수 없으므로, 실제 컴포넌트 이름은 영문자 또는 `_`로 시작하고 영문자·숫자·`_`만 쓰며 폴더·파일 basename·클래스명을 모두 맞춘다(예: `image_gallery`).
 
 ## info.xml
 
@@ -45,6 +47,8 @@ modules/editor/components/<name>/
 
 `select` 타입의 선택지는 각각을 별도의 `<options>` 요소로 표기한다. 값은 `value` 속성(또는 `<value>` 자식), 라벨은 `<title>` 자식으로 넣으며, 선택지가 여러 개면 `<options>` 요소를 그만큼 반복한다. `<options>`로 `<option>` 자식들을 감싸면 파서가 인식하지 못해 빈 옵션만 만들어진다.
 
+현재 컴포넌트 설정 UI가 입력 폼으로 렌더링하는 extra_vars type은 `text`/`textarea`/`select` 3종이다. 또한 `default`는 파서 메타에는 저장되지만 컴포넌트 설정 UI와 `EditorHandler::setInfo()` 경로가 이를 런타임 `value`로 자동 대입하지 않는다. 컴포넌트 코드는 설정값이 없을 때의 fallback을 직접 두고, 활성화 전에 관리자 설정을 한 번 저장하는 흐름을 전제로 하는 것이 안전하다.
+
 ## EditorHandler API
 
 `classes/editor/EditorHandler.class.php`. 모든 컴포넌트의 부모. **`BaseObject` 상속** — `error`/`message`/`get`/`add` 등 BaseObject API도 사용 가능.
@@ -56,7 +60,7 @@ class EditorHandler extends BaseObject
     // EditorModel::getComponentObject가 `new $component($editor_sequence, $component_path)`로
     // 객체를 만들기 때문(editor.model.php:593). 생성자를 아예 정의하지 않으면
     // 상속된 BaseObject::__construct($error, $message)가 대신 호출되어 error=$editor_sequence로
-    // 세팅되고(정수 문자열이 아니면 -1, editor.model.php:593), dispEditorPopup의 $oComponent->toBool()
+    // 세팅되고, 0이 아닌 팝업용 editor_sequence에서는 dispEditorPopup의 $oComponent->toBool()
     // 검사(editor.view.php:77)에서 실패해 component_not_founded 템플릿이 출력된다. 반면 생성자를
     // 정의하되 두 인자를 $this에 저장하지 않으면 부모 생성자는 자동 호출되지 않고 error는 0으로
     // 남아 toBool()은 통과한다. 이 경우 실패는 toBool이 아니라 이후 getPopupContent에서 발생하며,
@@ -158,7 +162,7 @@ $xml_obj->body = null;   // div형 컴포넌트의 내부 HTML. <img> 형태면 
 
 ## transHTML 호출 시점
 
-문서 출력 시 `DocumentItem::getTransContent()`(`modules/document/document.item.php:796`, 위젯은 `modules/widget/widget.controller.php:576`)가 `getController('editor')->transComponent()`를 호출한다. `editor.controller.php`의 `transComponent`가 본문을 파싱하다가 `<div|img ... editor_component="...">`를 발견하면 콜백 `transEditorComponent`가 해당 컴포넌트의 `transHTML`을 호출한다(`modules/editor/editor.controller.php:290`). (구 API인 `Context::transContent()`는 `@deprecated` no-op이라 `$content`를 그대로 반환하며 컴포넌트를 변환하지 않는다.)
+변환은 두 층에서 일어난다. `DocumentItem::getTransContent()`(`modules/document/document.item.php:796`)와 `widgetContent` 처리(`modules/widget/widget.controller.php:576`)가 본문 조각을 먼저 변환하고, 에디터 모듈의 `display.before` 이벤트 핸들러 `triggerEditorComponentCompile()`이 최종 HTML 문자열에도 `transComponent()`를 적용한다. `transComponent()`가 `<div|img ... editor_component="...">`를 발견하면 콜백 `transEditorComponent`가 해당 컴포넌트의 `transHTML`을 호출한다(`modules/editor/editor.controller.php:290`). 이미 변환된 마커는 다음 단계에서 다시 매칭되지 않는다. 구 API인 `Context::transContent()`는 `@deprecated` no-op이라 `$content`를 그대로 반환한다.
 
 본문 저장 단계에서는 마커가 그대로 DB에 보관됨 — 표시 시점에 transHTML로 변환.
 
@@ -197,10 +201,15 @@ class MyHello extends EditorHandler
             <button type="button" onclick="myhelloInsert()">삽입</button>
         </form>
         <script>
-            // 팝업은 popopen으로 열린 별도 창이므로 window.parent가 아니라 opener를 사용한다.
+            // PC 팝업에서는 실제 opener, 모바일 modal iframe에서는 popup_layout이
+            // opener를 window.parent로 연결하므로 두 경우 모두 opener를 사용한다.
             function myhelloInsert() {
                 var n = document.querySelector("[name=name]").value;
-                var html = "<img src=\"../../../../common/img/blank.gif\" editor_component=\"myhello\" name=\"" + n + "\" />";
+                var marker = document.createElement("img");
+                marker.setAttribute("src", "./common/img/blank.gif");
+                marker.setAttribute("editor_component", "myhello");
+                marker.setAttribute("name_encoded", encodeURIComponent(n));
+                var html = marker.outerHTML;
                 opener.editorFocus(opener.editorPrevSrl);
                 var iframe = opener.editorGetIFrame(opener.editorPrevSrl);
                 opener.editorReplaceHTML(iframe, html);
@@ -211,7 +220,7 @@ class MyHello extends EditorHandler
 
     public function transHTML($xml_obj)
     {
-        $name = $xml_obj->attrs->name ?? 'world';
+        $name = rawurldecode($xml_obj->attrs->name_encoded ?? 'world');
         return '<strong>Hello, ' . escape($name) . '!</strong>';
     }
 }
@@ -219,7 +228,7 @@ class MyHello extends EditorHandler
 
 ### `modules/editor/components/myhello/component_icon.gif`
 
-32x32 GIF 아이콘.
+코어 컴포넌트와 같은 32x32 GIF 아이콘. 런타임은 파일 존재 여부만 검사하고 실제 크기는 검증하지 않는다. 파일이 없어도 컴포넌트 인식과 CKEditor 버튼 생성 자체는 계속되지만, CKEditor 플러그인은 이 고정 경로를 아이콘 URL로 사용하므로 도구바에 깨진 아이콘이 표시된다. `component_icon` 메타 플래그도 파일이 있을 때만 설정된다.
 
 설치:
 1. 파일 작성.
@@ -237,11 +246,15 @@ class MyHello extends EditorHandler
 
 `transHTML`이 ID로 갤러리 조회 → 실제 HTML 생성.
 
+## 컴포넌트의 AJAX 메서드
+
+팝업에서 서버 작업이 필요하면 `module=editor&act=procEditorCall&component=<name>&method=<method>` POST 요청으로 컴포넌트 메서드를 호출할 수 있다. 현재 `procEditorCall()`은 `method_exists()`로 요청된 이름의 존재만 확인할 뿐 별도 allowlist나 visibility 검사를 하지 않은 채 `$oComponent->{$method}()`를 실행한다. 따라서 실제로 호출 가능한 public 메서드는 외부 요청 가능한 엔드포인트로 간주하고, 입력값·로그인·그룹/모듈 권한을 메서드 안에서 다시 검증해야 한다. protected/private 메서드 이름도 존재 검사는 통과하지만 실제 호출 시 `Error`가 발생할 수 있다. 액션은 controller 타입이므로 기본 POST 전용이며 일반 CSRF 검사가 적용된다.
+
 ## 권한
 
 - 컴포넌트 사용 권한은 에디터 모듈 단에서 관리.
 - 게시판/모듈별 에디터 설정에서는 그룹 단위로 기본/확장 컴포넌트 사용 권한(`enable_default_component_grant`/`enable_component_grant`)만 부여한다(컴포넌트별 토글은 없음).
-- 개별 컴포넌트의 활성화 및 노출 범위(사용 그룹 `target_group`, 노출 모듈 `mid_list`)는 컴포넌트 관리 화면에서 전역으로 설정하며, `mid_list`로 특정 게시판에만 노출되도록 제한할 수 있다.
+- 개별 컴포넌트의 활성화 및 노출 범위(사용 그룹 `target_group`, 노출 모듈 `mid_list`)는 컴포넌트 관리 화면에서 전역으로 설정하며, `mid_list`로 특정 게시판에만 노출되도록 제한할 수 있다. `editor_components_site` 테이블과 사이트별 관리자 저장 쿼리는 남아 있지만, 현재 `EditorModel::getComponentList()`와 `getComponent()`는 `site_srl`을 실제 조회에 반영하지 않으므로 사이트별 설정이 런타임에 적용된다고 가정하면 안 된다.
 
 ## 코어 컴포넌트 (4종)
 

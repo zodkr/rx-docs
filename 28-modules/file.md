@@ -119,19 +119,19 @@ $url = FileModel::getDownloadUrl($file_srl, $sid, 0, $source_filename);
 
 `FilenameFilter` + `FileContentFilter` 적용:
 
-- 위험 확장자 차단.
-- 매직 바이트 검사.
-- PHP 코드 검출.
-- SVG 정화.
+- 파일명의 위험 문자를 치환하고 오해를 부르는 이중 확장자를 정리하며, 최종 `.php`는 `.phps`로 바꾼다. 비관리자는 세션 또는 모듈의 허용 확장자 목록에 없는 파일을 거부한다.
+- 지정된 이미지·오디오·동영상 확장자는 `fileinfo`가 판별한 MIME 대분류와 비교.
+- HTML/XML처럼 보이는 콘텐츠에서는 PHP 태그와 위험한 스크립트·외부 entity 패턴 검사.
+- 비관리자의 SVG 업로드는 `Security::sanitize(..., 'svg')`로 한 번 더 정화.
 
 상세: [../19-security.md](../19-security.md).
 
 ## 이미지 처리
 
-- 업로드 시 EXIF 회전 보정.
+- 파일 모듈 설정의 `image_autorotate`가 켜진 JPEG는 EXIF 방향을 읽어 회전 보정 (`file.controller.php:1247-1259`).
 - 업로드 시 이미지 리사이즈/재인코딩과 동영상 포스터 썸네일 생성은 `FileHandler::createImageFile`로 처리 (`file.controller.php:1401`은 이미지 변환, `:1368`은 mp4 썸네일)되며, 생성된 썸네일은 `files/attach/`의 storage_path(`thumbnail_filename` 컬럼, `file.controller.php:1103-1110`)에 저장된다.
 - 목록/조회용 썸네일은 file 모듈이 아니라 document/comment 아이템 클래스의 `getThumbnail($w, $h, $type)`이 생성해 `files/thumbnails/<번호경로>/`에 캐싱한다 (`document.item.php:1100`(경로 `:1134`), `comment.item.php:776`(경로 `:810`)).
-- animated WebP/GIF 보존.
+- 리사이즈·재인코딩·형식 변환이 필요 없으면 원본 파일을 그대로 통과시키므로 애니메이션도 유지된다. 변환이 필요한 경우에는 보존을 보장하지 않는다. GD 경로의 `createImageFile()`은 animated WebP를 거부하고, animated GIF는 단일 프레임으로 처리한다. WebP는 ImageMagick 설정이 있으면 실패 후 폴백할 수 있다 (`file.controller.php:1398-1422`, `FileHandler.class.php:608-633`).
 
 ## JS 위젯
 

@@ -78,13 +78,13 @@ modules/editor/components/
 - `plugins/xe_component/plugin.js` — Rhymix 컴포넌트 시스템 통합. 도구바 버튼/팝업 호출.
 - `plugins/rx_paste/plugin.js` — 붙여넣기 정화.
 
-상세: [../34-external-libraries.md](../34-external-libraries.md#ckeditor).
+상세: [../34-external-libraries.md](../34-external-libraries.md#ckeditor-ckeditor-4).
 
 ## DB 스키마
 
 | 테이블 | 정의 파일 |
 |---|---|
-| `editor_autosave` | 자동 저장 본문 (회원/문서 키) — `schemas/editor_autosave.xml` |
+| `editor_autosave` | 자동 저장 본문 (`module_srl` + member/certify/IP로 조회, `document_srl`도 저장) — `schemas/editor_autosave.xml` |
 | `editor_components` | 컴포넌트 전역 설정 |
 | `editor_components_site` | 사이트별 컴포넌트 설정 |
 
@@ -113,8 +113,9 @@ modules/editor/components/
   ↓
 xe_component 플러그인이 window.openComponent(name, sequence) 호출
   ↓
-editor_common.js가 ajax 호출:
+editor_common.js가 팝업 URL 구성:
   GET /?module=editor&act=dispEditorPopup&...
+  (모바일: openModalIframe, PC: popopen)
   ↓
 EditorView가 컴포넌트의 getPopupContent() 호출
   ↓
@@ -130,7 +131,7 @@ HTML 반환 → 팝업 표시
 
 ## 자동저장
 
-`editor_autosave` 테이블이 회원 + 문서 키 단위로 작성 중 본문 보관. 글쓰기 폼 진입 시 자동 복원 prompt.
+`editor_autosave` 테이블은 `module_srl`·`document_srl`을 저장하지만, 복원 조회는 `document_srl`이 아니라 `module_srl`과 로그인 사용자의 `member_srl` 또는 비로그인 사용자의 autosave 인증 쿠키 `certify_key`(없으면 IP)로 식별한다. `document_srl`은 기존 문서 여부 확인과 첨부 이동 대상으로 사용된다. 글쓰기 폼 진입 시 자동 복원 prompt.
 
 ## 이모티콘 팩
 

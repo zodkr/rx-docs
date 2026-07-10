@@ -31,13 +31,15 @@
 |---|---|
 | `border_thickness` | `(int)` 강제 |
 | `gallery_style` | `list`이면 `list_gallery.html`, 그 외엔 `slide_gallery.html` |
-| `border_color` | 16진 RGB 6자리 추출 후 `#`prepend |
-| `bg_color` | 동상 |
+| `border_color` | 값이 6자리 16진수로 시작하면 그 6자리 앞에 `#`만 삽입하고 뒤 문자열은 그대로 남김(예: `ffffffBAD` → `#ffffffBAD`). 매치하지 않으면 원문을 유지하며 전체 검증이나 기본값 대입은 하지 않음 |
+| `bg_color` | `border_color`와 동일 |
 | `gallery_align` | `left`/`center`/`right` 중 하나만 허용, 그 외엔 `center`로 강제 |
-| `images_list` | 공백 구분 파일명들. `(gif\|jpe?g\|png)` 확장자만 허용 |
+| `images_list` | 공백 구분 경로. 확장자 뒤 공백을 줄바꿈으로 바꾼 뒤, 각 항목이 `^[a-z0-9/]+\.(gif\|jpe?g\|png)+$`에 맞을 때만 유지(대소문자 무시). 따라서 `_`·`-`·추가 `.`·query string이 든 경로는 제외됨 |
 | `style` | `(width\|height)([^[:digit:]]+)([0-9]+)` regex(width·height 모두 매칭)로 첫 매칭의 숫자값을 추출해 width로 사용, 값이 없거나 0이면 400 |
 
 각 갤러리 인스턴스에 고유 `srl`(`rand(111111, 999999)`)을 부여.
+
+현재 색상 템플릿에는 구현 차이가 있다. `transHTML()`이 정상 6자리 값에 이미 `#`를 붙이고 슬라이드 템플릿은 그 값을 그대로 사용하지만, `list_gallery.html:19`는 다시 `#`를 붙여 `##ffffff` 같은 CSS를 만든다. 이는 현재 소스의 동작이므로 list 스타일의 배경색·테두리색에 의존해서는 안 된다.
 
 ### XMLRPC 응답 분기
 

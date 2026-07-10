@@ -52,6 +52,10 @@ $db = Rhymix\Framework\DB::getInstance('slave');  // 다중 DB 분리 시
 
 `executeQueryArray(...)`는 인스턴스 메서드가 아니라 `common/legacy.php`의 글로벌 함수다 — 내부에서 `DB->executeQuery(..., 'array')`를 호출한다.
 
+### 이전 statement 정리와 실패 후 재실행
+
+`query()`/`executeQuery()`/페이지네이션 count query는 새 쿼리를 준비하기 전에 직전 statement를 정리한다. 이때 `closeCursor()`는 직전 값이 실제 `PDOStatement`인 경우에만 호출하고, `DBHelper::query()`가 실행 실패 시 반환해 저장한 `false`는 cursor 메서드를 호출하지 않고 제거한다 (`common/framework/DB.php:239-247`, `:386-395`, `:479-488`, `common/framework/helpers/DBHelper.php:99-126`). 따라서 한 쿼리가 실패한 직후 같은 DB 인스턴스로 다음 쿼리를 실행해도, `false`에 `closeCursor()`를 호출하는 2차 오류가 발생하지 않는다.
+
 ### 트랜잭션 중첩
 
 ```php
@@ -64,10 +68,12 @@ try {
     // ...
     $db->commit();             // 진짜 commit
 } catch (Throwable $e) {
-    $db->rollback();           // 가장 바깥까지 롤백
+    $db->rollback();           // 현재는 레벨 1이므로 실제 전체 rollback
     throw $e;
 }
 ```
+
+`rollback()`은 항상 가장 바깥까지 한 번에 롤백하는 API가 아니다. 트랜잭션 레벨이 2 이상이면 가장 가까운 savepoint로만 되돌리고 레벨을 하나 줄이며, 레벨 1에서 호출할 때만 실제 PDO transaction 전체를 롤백한다 (`common/framework/DB.php:651-679`).
 
 ## XML 쿼리 시스템
 
@@ -90,7 +96,7 @@ $list = executeQueryArray('board.getBoardList', $args)->data ?? [];
 
 `DB::executeQuery()` (`common/framework/DB.php:299-304`)는 `query_id`를 `.`로 split한 뒤:
 
-- 2조각이면 앞에 `'modules'`를 자동 prepend → `board.getList` → `modules/board/queries/getList.xml`
+- 2조각이면 앞에 `'modules'`를 자동 prepend → `board.getBoardList` → `modules/board/queries/getBoardList.xml`
 - 3조각이면 그대로 → `widgets.content.getMids` → `widgets/content/queries/getMids.xml`, `addons.<name>.<query>` 등 비-모듈 플러그인도 같은 식으로 호출 가능
 
 파일이 없으면 `setError(-1, "Query '...' does not exist.")` 반환.
@@ -164,13 +170,15 @@ $list = executeQueryArray('board.getBoardList', $args)->data ?? [];
 | `in` | `IN (...)` (`,`로 split한 후 각 원소를 bound parameter로) |
 | `notin` / `not_in` | `NOT IN (...)` |
 | `between` | `BETWEEN ? AND ?` |
-| `notbetween` / `not_between` | `NOT BETWEEN ? AND ?` |
+| `notbetween` / `not_between` | `NOT BETWEEN ? AND ?` — 현재 구현에서는 반드시 배열 인자를 사용 |
 | `search` | 공백/따옴표/마이너스 prefix를 해석하는 키워드 검색식으로 변환 (`_parseSearchKeywords`) |
 | `plus` / `minus` / `multiply` | **`<column>`(INSERT/UPDATE) 전용**. `col = col ± ?` / `col = col * ?` 형태로 expand |
 
 > `<column>`(ColumnWrite — INSERT/UPDATE 본문)에서는 `equal` / `plus` / `minus` / `multiply` **4개만** 허용. 다른 operation은 `\Rhymix\Framework\Exceptions\QueryError: Operation … is not valid for column in an INSERT or UPDATE query`를 던진다 (`VariableBase.php:110-113`).
 
 > 위 표에 없는 operation(예: 존재하지 않는 `not`)은 switch의 default 분기(`VariableBase.php:271-273`)로 떨어져 `col = ?`(등호 비교)를 조용히 생성한다. 비트 NOT(`~`)을 만드는 코드는 파서 어디에도 없다.
+
+> `between`은 배열뿐 아니라 쉼표 문자열도 목록으로 변환하지만, `notbetween`/`not_between`은 목록 변환 대상에서 빠져 있다 (`VariableBase.php:103-107,236-249`). 따라서 후자는 `[최솟값, 최댓값]` 형태의 배열을 전달해야 하며 쉼표 문자열에 의존하면 안 된다.
 
 ### 조건이 SQL에 포함될지 결정되는 흐름
 
@@ -247,7 +255,7 @@ JOIN조건은 `<table>` 내부의 `<conditions>` 블록에 적는다.
 |---|---|
 | `pipe` | `AND`(기본)/`OR` — 그룹 전체를 결합하는 operator |
 | `if` | 비어있으면 그룹 전체 생략 |
-| `notnull` | 그룹 단위 not_null 플래그 |
+| `notnull` | 그룹 안에 SQL로 남는 유효 조건이 하나도 없으면 `QueryError`를 던짐 (`Query.php:583-594`) |
 
 #### `default=` 토큰 (`VariableBase::getDefaultValue` — `VariableBase.php:329-393`)
 
@@ -314,7 +322,7 @@ $total_page = $output->total_page;
 
 - **SELECT DISTINCT**: `<columns distinct="distinct">…</columns>` (`DBQueryParser.php:227-234`).
 - **INSERT … ON DUPLICATE KEY UPDATE**: `<query action="insert" updateduplicate="true">`.
-- **인덱스 힌트**: `<index_hint for="MYSQL|ALL"><(이름 자유) name="idx_x" type="use|force|ignore" table="d" /></index_hint>` — `for`가 `ALL`이거나 현재 DB 드라이버와 일치할 때만 적용 (`DBQueryParser.php:86-121`).
+- **인덱스 힌트**: `<index_hint for="MYSQL|ALL"><hint name="idx_x" type="use|force|ignore" /></index_hint>` — child 태그 이름은 자유이며, `for`가 `ALL`이거나 MySQL과 일치할 때 적용한다. 파서는 `table` 속성을 읽어 객체에 저장하지만 현재 SQL 조립기는 이를 사용하지 않으므로, 별칭별 힌트 적용 기능으로 간주하면 안 된다 (`DBQueryParser.php:86-121`, `Query.php:512-550`).
 - **`<groups>` + `<having>`**: `<groups><group column="d.member_srl" /><having><condition operation="more" column="cnt" var="min_count" /></having></groups>` — HAVING 절 (`DBQueryParser.php:183-186`).
 - **서브쿼리(테이블 자리)**: `<tables><table query="true" alias="A"><tables>…</tables>…</table></tables>` — FROM 절 또는 JOIN 절의 derived table로 사용 (`DBQueryParser.php:57-64`).
 - **서브쿼리(컬럼 자리)**: `<columns>` 안에 `<query id="…" action="select">…</query>`를 두면 SELECT 컬럼으로 들어간다 (`DBQueryParser.php:126-130`).

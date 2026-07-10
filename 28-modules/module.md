@@ -36,7 +36,7 @@
 | `getModuleSkinInfoList` / `getFileBoxListHtml` / `getModuleInfoByMenuItemSrl` | 모델 (root) |
 | `getLangListByLangcodeForAutoComplete` / `getLangByLangcode` | 다국어 자동완성 |
 | `procModuleFileBoxAdd` / `procModuleFileBoxDelete` | 파일박스 CRUD (root) |
-| `procModuleClearCache` | 캐시 비우기 (CSRF 면제) |
+| `procModuleClearCache` | 서명 인증 JSON 캐시 삭제 API(CSRF 면제). `keys`와 `Security::verifySignature(implode('\|', $keys), $signature)` 검증 필수. `*`는 전체, `group:*`는 그룹, 그 외는 개별 키 삭제 |
 
 ### 관리자
 

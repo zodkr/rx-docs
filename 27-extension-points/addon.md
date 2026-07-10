@@ -17,6 +17,8 @@ addons/<name>/                # 코어/사용자 영역
 
 애드온은 코어 동봉이든 사용자 추가든 모두 `addons/<name>/` 아래에만 위치한다. (`plugins/`에 둔 애드온은 인식되지 않는다.)
 
+관리자 활성화·설정 경로가 애드온 이름을 `\w+`로 검증하므로 이름에는 영문자·숫자·`_`만 사용하고 폴더명과 `<name>.addon.php` basename을 일치시킨다.
+
 ## info.xml
 
 `common/framework/parsers/AddonInfoParser.php`가 파싱.
@@ -40,10 +42,8 @@ addons/<name>/                # 코어/사용자 영역
         </var>
         <var name="enable_logging" type="select" default="N">
             <title xml:lang="ko">로깅 사용</title>
-            <options>
-                <option value="Y"><title xml:lang="ko">사용</title></option>
-                <option value="N"><title xml:lang="ko">사용 안 함</title></option>
-            </options>
+            <options value="Y"><title xml:lang="ko">사용</title></options>
+            <options value="N"><title xml:lang="ko">사용 안 함</title></options>
         </var>
     </extra_vars>
 </addon>
@@ -59,13 +59,15 @@ addons/<name>/                # 코어/사용자 영역
 
 애드온 설정 화면(`setup_addon.html`)은 위 3종만 입력 폼으로 렌더링한다 (`modules/addon/tpl/setup_addon.html:70-74`의 `text`/`textarea`/`select` cond 분기). radio/checkbox/image/filebox/color/date 등 다른 타입은 애드온 설정 UI에서 지원되지 않는다.
 
+`select` 선택지는 위 예제처럼 반복되는 `<options value="...">` 요소로 선언한다. `<options>` 안에 `<option>`을 중첩하는 일반 HTML select 형태는 `BaseParser::_getExtraVars()`가 인식하지 않는다.
+
 ## hook 위치
 
 | 위치 | 발생 시점 | 발생 코드 |
 |---|---|---|
 | `before_module_init` | `ModuleHandler` 생성자 끝 | `ModuleHandler.class.php:112-115` |
 | `before_module_proc` | `ModuleObject::proc` 시작 | `ModuleObject.class.php:827-830` |
-| `after_module_proc` | `ModuleObject::proc` 끝 | (해당 위치) |
+| `after_module_proc` | `ModuleObject::proc` 액션 및 after 트리거 뒤 | `ModuleObject.class.php:920-923` |
 | `before_display_content` | `DisplayHandler::printContent` | `DisplayHandler.class.php:73-76` |
 
 ## `<name>.addon.php` 작성
@@ -94,7 +96,7 @@ if ($called_position == 'before_module_proc') {
 }
 
 if ($called_position == 'after_module_proc') {
-    // 액션 직후. JS/CSS 로드, 컨텍스트 변수 추가.
+    // 액션과 관련 after 트리거 처리 후. JS/CSS 로드, 컨텍스트 변수 추가.
     if (Context::getResponseMethod() == 'HTML') {
         Context::loadFile(['./addons/myaddon/myaddon.js', 'body', '', null], true);
     }
@@ -132,7 +134,7 @@ addon 코드는 컴파일된 캐시(`files/cache/addons/<type>.php`) 안에서 `
 | `$run` | 이 addon이 현재 요청에서 실행되어야 하는지 — `if($run && file_exists($addon_file)): include $addon_file;` 조건이므로 addon 코드 진입 시 항상 `true` |
 | `$before_time` | `microtime(true)` |
 
-> `$after_time`은 include **이후**에 정의되므로 addon 코드 안에서는 사용할 수 없다.
+> `$after_time`은 현재 addon의 종료 시각으로 신뢰할 수 없다. 첫 addon에서는 정의되지 않았고, 같은 컴파일 캐시 안의 두 번째 이후 addon에서는 앞선 addon의 값이 남아 있을 수 있다. 현재 addon의 실행 시간을 재려면 addon 코드 안에서 별도의 종료 시각을 직접 측정한다.
 
 **`before_module_init`** (`ModuleHandler::__construct` 안, `:112-115`)
 
@@ -157,7 +159,7 @@ addon 코드는 컴파일된 캐시(`files/cache/addons/<type>.php`) 안에서 `
 호출자가 제공하는 변수:
 
 - `$this` — 동일 (모듈 인스턴스).
-- 로컬: `$is_mobile`, `$triggerOutput`, `$triggerAct` (예: `'act:board.dispBoardContent'`), `$output` (액션 반환값, `BaseObject` 또는 `null`), `$original_output` (`$output instanceof BaseObject`면 clone, 아니면 `null`), `$oAddonController`.
+- 로컬: `$is_mobile`, `$triggerOutput`, `$triggerAct` (예: `'act:board.dispBoardContent'`), `$output` (액션 반환값 — 일반적으로 `BaseObject` 또는 `null`이지만 런타임이 타입을 강제하지 않음), `$original_output` (`$output instanceof BaseObject`면 clone, 아니면 `null`), `$oAddonController`.
 
 **`before_display_content`** (`DisplayHandler::printContent` 안, `:73-76`)
 
@@ -267,7 +269,7 @@ if ($called_position == 'before_display_content' && Context::getResponseMethod()
 
 ## 디버깅
 
-`config('debug.enabled')` + `display_content`에 `slow_*` 포함 시 느린 애드온도 캐치 가능.
+디버그가 현재 사용자에게 활성화되어 있으면 컴파일 캐시가 각 애드온 실행을 `Debug::addTrigger()`에 `addon.<hook 위치>` 이름으로 기록한다. `config('debug.display_content')`에 `slow_triggers`를 넣으면 `debug.log_slow_triggers` 임계값을 넘긴 애드온도 느린 트리거 목록에서 확인할 수 있다 (`slow_widgets`나 `slow_queries`가 아님).
 
 직접 디버그:
 

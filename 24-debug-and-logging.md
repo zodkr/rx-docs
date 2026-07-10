@@ -1,6 +1,6 @@
 # 24. 디버그와 로깅
 
-`Rhymix\Framework\Debug` (`common/framework/Debug.php`, 996줄)이 모든 디버그/로깅을 담당한다.
+`Rhymix\Framework\Debug` (`common/framework/Debug.php`, 996줄)은 요청 단위 디버그 정보 수집, 화면/파일 출력, PHP 오류 처리를 담당한다. 메일러·스팸필터 등 각 모듈의 업무 로그는 별도 테이블과 모듈 코드가 관리한다.
 
 ## 활성화
 
@@ -158,7 +158,7 @@ Rhymix\Framework\Debug::disable();
 - `null` → `files/debug/YYYYMMDD.php` (날짜별로 회전되는 파일).
 - 사용자 정의 가능.
 
-회전: 디버그 로그 파일 회전은 외부 logrotate로 처리한다. `common/scripts/clean_old_logs.php`(현재 `module.cleanMiscLogs`로 위임)는 DB에 쌓인 로그(메일러 메일/SMS/푸시, 스팸필터 로그 등)를 regdate 기준 일수(기본 30일)로 삭제하는 스크립트이며 디버그 로그 파일은 대상이 아니다.
+기본 파일명의 `YYYY`/`YY`/`MM`/`DD` 토큰은 로그를 쓸 때마다 현재 내부 날짜로 치환되므로 일자별 파일 생성은 코어가 직접 수행한다 (`classes/display/DisplayHandler.class.php:290-308`). 외부 logrotate나 별도 정리 작업은 오래된 파일의 보존 기간·압축·삭제를 관리할 때만 필요하다. `common/scripts/clean_old_logs.php`(현재 `module.cleanMiscLogs`로 위임)는 DB에 쌓인 로그(메일러 메일/SMS/푸시, 스팸필터 로그 등)를 regdate 기준 일수(기본 30일)로 삭제하는 스크립트이며 디버그 로그 파일은 대상이 아니다.
 
 ## 외부 시스템 연동
 

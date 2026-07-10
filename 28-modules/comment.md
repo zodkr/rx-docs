@@ -41,7 +41,7 @@
 
 ## CommentItem
 
-`comment.item.php`의 실제 메서드 일부. 댓글에는 **제목/`getTitle()`이 없고**, depth/parent_srl/첨부 파일 같은 raw 컬럼은 전용 getter 없이 `BaseObject::get()`으로 접근한다.
+`comment.item.php`의 실제 메서드 일부. 댓글에는 **제목/`getTitle()`이 없고**, depth/parent_srl 같은 raw 컬럼은 전용 getter 없이 `BaseObject::get()`으로 접근한다.
 
 ```php
 $oComment = CommentModel::getComment($comment_srl);
@@ -62,24 +62,23 @@ $oComment->isEditable();
 $oComment->isSecret();
 $oComment->isDeleted();
 $oComment->isDeletedByAdmin();
-$oComment->getStatus();          // RX_STATUS_*
+$oComment->getStatus();          // 'PUBLIC'/'SECRET'/... 상태 문자열
 $oComment->getStatusText();
 $oComment->getVote();
 $oComment->getMyVote();
 $oComment->getDeclared();
 $oComment->getThumbnail($width, $height, $thumbnail_type = '');
+$oComment->hasUploadedFiles();   // 접근 가능하고 uploaded_count가 있으면 true
+$files = $oComment->getUploadedFiles(); // 접근 가능한 유효 댓글 첨부 목록
 
 // 전용 getter가 없는 컬럼은 BaseObject::get()으로 접근
 $depth      = $oComment->get('depth');
 $parent_srl = $oComment->get('parent_srl');
 $module_srl = $oComment->get('module_srl');
 $document_srl = $oComment->get('document_srl');
-
-// 첨부 파일은 file 모듈을 직접 호출
-$files = FileModel::getFiles($oComment->get('comment_srl'));
 ```
 
-(`getDepth()`/`getParentSrl()`/`getAttachedFiles()`/`getTitle()` 같은 메서드는 `CommentItem`에 정의되어 있지 않다.)
+(`getDepth()`/`getParentSrl()`/`getAttachedFiles()`/`getTitle()` 같은 이름은 `CommentItem`에 정의되어 있지 않다. 첨부는 `getUploadedFiles()`를 사용한다.)
 
 ## DB 스키마
 
@@ -123,7 +122,7 @@ $files = FileModel::getFiles($oComment->get('comment_srl'));
 | 트리거 (시점) | 메서드 | 용도 |
 |---|---|---|
 | `document.deleteDocument` (after) | `triggerDeleteDocumentComments` (controller) | 문서 삭제 시 댓글 일괄 삭제 |
-| `module.deleteModule` (after) | `triggerDeleteModuleComments` (controller) | 모듈 삭제 시 댓글/추천/신고 데이터 삭제 |
+| `module.deleteModule` (after) | `triggerDeleteModuleComments` (controller) | 모듈의 `comments`/`comments_list` 일괄 삭제(추천·신고 로그는 이 경로에서 정리하지 않음) |
 | `module.procModuleAdminCopyModule` (after) | `triggerCopyModule` (controller) | 모듈 복사 시 댓글 설정 복사 |
 | `document.moveDocumentModule` (after) | `triggerMoveDocument` (controller) | 문서 이동 시 댓글 `module_srl` 갱신 |
 | `document.copyDocumentModule.each` (before) | `triggerAddCopyDocument` (controller) | 문서 복사 시 댓글 복제 |
@@ -138,9 +137,11 @@ comment 모듈 자체는 grant를 정의하지 않는다 (`<grants />`, `conf/mo
 
 ## 상태 (status)
 
-- `RX_STATUS_PUBLIC` — 공개.
-- `RX_STATUS_SECRET` — 비밀 댓글.
-- `RX_STATUS_TRASH` — 휴지통.
+`comments.status` 컬럼은 숫자형 `RX_STATUS_*`를 저장하지만, `CommentItem::getStatus()`는 대응하는 대문자 문자열(`TEMP`, `PUBLIC`, `SECRET`, `EMBARGO`, `TRASH`, `CENSORED`, `CENSORED_BY_ADMIN`, `DELETED`, `DELETED_BY_ADMIN`, `OTHER`)을 반환한다 (`comment.item.php:153-168`). 숫자 `RX_STATUS_PUBLIC`이어도 별도 `is_secret='Y'`이면 API 결과는 `SECRET`이다.
+
+- `RX_STATUS_PUBLIC`(1) — 일반 공개 또는 `is_secret`과 조합한 비밀 댓글.
+- `RX_STATUS_SECRET`(2) — 비밀 댓글.
+- `RX_STATUS_TRASH`(4) — 휴지통.
 
 ## 관련 모듈
 

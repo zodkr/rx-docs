@@ -18,19 +18,19 @@
 | `HTTP` | `HTTP.php` (336줄) | Guzzle 래퍼, 프록시/타임아웃 추상화. |
 | `Image` | `Image.php` (101줄) | 이미지 메타, animated WebP/GIF 판정. |
 | `Korea` | `Korea.php` (465줄) | 한국 IP 대역, 휴대전화/이메일 검증, 주민·법인·사업자등록번호 검증. |
-| `Lang` | `Lang.php` (417줄) | `lang_*.php` 로딩, ArrayObject 인터폴레이션. 상세 → [16-i18n-and-lang.md](16-i18n-and-lang.md) |
+| `Lang` | `Lang.php` (417줄) | `<language>.php` 로딩(언어 base fallback), `lang.xml` 및 legacy `<language>.lang.php` 호환, ArrayObject 인터폴레이션. 상세 → [16-i18n-and-lang.md](16-i18n-and-lang.md) |
 | `MIME` | `MIME.php` (208줄) | 확장자 ↔ MIME 타입 매핑. |
 | `Mail` | `Mail.php` (693줄) | SwiftMailer 기반 메일 발송. 상세 → [18-mail-sms-push.md](18-mail-sms-push.md) |
 | `Pagination` | `Pagination.php` (155줄) | 페이지 계산기 (XE 호환은 `classes/page/PageHandler.class.php`). |
 | `Password` | `Password.php` (587줄) | bcrypt + phpass 호환. 상세 → [19-security.md](19-security.md) |
 | `Push` | `Push.php` (641줄) | APNS/FCM/FCMv1, 토픽, 토큰 관리. |
-| `Queue` | `Queue.php` (535줄) | DB/Redis 백업드 작업 큐, cron 처리. 상세 → [17-cache-and-queue.md](17-cache-and-queue.md) |
+| `Queue` | `Queue.php` (535줄) | DB/Redis 백엔드 작업 큐, cron 처리. 상세 → [17-cache-and-queue.md](17-cache-and-queue.md) |
 | `Request` | `Request.php` (226줄) | HTTP 메서드/호스트/라우팅 결과 보관. |
 | `Router` | `Router.php` (645줄) | URL ↔ 변수 변환. 상세 → [07-router.md](07-router.md) |
 | `SMS` | `SMS.php` (843줄) | SMS 발송 추상화. |
 | `Security` | `Security.php` (430줄) | 입력 sanitize, 암호화/서명, 난수 생성, CSRF 검사, hash_equals 상수시간 비교, XXE 방어. |
-| `Session` | `Session.php` (1147줄) | PHP 세션 + 자체 토큰/refresh/SSL 분리 쿠키. 상세 → [15-session-and-auth.md](15-session-and-auth.md) |
-| `Storage` | `Storage.php` (1058줄) | atomic 파일 쓰기, umask 관리, 파일 잠금. 상세 → [20-storage-and-files.md](20-storage-and-files.md) |
+| `Session` | `Session.php` (1147줄) | PHP 세션 + 자체 토큰/refresh와 세션·일반 쿠키의 `Secure` 정책. 상세 → [15-session-and-auth.md](15-session-and-auth.md) |
+| `Storage` | `Storage.php` (1058줄) | 조건부 atomic 파일 쓰기와 직접 잠금 쓰기 fallback, umask 관리, 파일 잠금. 상세 → [20-storage-and-files.md](20-storage-and-files.md) |
 | `Template` | `Template.php` (998줄) | 템플릿 엔진 인스턴스. 상세 → [09-templates-and-skins.md](09-templates-and-skins.md) |
 | `Timer` | `Timer.php` (109줄) | `RX_MICROTIME` 기반 시간 측정. |
 | `UA` | `UA.php` (480줄) | User-Agent 파싱 (모바일/태블릿/봇). |

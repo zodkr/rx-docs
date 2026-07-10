@@ -56,7 +56,7 @@ protected static $_kinds = [
 protected static $_nocsrf_methods = ['GET', 'HEAD', 'OPTIONS'];
 ```
 
-이 메서드는 CSRF 토큰 검증을 건너뛴다. POST 등은 토큰을 요구한다(`module.xml`의 `check-csrf="false"`로 액션별 해제 가능).
+이 메서드는 CSRF 검사를 건너뛴다. 그 밖의 메서드는 `module.xml`에서 `check-csrf="false"`로 해제하지 않는 한 `Security::checkCSRF()`를 호출한다. 기본 설정(`security.check_csrf_token=false`)에서는 토큰 대신 `Sec-Fetch-Site`/`Origin`/`Referer`로 same-origin 여부를 검사한다. 토큰 검사를 활성화한 경우에는 로그인 사용자의 요청에 `X-CSRF-Token` 헤더 또는 `_rx_csrf_token` 인자가 필요하다 (`common/framework/Security.php:327-380`).
 
 ## 생성자 (`:58`)
 
@@ -229,7 +229,7 @@ ModuleHandler::triggerCall($trigger_name, $called_position, $obj_or_data);
 5. `is_mobile` 재캐싱 (`:833`).
 6. `xml_info->action->{$act}`이 등록되어 있고 `method_exists($this, $act)`인 경우에 한해 (`:836`):
    - **권한 검사** — `module_srl && !grant->access`면 `stop("msg_not_permitted_act")` 후 FALSE (`:839-843`).
-   - **스킨 동기화** — `is_skin_fix === 'N'`이면 `setLayoutAndTemplatePaths(viewType, module_info)`, `ModuleModel::syncSkinInfoToModuleInfo` (`:846-855`).
+   - **스킨 동기화** — 현재 모듈의 skin이 있고 non-admin 액션이면, template path가 없거나 현재 device의 skin fix flag가 `N`일 때 `setLayoutAndTemplatePaths(viewType, module_info)`를 호출한다. 이후 `ModuleModel::syncSkinInfoToModuleInfo`는 두 경우 모두 실행 (`:846-855`).
    - **트리거** — `act:<module>.<act>.before` (`:859`).
    - **액션 실행** — `$this->{$act}()` (`:874`). `Rhymix\Framework\Exception`은 BaseObject(-2)로 변환.
    - **트리거** — `act:<module>.<act>.after` (`:883`).
@@ -318,16 +318,18 @@ public function procBoardGetList()
 }
 ```
 
-### 4. CLI에서 직접 호출
+### 4. CLI에서 모델/서비스 호출
 
 ```php
 // common/scripts/myscript.php
-$oController = getController('board');
-$output = $oController->procBoardInsertDocument();
-if (!$output->toBool()) {
-    echo $output->getMessage();
+$oDocumentModel = getModel('document');
+$result = $oDocumentModel->getDocumentList((object)['module_srl' => 123]);
+foreach ($result->data ?? [] as $document) {
+    // 작업 수행
 }
 ```
+
+`proc*` 액션을 controller에서 직접 호출하면 `ModuleHandler`의 권한·메서드·CSRF·ruleset·모듈 정보 설정을 우회한다. 또한 액션의 성공 반환값은 `BaseObject`로 통일되어 있지 않고 `void`일 수도 있으므로, 반환 계약을 확인하지 않은 채 `toBool()`을 호출하면 안 된다. CLI에서는 가능한 한 모델/전용 서비스 메서드를 호출한다.
 
 ## 다음 문서
 

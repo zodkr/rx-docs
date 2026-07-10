@@ -5,7 +5,7 @@ PHP 표준 세션과 `Rhymix\Framework\Session`(`common/framework/Session.php`, 
 ## 기본 모델
 
 - PHP `$_SESSION`을 활용한다 — 세션 저장소(file/redis/db/...)는 PHP ini 또는 `config('session.use_db')`로 결정.
-- Rhymix가 자체 토큰/refresh/SSL 분리 쿠키 정책을 덧붙인다.
+- Rhymix가 자체 토큰/refresh와 세션·일반 쿠키의 `Secure` 정책을 덧붙인다.
 - 로그인 정보는 `$_SESSION['RHYMIX']['login']` 등에 보관된다.
 
 ## Session 정적 API
@@ -14,16 +14,16 @@ PHP 표준 세션과 `Rhymix\Framework\Session`(`common/framework/Session.php`, 
 
 | 메서드 | 시그니처 | 의미 |
 |---|---|---|
-| `start` | `start(bool $force = false): bool` | 세션 시작 (이미 시작되어도 안전) |
+| `start` | `start(bool $force = false): bool` | 세션 시작. 이미 시작되었으면 `E_USER_WARNING`을 발생시키고 `false` 반환 |
 | `close` | `close(): void` | 세션 저장 후 종료 |
 | `destroy` | `destroy(): void` | 세션 파기 |
 | `isStarted` | `isStarted(): bool` | — |
 | `create` | `create(): bool` | 빈 세션 생성/초기화 |
 | `login` | `login(int $member_srl, bool $refresh = true): bool` | **member_srl(int)을 받음** |
 | `logout` | `logout(): void` | — |
-| `refresh` | `refresh(bool $refresh_cookie = false): bool` | 세션 ID 회전 |
+| `refresh` | `refresh(bool $refresh_cookie = false): bool` | 현재 도메인의 `started`/`trusted` 값이 없으면 채움. `true`이면 `last_refresh` 갱신·세션 ID 재생성·기존 자동 로그인 쿠키 재발급까지 수행 |
 | `isMember` / `isAdmin` / `isTrusted` | `(): bool` | 로그인/관리자/비밀번호 재확인 통과 여부 |
-| `isValid` | `isValid(int $member_srl = 0): bool` | 토큰/멤버 검증 |
+| `isValid` | `isValid(int $member_srl = 0): bool` | 회원 세션의 무효화 시각 및 denied/limit 상태 검증 |
 | `getMemberSrl` | `getMemberSrl(): int` | — |
 
 사용:
@@ -70,14 +70,14 @@ $member = Context::get('logged_info');
 
 ### 일반 토큰
 
-`Context::init` 시점에 세션별 토큰이 자동 생성·검증된다.
+일반 토큰은 필요할 때 `Session::getGenericToken()`이 지연 생성한다. 예를 들어 공통 HTML 레이아웃의 `<meta name="csrf-token">`을 렌더링할 때 이 메서드가 호출된다 (`common/tpl/common_layout.html:10`, `common/framework/Session.php:750-760`). `Context::init()` 자체가 토큰을 생성하거나 검증하는 것은 아니다.
 
 ```php
 $token = Rhymix\Framework\Session::getGenericToken();
 $ok = Rhymix\Framework\Session::verifyToken($token);
 ```
 
-POST 등 비-안전 메서드는 `_rx_csrf_token` 파라미터/헤더 또는 referer/origin 검증을 자동 수행한다. 검증 실패 시 모듈 처리가 거부된다.
+POST 등 비-안전 메서드 액션은 `ModuleHandler`가 `Security::checkCSRF()`를 호출해 검증하고, 실패하면 모듈 처리를 거부한다 (`classes/module/ModuleHandler.class.php:382-388`). 기본값인 `security.check_csrf_token=false`에서는 `_rx_csrf_token` 파라미터/헤더 검사를 생략하지만, `Sec-Fetch-Site`·Origin·Referer를 이용한 same-origin 검사는 계속 수행한다. 이 설정을 `true`로 켜면 로그인 사용자의 토큰 누락도 실패로 처리한다 (`common/framework/Security.php:327-380`).
 
 ### 액션별 토큰
 
@@ -132,12 +132,14 @@ Rhymix\Framework\Session::setTrusted(1800);    // 30분 신뢰 유지
 2. 다음 요청 시 토큰 검증 → 세션 자동 복원.
 3. `session.autologin_refresh`가 꺼져 있지 않으면(기본 `true`) 자동 로그인 성공 시마다 security_key를 회전한다.
 
-## SSL 분리 쿠키
+## SSL 쿠키 정책
 
-HTTPS와 HTTP 사이트에서 별도 세션 키를 사용하는 정책 (`config('session.use_ssl_cookies')`).
+`config('session.use_ssl')`과 `config('session.use_ssl_cookies')`는 서로 다른 대상을 제어한다.
 
-- HTTPS 전용 영역은 `Secure` 쿠키로 별도 부세션을 관리.
-- HTTP로 다운그레이드되면 부세션이 노출되지 않음 (관리자 작업 보호).
+- `session.use_ssl=true` — 현재 요청이 HTTPS일 때 PHP 세션 쿠키에 `Secure` 속성을 붙인다 (`Session::_getParams()`, `common/framework/Session.php:963-972`).
+- `session.use_ssl_cookies=true` — `Rhymix\Framework\Cookie` 헬퍼로 만드는 일반 쿠키에 HTTPS 요청에서 `Secure` 속성을 붙인다 (`common/framework/Cookie.php:71`).
+
+어느 설정도 HTTP/HTTPS별 별도 부세션을 만들지는 않는다. `Secure` 쿠키는 HTTP 요청으로 전송되지 않으므로, HTTPS 전용 운영이라면 리다이렉트·HSTS 등 서버 정책과 함께 사용한다.
 
 ## 세션 도메인
 

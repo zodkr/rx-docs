@@ -29,7 +29,7 @@
 
 ## 동작
 
-`ModuleHandler::_createErrorMessage()`가 에러 발생 시 `MessageView` 인스턴스를 만들어 반환. PC 기본 스킨은 `xedition`(`modules/message/skins/xedition/`), 모바일 기본 스킨은 `default`이며, 설정된 스킨 디렉토리가 없으면 `skins/default/`로 폴백한다 (`message.view.php:17-53`).
+`ModuleHandler::_createErrorMessage()`가 에러 발생 시 `MessageView` 인스턴스를 만들어 반환. PC 기본 스킨은 `xedition`이며 누락 시 `skins/default/`로 폴백한다. 모바일 기본 `mskin`은 `default`이고 일반 모바일 모드에서는 `m.skins/<mskin>/` → `m.skins/default/` 순서다. `mskin='/USE_RESPONSIVE/'`일 때만 PC `skins/<skin>/`을 사용하고 없으면 `skins/default/`로 폴백한다 (`message.view.php:17-53`).
 
 `MessageView::getErrorHelp()`가 흔한 PHP 오류 메시지를 정규식으로 판별해 친절한 도움말(`message.error_help.*` 언어값)을 `system_message_help`로 함께 표시한다 (`message.view.php:75`, `message.view.php:105-124`).
 

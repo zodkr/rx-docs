@@ -46,13 +46,21 @@
 7. **`files/config/config.php`** — 자동 생성.
 8. **완료** → 홈페이지(`RX_BASEURL`)로 이동 (`success_return_url`이 지정된 경우 해당 URL).
 
+## DB 스키마
+
+| 테이블 | 정의 파일 |
+|---|---|
+| `sequence` | `schemas/sequence.xml` — `getNextSequence()`가 공용 srl을 발급하는 auto increment 테이블 |
+
 ## 코어 모듈 일괄 설치
 
 설치 마지막 단계에서 `installDownloadedModule()`이 `modules/`를 순회하되 `Context::isDefaultPlugin($module, 'module')`로 걸러 기본 플러그인(코어 모듈)만 대상으로 삼는다 (`install.controller.php:466-538`). `module` 모듈을 먼저 설치한 뒤 system → content → member 카테고리 순서로 각 모듈을 설치하며, 각 설치는 `schemas/*.xml` 실행(`createTable`) + `moduleInstall()` 호출로 이뤄진다 (`installModule()`, `install.controller.php:543-588`). 모든 설치가 끝나면 설치한 순서대로 `updateModule()`을 호출해 각 모듈의 `checkUpdate()`/`moduleUpdate()` 업데이트 로직을 수행한다.
 
+한국어 초기 데이터 스크립트(`script/ko.install.php`)는 기본 사이트맵을 구성할 때 `menu.getModuleListInSitemap`의 `after` 트리거를 호출해 각 콘텐츠 모듈의 인스턴스 목록을 수집한다 (`modules/install/script/ko.install.php:166`). 일반 요청 라이프사이클에서 install 모듈이 정의하거나 hook하는 트리거는 아니다.
+
 ## 보안
 
-설치 후 `install` 모듈 자체는 자동으로 차단된다 (`Context::isInstalled()` true 시 진입 불가).
+설치 후 초기 설치용 `installView`와 `installController` 액션은 `Context::isInstalled()`가 true이면 `msg_already_installed`로 차단된다. 반면 `installAdminController`의 모듈 설치·업데이트 액션은 설치가 끝난 뒤에도 계속 사용된다.
 
 ## 관련
 

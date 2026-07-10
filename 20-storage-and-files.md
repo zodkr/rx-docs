@@ -4,8 +4,8 @@
 
 ## 핵심 디자인
 
-- **Atomic write**: 임시 파일 → `rename()` 패턴으로 부분 쓰기 방지.
-- **권한 캐시**: umask를 모듈 초기에 캐싱해 매번 stat 호출 회피.
+- **조건부 atomic write**: `safe_overwrite`가 켜져 있고 append 모드가 아니며 대상 디렉토리에 쓸 수 있을 때 임시 파일 → `rename()` 패턴을 사용한다. 그 외에는 대상 파일에 직접 잠금 쓰기.
+- **권한 캐시**: `config('file.umask')` 값을 처음 필요할 때 읽어 정적 프로퍼티에 캐싱.
 - **잠금**: 동시 쓰기 충돌 방지를 위한 파일 잠금 API.
 
 ## API
@@ -38,16 +38,16 @@
 | 메서드 | 비고 |
 |---|---|
 | `Storage::read($path, $stream=false)` | 문자열 또는 stream resource 반환 |
-| `Storage::readPHPData($path)` | PHP array 직렬화 파일 unserialize |
+| `Storage::readPHPData($path)` | 값을 `return`하는 PHP 데이터 파일을 `include`하여 결과 반환 |
 
 ### 쓰기
 
 | 메서드 | 비고 |
 |---|---|
-| `Storage::write($path, $content, $mode='w', ?int $perms=null)` | atomic |
+| `Storage::write($path, $content, $mode='w', ?int $perms=null)` | 조건이 맞으면 temp+rename atomic, 아니면 직접 잠금 쓰기 |
 | `Storage::writePHPData($path, $data, ?string $comment=null, bool $serialize=true)` | PHP 데이터 직렬화 파일 |
 
-`writePHPData`는 기본적으로 `serialize()` 결과를 PHP guard와 함께 저장한다 (`$serialize=false`면 `var_export` 사용). 설정 파일 작성에 활용.
+`writePHPData`는 기본적으로 `serialize()` 결과를 `return unserialize(...)` 형태의 PHP 파일로 저장하고, `$serialize=false`면 `var_export`한 값을 직접 `return`하도록 쓴다. `readPHPData()`는 이를 일반 `unserialize()`로 읽는 것이 아니라 PHP 파일로 include한다 (`common/framework/Storage.php:240-250`).
 
 ### 복사/이동/삭제
 
@@ -77,20 +77,22 @@ Rhymix\Framework\Storage::protectDirectory($path);
 
 - `.htaccess` (Deny from all) 생성.
 - `index.html` (빈 파일) 생성.
-- 외부 직접 접근 차단.
+- Apache에서 `.htaccess`가 허용된 경우 외부 직접 접근 차단.
+
+`protectDirectory()`는 best-effort 보조 수단이며 웹서버 설정에 의존한다. nginx 등 `.htaccess`를 해석하지 않는 서버에서는 별도 location 규칙으로 차단해야 한다 (`Storage.php:876-913`).
 
 ### 메타데이터
 
 | 메서드 | 비고 |
 |---|---|
 | `Storage::getSize($filename)` | bytes |
-| `Storage::getServerUID()` | 웹서버 프로세스 UID (umask 계산용) |
+| `Storage::getServerUID()` | 현재 PHP 프로세스의 effective UID (umask 계산용) |
 
 > `Storage`는 mtime / mime-type / touch wrapper를 제공하지 않는다. 그 용도는 PHP 표준 함수(`filemtime`, `touch`, `mime_content_type` 등) 또는 `Rhymix\Framework\MIME`을 직접 사용한다.
 
 ## 쓰기 실패 처리
 
-`Storage::write()`는 권한 부족 등으로 쓰기에 실패하면 `trigger_error`(`E_USER_WARNING`) 후 `false`를 반환할 뿐, FTP 등 다른 경로로 폴백하지 않는다 (`Storage.php:312-316`). XE 시절의 레거시 FTP 클래스 `common/libraries/ftp.php`는 `tar.php`와 함께 제거되어 현재 존재하지 않는다. `config('ftp.*')` 항목 자체는 관리자 FTP 설정용으로 남아 있으나, 파일 스토리지 폴백 용도로는 더 이상 사용되지 않는다.
+`Storage::write()`는 권한 부족 등으로 쓰기에 실패하면 `trigger_error`(`E_USER_WARNING`) 후 `false`를 반환할 뿐, FTP 등 다른 경로로 폴백하지 않는다 (`Storage.php:312-316`). XE 시절의 레거시 FTP 클래스 `common/libraries/ftp.php`는 `tar.php`와 함께 제거되어 현재 존재하지 않는다. `common/defaults/config.php`에는 호환을 위한 `ftp.*` 기본값이 남아 있지만 현재 코어가 파일 쓰기나 관리자 FTP 설정에 사용하지 않는다.
 
 ## 잠금 (lock)
 
@@ -129,7 +131,7 @@ if (Rhymix\Framework\Storage::getLock(string $name): bool) {
 
 ### `FileHandler::createImageFile`
 
-이미지 리사이즈 (GD 함수 직접 사용). animated WebP 보존, EXIF 회전 처리.
+이미지 리사이즈 (GD 함수 직접 사용). animated WebP는 처리하지 않고 `false`를 반환하며, animated GIF도 애니메이션을 보존하지 않는다. EXIF 방향은 자동 적용되지 않으므로 필요하면 `FileHandler::checkImageRotation($source_file)` 결과를 `$rotate` 인자로 전달한다 (`FileHandler.class.php:504-534,627-646`).
 
 ```php
 FileHandler::createImageFile(
@@ -149,7 +151,18 @@ FileHandler::createImageFile(
 원격 파일 다운로드. `Rhymix\Framework\HTTP` 위에서 동작.
 
 ```php
-$ok = FileHandler::getRemoteFile($url, $target_path, $body=null, $timeout=3, $method='GET', $content_type=null, $headers=[]);
+$ok = FileHandler::getRemoteFile(
+    $url,
+    $target_path,
+    null,   // body
+    3,      // timeout
+    'GET',  // method
+    null,   // content_type
+    [],     // headers
+    [],     // cookies
+    [],     // post_data
+    []      // request_config
+);
 ```
 
 ### `FileHandler::returnBytes`

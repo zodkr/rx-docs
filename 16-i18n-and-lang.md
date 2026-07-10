@@ -4,7 +4,7 @@
 
 ## 지원 언어
 
-코어 다국어 디렉토리: `common/lang/`. 12종 이상.
+지원 locale 목록은 `common/defaults/locales.php`에 13종이 등록되어 있다. 코어 번역 디렉토리 `common/lang/`에는 현재 12종의 번역 파일이 있으며, 별도 번역 파일이 없는 locale은 영어 폴백을 사용한다.
 
 | 코드 | 언어 |
 |---|---|
@@ -20,6 +20,7 @@
 | `de` | Deutsch |
 | `mn` | Монгол |
 | `tr` | Türkçe |
+| `id` | Bahasa Indonesia (코어 `id.php`가 없으므로 누락 키는 영어 폴백) |
 
 전체 목록은 `common/defaults/locales.php` 참고.
 
@@ -49,7 +50,7 @@ lang 파일의 `$lang`은 `loadDirectory()`가 생성한 `\stdClass`이며(`comm
 
 ### 모듈 namespace로 접근
 
-위 예시는 `lang('board.board_title')` 또는 템플릿에서 `{$lang->board_title}` (모듈 컨텍스트일 때).
+위 예시는 명시적 plugin 키인 `lang('board.board_title')`로 접근할 수 있다. 템플릿의 `{$lang->board_title}`처럼 prefix 없는 키는 현재까지 로드된 plugin들의 검색 우선순위에서 찾는다.
 
 ## API
 
@@ -65,7 +66,7 @@ echo $lang->get('board.board_title');
 
 ```php
 $text = lang('board.board_title');
-$text = lang('cmd_write_document');         // 현재 모듈 namespace
+$text = lang('cmd_write_document');         // 로드된 plugin들의 검색 우선순위에서 탐색
 lang('custom_key', '동적으로 정의');        // 런타임 설정
 ```
 
@@ -92,7 +93,7 @@ unset($lang->key);        // __unset
 $lang->arrayKey('a','b'); // __call → 임의 키
 ```
 
-존재하지 않는 키는 키 자체를 반환(에러 X) — 누락 키 감지를 위해 `$lang->{key} ?? null` 패턴 활용.
+존재하지 않는 키는 키 자체를 반환한다(에러 없음). `$lang->{$key} ?? null`은 `__isset()`을 호출하지만, 현재 언어 인스턴스에 로드된 plugin의 **직접 프로퍼티**만 검사한다. dot-separated 키나 영어 폴백의 존재까지 판정하지 않으므로 범용 누락 키 검사로 사용하면 안 된다 (`common/framework/Lang.php:383-392`). 최종 폴백까지 거친 뒤에도 반환값이 요청한 키와 같으면 실제 번역이 없을 가능성이 높다.
 
 ## 기본 언어 폴백
 
@@ -164,7 +165,10 @@ public function dispFooIndex()
 
 ```php
 $lang_key = 'foo_' . $type;
-$message = lang($lang_key) ?: '기본 메시지';
+$message = lang($lang_key);
+if ($message === $lang_key) {
+    $message = '기본 메시지';
+}
 ```
 
 ### 다국어가 다른 위치에 있는 경우

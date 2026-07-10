@@ -5,23 +5,26 @@ Rhymix를 실행/배포할 때 필요한 PHP 환경, DB, 드라이버, 웹서버
 ## PHP
 
 - 최소: **7.4** (`common/autoload.php:14-19`에서 강제 체크).
+- 공식 운영 권장: **8.2 이상** ([공식 설치 환경](https://rhymix.org/manual/introduction/requirements)).
 - CI 매트릭스: **7.4 ~ 8.5** (`.github/workflows/ci.yml`).
 - composer 명목상 `>=7.2.5`로 적혀 있으나 (`common/composer.json:17`) 런타임 체크가 우선한다.
 
-### 필수 PHP 확장 (`common/composer.json:18-25`)
+### 공식 런타임 필수 PHP 확장
 
 | 확장 | 용도 |
 |---|---|
 | `ext-curl` | HTTP/푸시/외부 API |
 | `ext-gd` | 이미지 리사이즈/썸네일 |
-| `ext-iconv` | 인코딩 변환 |
+| `ext-iconv` 또는 `ext-mbstring` | 인코딩·멀티바이트 문자열 |
 | `ext-json` | JSON 응답/큐 페이로드 |
-| `ext-mbstring` | 멀티바이트 문자열 |
 | `ext-openssl` | TLS, 암호화 |
-| `ext-pcre` | 정규식 |
-| `ext-xml` | XML 메타/쿼리 파싱 |
+| `ext-pdo_mysql` | MySQL/MariaDB 접속 |
+| `SimpleXML` | XML 메타/쿼리 파싱 |
+| `Zend OPcache` | PHP opcode 캐시 |
 
-권장 추가 확장: `ext-mysqli` 또는 `ext-pdo_mysql` (DB 접속), `ext-mbstring`, `ext-zip`(설치/업데이트), `ext-fileinfo`(파일 타입 검출), `ext-bcmath`, `ext-intl`.
+위 목록은 [공식 설치 환경](https://rhymix.org/manual/introduction/requirements)의 런타임 요구사항이다. 설치 환경 검사도 DB 지원 여부는 `extension_loaded('pdo_mysql')`만 확인하므로 (`modules/install/install.controller.php:307`) `ext-mysqli`는 이를 대체하지 못한다. 공식 권장 추가 확장은 `ext-apcu`, `ext-exif`, `ext-fileinfo`, `ext-intl`, `ext-zip`이다.
+
+반면 소스에서 Composer 의존성을 다시 설치·갱신할 때는 `common/composer.json:18-25`가 `ext-curl`, `ext-gd`, `ext-iconv`, `ext-json`, `ext-mbstring`, `ext-openssl`, `ext-pcre`, `ext-xml`을 각각 요구한다. 즉 공식 런타임의 “iconv 또는 mbstring”보다 개발 환경의 manifest가 더 엄격하다. `config.platform-check=false`이므로 번들된 vendor를 실행할 때 Composer의 자동 platform check는 생성되지 않지만, `composer install`/`update`의 의존성 해석에는 이 manifest 요구가 적용된다.
 
 ### PHP ini 권장값
 
@@ -35,23 +38,23 @@ Rhymix를 실행/배포할 때 필요한 PHP 환경, DB, 드라이버, 웹서버
 
 ## 데이터베이스
 
-- **공식 지원**: MySQL 5.5+ / MariaDB 10.0+.
+- **공식 지원**: MySQL 5.7+ / MariaDB 10.6+ ([공식 설치 환경](https://rhymix.org/manual/introduction/requirements)).
 - 드라이버: `common/framework/DB.php` — PDO MySQL 기반, prefix 자동 적용, prepared statement.
 - 설치 모듈(`modules/install/`)이 초기 스키마를 생성한다.
 
 테이블 prefix는 `db.master.prefix` 설정(기본 `rx_`). 멀티 마스터/슬레이브 분리는 `DB::getInstance($type)` 인자로 지원하지만 기본 단일 마스터로 동작한다.
 
-## 드라이버 (자동 폴백)
+## 드라이버
 
-런타임에 환경에 맞게 선택되며, 가용성 검사 후 자동 폴백된다.
+드라이버 선택과 폴백 정책은 하위 시스템마다 다르다. Cache는 설정한 드라이버를 사용할 수 없으면 Dummy로 폴백하지만, Mail은 클래스가 없을 때 `mailfunction`으로 폴백하고 Queue/Push는 알 수 없는 드라이버에 대해 `null`을 반환한다. 따라서 모든 드라이버에 공통인 자동 폴백 계약은 없다.
 
 ### 캐시 (`common/framework/drivers/cache/`)
 
 | 드라이버 | 비고 |
 |---|---|
 | `apc` | APCu 기반, 단일 서버 |
-| `dummy` | 항상 cache miss (디버깅/비활성화) |
-| `file` | `files/cache/store/` 디렉토리 사용 |
+| `dummy` | 요청 내 메모리 캐시. `force=true` 항목은 `files/cache/store/`에 영속 저장 |
+| `file` | Rhymix 2.1부터 직접 선택 불가. Dummy의 영속 저장 구현으로만 사용 |
 | `memcached` | `ext-memcached` 필요 |
 | `redis` | `ext-redis` 필요 |
 | `sqlite` | `ext-sqlite3` 필요 |
@@ -85,9 +88,11 @@ Rhymix를 실행/배포할 때 필요한 PHP 환경, DB, 드라이버, 웹서버
 
 | 드라이버 | 비고 |
 |---|---|
-| `db` | RDBMS 백엔드 (기본) |
+| `db` | RDBMS 백엔드. 예약·반복 작업은 항상 이 드라이버 사용 |
 | `redis` | Redis List 기반 (lPush/rPush, lpop/blpop) |
-| `dummy` | 즉시 무시 |
+| `dummy` | 테스트용 단일 메모리 작업 저장소. 관리자 설정에서 Queue 활성화와 함께 선택하면 저장 거부 |
+
+Queue는 기본 실행 드라이버가 없으며, 설정하지 않은 상태에서 `Queue::addTask()`를 호출하면 `FeatureDisabled` 예외가 발생한다.
 
 ## 웹서버
 
@@ -123,7 +128,7 @@ Rhymix를 실행/배포할 때 필요한 PHP 환경, DB, 드라이버, 웹서버
 ## 권장 디렉토리 권한
 
 - `files/`: 웹서버 사용자가 쓰기 가능 (보통 0755 디렉토리 + 0644 파일).
-- umask: `config('file.umask')` 값을 8진수로 해석해 사용한다 (`common/framework/Storage.php:920-927`). 미설정 시 `0`(umask 적용 안 함). 설치 환경에 적절한 값은 `Storage::recommendUmask()`(`:940-`)가 제안한다 — Windows면 `0000`, 그 외엔 파일 소유자 UID(`fileowner(__FILE__)`)와 PHP 프로세스 UID(`getServerUID()`)가 같으면 `0022`, 다르면 `0000`.
+- umask: `config('file.umask')` 값을 8진수로 해석해 사용하며 현재 기본값은 `0022`다 (`common/defaults/config.php:80-83`, `common/framework/Storage.php:920-927`). 값을 실제로 비우거나 `0000`으로 설정하면 `0`(umask 적용 안 함)이 된다. 설치 환경에 적절한 값은 `Storage::recommendUmask()`(`:940-`)가 제안한다 — Windows면 `0000`, 그 외엔 파일 소유자 UID(`fileowner(__FILE__)`)와 PHP 프로세스 UID(`getServerUID()`)가 같으면 `0022`, 다르면 `0000`.
 
 런타임 생성 디렉토리는 [03-directory-structure.md](03-directory-structure.md)의 `files/` 절 참고.
 

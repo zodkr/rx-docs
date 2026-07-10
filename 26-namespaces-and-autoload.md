@@ -139,24 +139,25 @@ $GLOBALS['RX_AUTOLOAD_FILE_MAP'] = [
 
 ### 주의
 
-이 패턴은 **무한히 매칭**된다. 즉 정의되지 않은 클래스도 결과적으로 경로를 만들어보고 `file_exists` 체크에서 걸러진다.
+이 패턴은 namespace 구분자(`\`)가 없는 영문·숫자·underscore 레거시 클래스명 대부분에 매칭된다. 즉 그 형식의 정의되지 않은 클래스도 결과적으로 경로를 만들어보고 `file_exists` 체크에서 걸러진다.
 
-→ 정의되지 않은 클래스의 `class_exists` 호출은 항상 모듈 경로를 한 번 stat한다. 비용은 적지만 인지 필요.
+→ 이 형식의 정의되지 않은 클래스에 `class_exists`를 호출하면 모듈 경로를 한 번 stat한다. 비용은 적지만 인지 필요.
 
-## 분기 4: `RX_NAMESPACES` (외부 plugin)
+## 분기 4: `RX_NAMESPACES` (사용자 정의 vendor namespace)
 
-`files/config/config.php`의 `namespaces.mapping`을 부트스트랩 시 `$GLOBALS['RX_NAMESPACES']`에 컴파일한다.
+`files/config/config.php`의 `namespaces`에는 `mapping`뿐 아니라 이를 바탕으로 미리 생성된 `regexp`도 함께 저장된다. `Config::init()`은 `regexp`가 비어 있지 않을 때만 이 배열을 `$GLOBALS['RX_NAMESPACES']`로 내보낸다 (`common/framework/Config.php:45-48`).
 
 ```php
 'namespaces' => [
     'mapping' => [
-        'Vendor\\MyPlugin\\' => 'plugins/myplugin',
-        'Acme\\Tools\\'      => 'plugins/acme-tools',
+        'Vendor\\MyPlugin' => 'plugins/myplugin',
+        'Acme\\Tools'      => 'plugins/acme-tools',
     ],
+    'regexp' => '!^(Vendor/MyPlugin|Acme/Tools)/((?:\\w+/)*)(\\w+)$!',
 ]
 ```
 
-런타임에 정규식이 생성된다:
+모듈 등록 시 `ModuleController::registerNamespaces()`가 namespace 이름을 길이 내림차순으로 정렬해 위 정규식을 생성하고 설정에 함께 저장한다 (`modules/module/module.controller.php:1553-1571`). 런타임에는 저장된 값을 그대로 사용한다.
 
 ```php
 // 구분자는 `!`, 이름은 길이 내림차순 정렬 (modules/module/module.controller.php:1563)
@@ -175,13 +176,19 @@ $GLOBALS['RX_NAMESPACES']['mapping'] = [
 
 ### 등록 방법
 
-관리자 UI에서 namespace 등록 또는 `config.user.inc.php`:
+모듈에서 사용자 정의 vendor namespace를 쓰는 지원 경로는 `modules/<module>/conf/module.xml`에 선언하는 것이다.
 
-```php
-config('namespaces.mapping', [
-    'Vendor\\MyPlugin\\' => 'plugins/myplugin',
-]);
+```xml
+<namespaces>
+    <namespace name="Vendor\MyPlugin" />
+</namespaces>
 ```
+
+모듈 설치·업데이트 흐름이 `ModuleController::registerNamespaces($module_name)`를 호출하여 `Vendor\MyPlugin` → `modules/<module>` mapping과 일치하는 regexp를 함께 저장한다 (`modules/install/install.admin.controller.php:58-70`, `modules/module/module.controller.php:1521-1571`). namespace만 따로 입력하는 관리자 UI는 없다.
+
+`config/config.user.inc.php`에서 `namespaces.mapping`만 설정하는 방식은 동작하지 않는다. 이 파일은 `Config::init()`이 `$GLOBALS['RX_NAMESPACES']`를 만든 **뒤에** 로드되고(`common/autoload.php:136-144`), regexp도 생성하지 않기 때문이다. 코어의 모듈 설치·업데이트 등록 절차를 사용하는 것이 안전하다.
+
+모듈 밖의 임의 경로를 vendor namespace에 직접 연결해야 한다면 부트스트랩 전에 읽히는 `files/config/config.php`의 `namespaces`에 **mapping과 일치하는 regexp를 모두** 넣어야 한다. 다만 `Rhymix\Plugins\...`처럼 분기 1이 이미 지원하는 namespace를 쓰는 편이 간단하며 별도 등록도 필요 없다.
 
 ## Composer autoloader
 

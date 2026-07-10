@@ -106,7 +106,7 @@ rhymix/
 | `files/attach/xeicon/` | 사용자 정의 xeicon | — |
 | `files/cache/` | 일반 캐시 | `Cache::clearAll`로 비움 |
 | `files/cache/template/` | 컴파일된 템플릿 | 자동 무효화 |
-| `files/cache/store/` | file 캐시 드라이버 저장소 | TTL 자동 정리 |
+| `files/cache/store/` | Dummy 캐시의 `force=true` 영속 항목 저장소(File 구현은 직접 선택 불가) | 만료 항목은 조회 시 제거 |
 | `files/cache/assets/` (하위 `minified/`=minify, `compiled/`=LESS·SCSS 컴파일, `combined/`=concat 결합) | CSS/JS minify·compile·concat 산출물 | 자동 |
 | `files/cache/lang/` | 컴파일된 다국어 캐시 | 자동 |
 | `files/cache/addons/` | 컴파일된 애드온 (PC/모바일) | 변경 시 자동 |
@@ -163,6 +163,7 @@ modules/<name>/
 - `.ht*` (Apache 설정).
 - `composer.json`, `composer.lock` (`composer.*`).
 - `files/attach`, `files/config`, `files/cache` 하위의 `*.php`/`*.inc`/`*.bak` 등 스크립트 확장자, `files/faceOff`, `files/ruleset` 하위의 `*.html`/`*.xml`/`*.blade.php` (`*.tpl`는 차단 대상 아님).
+- `files/env/` 전체, `files/member_extra_info/new_message_flags/`와 `files/member_extra_info/point/` 전체.
 - `common/tpl/` 하위 `*.html`/`*.xml`/`*.blade.php` (`common/vendor/`에 대한 차단 규칙은 없음).
 - 모듈 내부의 `queries/*.xml`, `schemas/*.xml`, `ruleset/*.xml` (런타임에 PHP가 읽음).
 

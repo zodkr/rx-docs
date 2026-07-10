@@ -1,12 +1,12 @@
 # 34. 외부 라이브러리
 
-Rhymix가 사용하는 외부 PHP/JS/CSS 라이브러리. 3개 범주로 분류한다.
+Rhymix가 사용하는 외부 PHP/JS/CSS 라이브러리를 Composer 패키지, 비-Composer PHP 코드, JS 플러그인, 폰트/CSS, JS 진입 파일로 나누어 정리한다.
 
 ## 1. Composer 패키지 (변경 없이 사용)
 
-`common/composer.json`이 정의. `common/vendor/`에 설치되어 커밋된다.
+`common/composer.json`의 직접 `require` 항목. 표의 값은 설치된 정확한 버전이 아니라 선언된 제약이며, 실제 버전은 `common/composer.lock`에서 확인한다. 패키지는 `common/vendor/`에 설치되어 커밋된다.
 
-| 패키지 | 버전 | 용도 |
+| 패키지 | `composer.json` 제약 | 용도 |
 |---|---|---|
 | `bordoni/phpass` | `0.3.6` | phpass 비밀번호 해싱 (옛 XE 호환). |
 | `composer/ca-bundle` | `*` | CA 인증서 번들 (curl/openssl용). |
@@ -72,9 +72,10 @@ common/js/plugins/<name>/
   - 더블클릭 시 컴포넌트 편집 팝업 호출 (`window.openComponent`).
   - 본문 내 컴포넌트 마커 시각화.
 
-- **`plugins/rx_paste/plugin.js`** — Rhymix 전용 붙여넣기 정화.
-  - 외부 에디터(Word/Google Docs)에서 붙여넣기 시 불필요한 스타일 제거.
-  - 첨부 이미지 자동 업로드.
+- **`plugins/rx_paste/plugin.js`** — Rhymix 전용 붙여넣기·파일 드롭 처리.
+  - escape된 단일 `iframe`/`object` 마크업을 실제 embed 마크업으로 복원.
+  - 클립보드·드롭 데이터에 파일이 있으면 `procFileUpload`로 업로드한 뒤 첨부 목록과 본문을 갱신.
+  - Word/Google Docs의 스타일 정리는 이 플러그인의 구현이 아니라 CKEditor의 `pastefromword`·`pastefromgdocs` 등 별도 플러그인 영역이다 (`rx_paste/plugin.js:21-42`).
 
 **기본 CKEditor 플러그인 (36개, `plugins/` 디렉토리 총 38개 = 기본 36 + 커스텀 2)**:
 
@@ -209,7 +210,7 @@ URI.js — URL 파싱/조작.
 - SIL OFL 1.1 — XEIcon.
 - Apache 2.0 — Google Auth, Bootstrap 2.x.
 
-번들 시 `LICENSE.txt`를 함께 동봉.
+동봉된 라이선스 파일명은 `LICENSE`, `LICENSE.md`, `LICENSE.txt`, `README.md` 등 라이브러리마다 다르다. 업데이트할 때는 각 패키지가 제공한 라이선스 파일과 소스 헤더를 그대로 보존한다.
 
 ## 업데이트
 

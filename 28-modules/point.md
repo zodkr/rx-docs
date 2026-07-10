@@ -72,7 +72,7 @@ $level = $oPointModel->getLevel($current, $config->level_step);  // getLevel($po
 | 회원 ||||
 | 1 | `member.insertMember` (after) | `triggerInsertMember` (controller) | 가입 보너스 |
 | 2 | `member.doLogin` (after) | `triggerAfterLogin` (controller) | 출석/로그인 포인트 |
-| 3 | `member.deleteGroup` (after) | `triggerDeleteGroup` (controller) | 그룹 삭제 시 점수 초기화 |
+| 3 | `member.deleteGroup` (after) | `triggerDeleteGroup` (controller) | 삭제된 그룹을 포인트-레벨 그룹 연동 설정(`point_group`)에서 제거 |
 | 문서 ||||
 | 4 | `document.insertDocument` (after) | `triggerInsertDocument` (controller) | 글 작성 |
 | 5 | `document.updateDocument` (before) | `triggerBeforeUpdateDocument` (controller) | 수정 전 상태 캡처 |
@@ -92,7 +92,7 @@ $level = $oPointModel->getLevel($current, $config->level_step);  // getLevel($po
 | 파일 ||||
 | 18 | `file.deleteFile` (after) | `triggerDeleteFile` (controller) | 파일 삭제 |
 | 19 | `file.downloadFile` (before) | `triggerBeforeDownloadFile` (controller) | 다운로드 점수 확인 |
-| 20 | `file.downloadFile` (after) | `triggerDownloadFile` (controller) | 다운로드 점수 차감 |
+| 20 | `file.downloadFile` (after) | `triggerDownloadFile` (controller) | 다운로더의 signed `download_file` 포인트와 업로더의 `download_file_author` 포인트 반영 |
 | 모듈 메타 ||||
 | 21 | `module.procModuleAdminCopyModule` (after) | `triggerCopyModule` (controller) | 모듈 복사 시 점수 설정 복사 |
 | 22 | `module.dispAdditionSetup` (after, view) | `triggerDispPointAdditionSetup` (view) | 관리자 모듈 설정 UI에 포인트 옵션 추가 |
@@ -105,7 +105,7 @@ $level = $oPointModel->getLevel($current, $config->level_step);  // getLevel($po
 | `document.deleteDocument` (before) | `triggerBeforeDeleteDocument` (controller) | 현재 버전은 after만 사용 |
 | `file.insertFile` (after) | `triggerInsertFile` (controller) | 더 이상 사용하지 않음 |
 
-각 모듈 설정에서 포인트 조정 가능 (모듈별 `module_config.point_*` 값).
+모듈별 포인트 값은 `module_part_config`에 `module='point'`, 해당 `module_srl`의 직렬화 설정으로 저장한다. 항목이 없을 때의 전역 fallback은 point 모듈의 `module_config`에서 읽는다 (`point.model.php:276-303`, `point.admin.controller.php:215,300`).
 
 ## 이 모듈이 정의하는 트리거
 

@@ -1,6 +1,16 @@
 # 18. 메일 / SMS / 푸시
 
-세 시스템 모두 **드라이버 추상화 + 정적 발송 API + 발송 트리거** 구조를 공유한다. 드라이버 선택·인증 정보·발신 정보는 **관리자 > 시스템 설정 > 알림**(`modules/admin/controllers/systemconfig/Notification.php`, `config_notification` 템플릿)에서 설정하며, `modules/advanced_mailer/`는 발송 로그·예외 발송·SPF/DKIM 확인·테스트 발송을 담당한다.
+세 시스템 모두 **드라이버 추상화 + 인스턴스 발송 API + 발송 트리거** 구조를 공유한다. 드라이버 선택·인증 정보·발신 정보는 **관리자 > 시스템 설정 > 알림**(`modules/admin/controllers/systemconfig/Notification.php`, `config_notification` 템플릿)에서 설정하며, `modules/advanced_mailer/`는 발송 로그·예외 발송·SPF/DKIM 확인·테스트 발송을 담당한다.
+
+## `send()`의 동기/비동기 의미
+
+Mail/SMS/Push의 `send(bool $sync = false)`는 모두 같은 규칙을 따른다.
+
+- 큐가 꺼져 있거나 `$sync=true`이면 현재 요청에서 실제 발송하고 그 결과를 반환한다.
+- `queue.enabled=true`, `$sync=false`, 큐 워커 밖이면 객체를 큐에 추가한 뒤 `true`를 반환한다. 이 `true`는 **큐 등록 성공**일 뿐 실제 전달 성공이 아니다.
+- 비동기 경로에서는 before/after 발송 트리거와 드라이버 오류 처리도 워커가 실제 발송할 때 실행된다.
+
+즉 즉시 드라이버 결과와 `getErrors()`가 필요하면 `send(true)`를 사용하고, 기본 `send()` 결과를 수신 성공으로 기록하지 않는다 (`common/framework/Mail.php:562-578`, `SMS.php:513-529`, `Push.php:404-420`).
 
 ## 메일 — `Rhymix\Framework\Mail`
 
@@ -40,7 +50,8 @@ $mail->setBody('Plain text', 'text/plain');     // 또는 명시
 $mail->setContent('<p>본문</p>');                 // setBody와 동등 (alias)
 $mail->attach('/path/to/file.pdf', 'invoice.pdf');
 
-$success = $mail->send(bool $sync = false);
+$success = $mail->send();        // 큐 사용 시 enqueue 결과
+// $success = $mail->send(true); // 현재 요청에서 동기 발송
 if (!$success) {
     $errors = $mail->getErrors();
 }
@@ -56,8 +67,8 @@ Rhymix\Framework\Mail::setDefaultDriver(new MyMailDriver());
 
 ### 트리거
 
-- `mail.send.before` — 발송 직전 (Mail 객체 수정 가능).
-- `mail.send.after` — 발송 직후 (성공/실패 로깅).
+- 이름 `mail.send`, position `before` — 발송 직전 (Mail 객체 수정 가능).
+- 이름 `mail.send`, position `after` — 발송 직후 (성공/실패 로깅).
 
 ### 기본 발신자
 
@@ -101,18 +112,25 @@ $sms->addTo('01098765432', '0');            // 두 번째 인자: country code (
 $sms->setSubject('인증번호');                  // LMS/MMS만 사용
 $sms->setBody('인증번호: 123456');             // setContent도 alias
 $sms->attach('/path/to/img.jpg');           // MMS만
-$success = $sms->send(bool $sync = false);
+$success = $sms->send();        // 큐 사용 시 enqueue 결과
+// $success = $sms->send(true); // 현재 요청에서 동기 발송
 ```
 
 SMS/LMS/MMS는 본문 길이 자동 판별.
 
-### 발신번호 허용 목록
+추가 제어 API:
 
-국내 통신사 정책상 발신번호는 사전 등록되어야 한다. `advanced_mailer` 관리 UI에서 추가.
+- `setDelay($seconds_or_timestamp)` — 1년 이하 값은 현재 시각 기준 초, 더 큰 값은 Unix timestamp로 해석(드라이버별 지원 여부 확인).
+- `forceSMS()` / `unforceSMS()` — LMS/MMS 대신 SMS로 강제/해제.
+- `allowSplitSMS()` / `disallowSplitSMS()`, `allowSplitLMS()` / `disallowSplitLMS()` — 장문 분할 정책 제어.
+
+### 발신번호 사전 등록
+
+국내 통신사 정책상 발신번호는 이용하는 SMS 게이트웨이/통신사에 사전 등록해야 한다. Rhymix 관리자 UI에는 발신번호 **목록 등록 기능이 없고**, 기본값 `sms.default_from` 하나와 강제 사용 여부만 설정한다 (`modules/admin/tpl/config_notification.html:174-188`, `Notification.php:244-257`).
 
 ### 트리거
 
-- `sms.send.before` / `sms.send.after`.
+- 이름 `sms.send`, position `before` / `after`.
 
 ### 인증번호 발송 패턴
 
@@ -159,7 +177,8 @@ $push->setImage('https://.../thumb.png');
 $push->setData(['post_id' => 123]);           // 커스텀 데이터 (array)
 $push->setBadge('1');                          // string
 $push->setSound('default');
-$success = $push->send(bool $sync = false);
+$success = $push->send();        // 큐 사용 시 enqueue 결과
+// $success = $push->send(true); // 현재 요청에서 동기 발송
 
 // 발송 결과 (member_srl 단위 분류 아님 — 토큰 단위)
 $successful = $push->getSuccessTokens();       // 발송 성공 토큰
@@ -178,7 +197,7 @@ $push->send();
 
 ### 트리거
 
-- `push.send.before` / `push.send.after`.
+- 이름 `push.send`, position `before` / `after`.
 
 ### 키/인증서
 
@@ -204,15 +223,25 @@ advanced_mailer가 담당하는 것:
 
 ## 새 드라이버 추가
 
-1. `common/framework/drivers/<kind>/mydriver.php`에 `<Kind>Interface` 구현 클래스 작성.
-2. `advanced_mailer` 관리 UI에서 등록 또는 코드:
-   ```php
-   // Mail/SMS는 인스턴스만, Push는 이름+인스턴스
-   Rhymix\Framework\Mail::addDriver(new MyMailDriver(...));
-   Rhymix\Framework\SMS::addDriver(new MySMSDriver(...));
-   Rhymix\Framework\Push::addDriver('mydriver', new MyPushDriver(...));
-   ```
-3. 설정 저장 → 자동 선택.
+코어에 포함할 드라이버는 `common/framework/drivers/<kind>/mydriver.php`에 `<Kind>Interface` 구현 클래스로 추가한다. `getSupportedDrivers()`가 이 디렉토리를 스캔하므로 지원 환경과 설정 검증을 통과하면 **관리자 > 시스템 설정 > 알림** 선택 목록에 자동으로 나타난다.
+
+외부 확장에서 요청 시점에 인스턴스를 등록할 수도 있다.
+
+```php
+// Mail/SMS: 목록 등록과 실제 기본 드라이버 지정은 별도
+$mail_driver = new MyMailDriver(...);
+Rhymix\Framework\Mail::addDriver($mail_driver);
+Rhymix\Framework\Mail::setDefaultDriver($mail_driver);
+
+$sms_driver = new MySMSDriver(...);
+Rhymix\Framework\SMS::addDriver($sms_driver);
+Rhymix\Framework\SMS::setDefaultDriver($sms_driver);
+
+// Push: 이름+인스턴스로 등록하면 getDriver($name)에서도 조회 가능
+Rhymix\Framework\Push::addDriver('mydriver', new MyPushDriver(...));
+```
+
+런타임 등록 배열은 요청마다 초기화되므로 확장 부트스트랩에서 매 요청 등록해야 한다. Mail/SMS의 `addDriver()`는 지원 드라이버 목록에 추가할 뿐 기본 발송 인스턴스를 자동 교체하지 않으므로 `setDefaultDriver()`도 필요하다 (`common/framework/Mail.php:33-70`, `SMS.php:40-77`).
 
 기본 인터페이스 메서드는 `<Kind>Interface.php`(예: `MailInterface.php`)에서 확인.
 

@@ -45,17 +45,21 @@
 
 (`layout_extra_vars`, `layout_menus`라는 별도 테이블은 없다 — extra_vars는 직렬화하여 `layouts` 테이블에 함께 저장.)
 
-## 시각 편집기
+## 레거시 FaceOff 시각 편집기
 
-`modules/layout/tpl/` 하위에 드래그앤드롭 편집 UI. 편집 결과는 `files/faceOff/<getNumberingPath(layout_srl)>layout.html`(`getNumberingPath()`는 뒤에 `/`를 포함, 예: `layout_srl=1`이면 `files/faceOff/001/layout.html`)에 저장되며, `LayoutModel::getUserLayoutHtml()`이 반환한 경로를 `ModuleHandler`가 `ModuleObject::setEditedLayoutFile()`로 설정해 `edited_layout_file`로 사용한다 (`classes/module/ModuleHandler.class.php:1178-1181`). (`files/cache/layout/`에는 컴파일된 `*.cache.php` 캐시만 저장된다.)
+`modules/layout/tpl/` 하위의 드래그앤드롭 편집 UI는 `type="faceoff"`인 과거 인스턴스를 위한 레거시 기능이다. 현재 `procLayoutAdminInsert()`는 새 FaceOff 레이아웃 생성을 거부한다 (`modules/layout/layout.admin.controller.php:24-27`).
+
+기존 인스턴스의 편집 결과는 `files/faceOff/<getNumberingPath(layout_srl)>layout.html`(`getNumberingPath()`는 뒤에 `/`를 포함, 예: `layout_srl=1`이면 `files/faceOff/001/layout.html`)에 저장되며, `LayoutModel::getUserLayoutHtml()`이 반환한 경로를 `ModuleHandler`가 `ModuleObject::setEditedLayoutFile()`로 설정해 `edited_layout_file`로 사용한다 (`classes/module/ModuleHandler.class.php:1178-1181`). `files/cache/layout/`에는 컴파일된 `*.cache.php` 외에도 미리보기 중 고정 임시 파일 `tmp.tpl`을 만들었다가 삭제한다 (`modules/layout/layout.admin.view.php:327-341`).
 
 ## 모델 메서드
 
 ```php
 LayoutModel::getLayout($layout_srl);             // 단일 레이아웃 정보
-LayoutModel::getLayoutList($site_srl, $type);
-LayoutAdminModel::getSiteDefaultLayout($type);   // 사이트 기본 레이아웃 srl 반환(없으면 0); -1 치환은 LayoutModel::getLayoutList()에서
+LayoutModel::getLayoutList($site_srl, $type);    // 현재 $site_srl은 호환용이며 조회에서 사용하지 않음
+getAdminModel('layout')->getSiteDefaultLayout($type); // 사이트 기본 레이아웃 srl 반환(없으면 0); -1 치환은 LayoutModel::getLayoutList()에서
 ```
+
+현재 레이아웃 목록 쿼리는 `$type`만 사용하고, 기본 디자인도 `files/site_design/design_0.php`에서 읽으므로 이 API를 site별 목록 분리로 해석하면 안 된다 (`layout.model.php:26-60`, `layout.admin.model.php:107-126`).
 
 ## 관련
 

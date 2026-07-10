@@ -15,7 +15,7 @@
 | `SpamfilterAdminController` | `spamfilter.admin.controller.php` |
 | `SpamfilterAdminView` | `spamfilter.admin.view.php` |
 
-(`spamfilter.admin.model.php`/`view.php`/`api.php`/`mobile.php`는 없다.)
+(`spamfilter.view.php`/`spamfilter.admin.model.php`/`spamfilter.mobile.php`/`spamfilter.api.php`는 없다.)
 
 ## 주요 액션 (14개)
 

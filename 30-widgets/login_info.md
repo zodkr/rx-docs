@@ -11,8 +11,8 @@
 | 인자 | 타입 | 의미 |
 |---|---|---|
 | `ncenter_use` | `select` (`yes`/`no`, 기본 `no`) | 알림센터(ncenterlite) 패널을 함께 표시 |
-| `$args->skin` | (자동) | 스킨 |
-| `$args->colorset` | (자동) | 컬러셋 |
+| `$args->skin` | 공통 실행 인자 | 호출자가 선택하는 스킨. `proc()`에는 fallback이 없음 |
+| `$args->colorset` | 공통 실행 인자 | 컬러셋. 누락 시 공통 실행기가 빈 문자열로 초기화 |
 
 가입 링크/계정 찾기/환영 메시지 등은 모두 **스킨이 결정**한다.
 
@@ -38,7 +38,7 @@
 6. **비로그인 상태**:
    - 스킨 진입 파일: `login_form`.
 7. 공통(위 `return;`을 만나지 않은 경우): `useProfileImage` (`profile_image == 'Y'` boolean), `member_config`, `ssl_mode` 컨텍스트 주입.
-   - `ssl_mode`는 `Context::getSslStatus() !== 'none'`이고 현재 요청 URI가 `https://`로 시작하면 `true`, 아니면 `false`.
+   - `ssl_mode`는 소스의 호출 표기대로 `Context::getSslStatus() !== 'none'`이고(선언명은 `getSSLStatus()`이며 PHP 메서드명은 대소문자를 구분하지 않음), 현재 요청 URI가 `https://`로 시작하면 `true`, 아니면 `false`.
 8. `TemplateHandler::getInstance()->compile($tpl_path, $tpl_file)` 반환.
 
 ## 스킨

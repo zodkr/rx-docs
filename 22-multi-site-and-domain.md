@@ -46,9 +46,12 @@ $info = Context::get('site_module_info');
 // $info->domain_srl
 // $info->domain
 // $info->mid             ← 도메인 인덱스 모듈의 mid
-// $info->module_srl       ← 동상 srl
-// $info->layout_srl       ← 도메인 기본 PC 레이아웃
-// $info->mlayout_srl      ← 도메인 기본 모바일 레이아웃
+// $info->module_srl       ← 해당 인덱스 모듈의 srl
+// $info->layout_srl       ← 인덱스 모듈 자체의 PC 레이아웃 설정
+// $info->mlayout_srl      ← 인덱스 모듈 자체의 모바일 레이아웃 설정
+// $info->default_layout_srl   ← domains 스키마에는 있으나 현재 코어 런타임 참조 없음
+// $info->default_mlayout_srl  ← 위와 같음
+// $info->default_menu_srl     ← 위와 같음
 // $info->default_language
 // $info->index_document_srl
 ```
@@ -74,10 +77,12 @@ $info = Context::get('site_module_info');
 
 | 값 | 동작 |
 |---|---|
-| `redirect_301` (기본) | 기본 도메인으로 301 |
+| `redirect_301` | 기본 도메인으로 301. 설정 키가 없거나 빈 값일 때 코드 내부 폴백 |
 | `redirect_302` | 기본 도메인으로 302 |
 | `block` | 404 응답 |
 | `display` | 임시 사이트로 처리 계속 (위험 — XSS 노출 가능) |
+
+신규 기본 설정값은 `display`다 (`common/defaults/config.php:51-57`). `ModuleHandler`의 `?: 'redirect_301'`은 설정 키 자체가 없거나 빈 값일 때만 적용되는 내부 폴백이므로, `redirect_301`을 신규 설치의 기본값으로 간주하면 안 된다 (`classes/module/ModuleHandler.class.php:126-150`).
 
 ## mid는 전역 유일
 
@@ -91,14 +96,14 @@ $info = Context::get('site_module_info');
 | 영역 | 도메인 분리 |
 |---|---|
 | 모듈 인스턴스 (게시판, 페이지) | **분리** — 각 도메인 자체 인스턴스 |
-| 메뉴 | 보통 분리 |
+| 메뉴 | 자동 도메인 분리 없음. 별도 메뉴를 만들고 각 모듈/레이아웃에 수동 배정 가능 |
 | 회원 | 공유 — 단일 회원 DB |
 | 문서/댓글/파일 | 모듈 인스턴스 단위로 분리 (즉 도메인 단위) |
 | 권한 그룹 (member_group) | 공유 |
 | 설정 (`config`) | 공유 |
-| 캐시 prefix | 도메인 자동 부착 가능 |
+| 캐시 prefix | 공유 — 설치 경로와 Rhymix 버전 기반이며 도메인이 자동 부착되지 않음 |
 
-회원 공유는 **단일 회원 DB** 모델 — 이것이 XE/Rhymix의 표준 다중 사이트 모델. 회원 분리가 필요하면 별도 인스턴스 운영.
+회원 공유는 **단일 회원 DB** 모델 — 이것이 XE/Rhymix의 표준 다중 사이트 모델. 회원 분리가 필요하면 별도 인스턴스 운영. 캐시 항목이 도메인별로 분리되어야 한다면 호출자가 `domain_srl` 등을 키에 포함해야 하며, `Cache`의 전역 prefix 자체는 `RX_BASEDIR` 해시와 `RX_VERSION`만 사용한다 (`common/framework/Cache.php:76-82`).
 
 ## URL 빌드
 
@@ -124,18 +129,22 @@ if ($module_info->domain_srl != $site_module_info->domain_srl) {
 
 ## 도메인별 설정 오버라이드
 
-도메인별로 다른 SSL 정책/언어/스킨이 필요하면 `domains` 테이블의 컬럼에 저장된다. 모듈/레이아웃 설정은 모듈 인스턴스 단위로 다르다.
+도메인별 SSL 정책은 `domains` 개별 컬럼, 언어·타임존 등은 `domains.settings` JSON에 저장된다. 스킨과 레이아웃은 각 모듈 인스턴스 설정으로 분리한다.
 
 ## 사이트맵 / 메뉴
 
-각 도메인은 자체 메뉴 트리를 가진다. `menu.getModuleListInSitemap` 트리거가 도메인별 모듈 목록을 반환.
+현재 메뉴 테이블은 legacy `site_srl`을 사용하고, 현행 도메인 모델의 `site_srl`은 항상 0이므로 도메인별 메뉴 트리가 자동 생성·격리되지는 않는다 (`modules/menu/schemas/menu.xml:1-5`). 필요한 경우 메뉴를 여러 개 만든 뒤 각 도메인의 모듈/레이아웃에 서로 다른 `menu_srl`을 수동 배정한다.
+
+`menu.getModuleListInSitemap`은 도메인별 모듈 **인스턴스 목록**을 반환하는 트리거가 아니다. 사이트맵 UI에서 만들 수 있는 모듈 **종류** 목록을 확장하는 after 트리거이며, 예를 들어 board 모듈은 배열에 `'board'`를 추가한다 (`modules/menu/menu.admin.model.php:405-434`, `modules/board/board.model.php:174-180`).
 
 ## 다른 도메인으로 강제 리다이렉트
 
 ```php
-$url = getNotEncodedSiteUrl($site_module_info->domain) . 'mid=foo';
+$url = getNotEncodedSiteUrl($site_module_info->domain, '', 'mid', 'foo');
 header("Location: {$url}", true, 301);
 ```
+
+URL 인자는 문자열 연결로 붙이지 않고 `getNotEncodedSiteUrl()`의 key/value 인자로 전달한다. 그래야 현재 rewrite 단계에 맞춰 `foo` 경로 또는 `?mid=foo` 쿼리가 올바르게 생성된다.
 
 ## site_srl (deprecated)
 

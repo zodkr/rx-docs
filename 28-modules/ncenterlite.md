@@ -63,7 +63,7 @@
 | `document.insertDocument` (after) | `triggerAfterInsertDocument` | 문서 알림 |
 | `document.deleteDocument` (after) | `triggerAfterDeleteDocument` | 문서 삭제 시 알림 회수 |
 | `document.moveDocumentToTrash` (after) | `triggerAfterMoveToTrash` | 휴지통 이동 처리 |
-| `comment.moveCommentToTrash` (after) | `triggerAfterMoveToTrashComment` | 동상 |
+| `comment.moveCommentToTrash` (after) | `triggerAfterMoveToTrashComment` | 동일 처리 |
 | `document.updateVotedCount` (after) / `document.updateVotedCountCancel` (after) | `triggerAfterDocumentVotedUpdate` / `triggerAfterDocumentVotedCancel` | 추천/취소 알림 |
 | `comment.updateVotedCount` (after) / `comment.updateVotedCountCancel` (after) | `triggerAfterCommentVotedCount` / `triggerAfterCommentVotedCancel` | 댓글 추천/취소 |
 | `communication.sendMessage` (after) | `triggerAfterSendMessage` | 쪽지 알림 |

@@ -208,6 +208,8 @@ $GNB->list = [
 
 자동으로 mtime 쿼리스트링(`?t=12345`) 부여 → 캐시 무효화.
 
+레이아웃은 페이지 전체를 감싸므로 인라인 `<script>`/`<style>`을 넣기 쉬운 자리지만, **새 레이아웃은 인라인 script/style 없이 작성한다.** 스크립트는 `layouts/<name>/js/*.js`, 스타일은 `css/*.css`로 분리해 `<load>`로 걸고, 레이아웃 설정값(`$layout_info->extra_vars`, 메뉴 등)을 JS에 넘길 때는 `<script id="myLayoutConfig" type="application/json">` 데이터 아일랜드 + JS 쪽 `getElementById`를 쓴다. 전체 규칙: [19-security.md § Content Security Policy](../19-security.md#content-security-policy).
+
 ## 모바일 레이아웃
 
 `m.layouts/<name>/`. PC 레이아웃과 별도. 같은 디렉토리 구조.

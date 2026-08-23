@@ -192,6 +192,8 @@ board 상세 화면(`_read.html`)은 `Context::set('oDocument', ...)`로 전달�
 <load target="css/style.dark.css" cond="$module_info->colorset=='dark'" />
 ```
 
+**새 스킨은 인라인 `<script>`/`<style>`, `on*=""` 속성 없이 작성한다.** 스킨 JS는 `js/`, CSS는 `css/`에 두고 `<load>`로 건다. `$module_info`나 목록 데이터 일부를 JS에 넘겨야 하면 `<script id="mySkinConfig" type="application/json">` 블록에 JSON으로 심고 JS에서 `getElementById(...).textContent`를 `JSON.parse`한다. 전체 규칙과 escape 주의점: [19-security.md § Content Security Policy](../19-security.md#content-security-policy).
+
 ## 최소 예제
 
 ### `modules/myboard/skins/simple/skin.xml`

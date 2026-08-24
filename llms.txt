@@ -78,6 +78,10 @@ CLI 모드는 `ModuleHandler::procCommandLineArguments($argv)`로 분기 ([21-cl
 
 파서는 `common/framework/parsers/`. 새 모듈/위젯/스킨 추가 시 **코드보다 먼저 이 XML을 본다.**
 
+### raw SQL은 커서를 직접 회수한다
+
+DB 연결이 **unbuffered**라 raw `query()`/`prepare()` 결과셋을 끝까지 읽지 않으면 커서가 열린 채 남고, 그 상태로 `commit()`에 도달하면 `HY000 2014`가 난다. `commit()`은 이 예외를 삼키므로 **커밋이 조용히 실패하고 트랜잭션이 통째로 롤백**된다 — 컨트롤러는 `success`를 반환하는데 데이터만 사라진다. `fetchColumn()`/`fetch()` 뒤에는 반드시 `closeCursor()`를 부르고(`fetchAll()`은 안전), 결과를 읽지 않는 `SELECT GET_LOCK/RELEASE_LOCK`도 예외가 아니다. 트리거 핸들러는 코어 트랜잭션 안에서 돌기 때문에 특히 위험하다. `executeQuery()`(XML 쿼리)만 쓰면 코어가 정리한다. 상세: [14-database-and-queries.md](14-database-and-queries.md).
+
 ## 레거시 클래스 명명 ↔ 파일 매핑
 
 | 클래스명 | 파일 |

@@ -56,6 +56,50 @@ $db = Rhymix\Framework\DB::getInstance('slave');  // 다중 DB 분리 시
 
 `query()`/`executeQuery()`/페이지네이션 count query는 새 쿼리를 준비하기 전에 직전 statement를 정리한다. 이때 `closeCursor()`는 직전 값이 실제 `PDOStatement`인 경우에만 호출하고, `DBHelper::query()`가 실행 실패 시 반환해 저장한 `false`는 cursor 메서드를 호출하지 않고 제거한다 (`common/framework/DB.php:239-247`, `:386-395`, `:479-488`, `common/framework/helpers/DBHelper.php:99-126`). 따라서 한 쿼리가 실패한 직후 같은 DB 인스턴스로 다음 쿼리를 실행해도, `false`에 `closeCursor()`를 호출하는 2차 오류가 발생하지 않는다.
 
+### unbuffered 연결과 커서 회수
+
+MySQL/MariaDB 연결은 **unbuffered 모드**로 열린다 (`common/framework/DB.php:132-140` — PHP 8.4 이상은 `PDO\MySQL::ATTR_USE_BUFFERED_QUERY`, 그 이하는 `PDO::MYSQL_ATTR_USE_BUFFERED_QUERY`를 `false`로 설정). 결과셋이 PHP 메모리로 한 번에 넘어오지 않고 서버 쪽 커서에 남아 있으므로, **읽다 만 결과셋은 커넥션을 점유한다**. `fetchColumn()`/`fetch()`로 한 행만 꺼내고 statement를 방치하면 커서는 계속 열려 있다.
+
+정리 책임은 API마다 다르다.
+
+| 호출 | 직전 statement 커서 |
+|---|---|
+| `query()`, `executeQuery()`, 페이지네이션 count query | 새 쿼리 준비 전에 닫는다 |
+| `prepare()` | **닫지 않는다.** `_last_stmt`만 교체한다 (`DB.php:202-203`) |
+| `begin()`, `commit()`, `rollback()` | 닫지 않는다 |
+
+커서가 열린 채로 `commit()`에 도달하면 PDO가 `HY000 2014 Cannot execute queries while other unbuffered queries are active`를 던진다. 그런데 `commit()`은 이 예외를 catch해 `setError()`로 삼키고 트랜잭션 레벨만 감소시킨다 (`DB.php:680-692`). 즉 **커밋이 조용히 실패**하고 커넥션은 IN-TRANSACTION 상태로 남아, 요청이 끝날 때 PDO가 암묵적으로 롤백한다. `rollback()`도 같은 구조다 (`DB.php:644-672`).
+
+증상이 특히 알아보기 어렵다.
+
+- 컨트롤러는 정상적으로 `success`를 반환하고 화면에도 성공으로 보인다.
+- 그런데 INSERT/UPDATE가 전부 사라진다. 문서 작성이라면 `rx_sequence`의 번호만 소모되고 `rx_documents`에는 행이 남지 않는다.
+- 에러 로그에도 남지 않는다. 예외가 `setError()`로 흡수되기 때문이다.
+
+특히 위험한 자리는 **트리거 핸들러**다. `document.insertDocument` / `publishDocument` 같은 after 트리거는 코어가 연 트랜잭션 **안에서** 실행되므로, 여기서 커서를 남기면 트리거를 호출한 쪽의 커밋이 통째로 날아간다.
+
+규칙은 단순하다.
+
+```php
+// 나쁜 예 — 커서가 열린 채 남는다
+$count = (int) $oDB->query('SELECT COUNT(*) FROM foo WHERE bar = ?', [$bar])->fetchColumn();
+
+// 좋은 예 — 읽고 나서 반드시 회수한다
+$stmt = $oDB->query('SELECT COUNT(*) FROM foo WHERE bar = ?', [$bar]);
+$count = (int) $stmt->fetchColumn();
+$stmt->closeCursor();
+
+// 결과 전체를 쓸 때는 fetchAll()이 커서를 완전히 소비하므로 안전하다
+$rows = $oDB->query('SELECT * FROM foo WHERE bar = ?', [$bar])->fetchAll();
+
+// 결과를 읽지 않는 SELECT도 예외가 아니다 (lock 함수가 대표적)
+$oDB->query('SELECT RELEASE_LOCK(?)', [$key])->closeCursor();
+```
+
+INSERT/UPDATE/DELETE는 결과셋이 없으므로 대상이 아니다. `executeQuery()`(XML 쿼리)만 쓰면 코어가 알아서 정리하므로 이 문제를 만나지 않는다 — raw SQL을 직접 실행할 때만 신경 쓰면 된다.
+
+`prepare()` 경로가 특히 함정이다. `_last_stmt`가 인스턴스에 참조를 붙들고 있어 함수를 벗어나도 GC가 커서를 닫아주지 않는다. 뒤이어 `query()`가 한 번이라도 호출되면 그때 정리되기 때문에 **오랫동안 우연히 동작하다가 호출 순서가 바뀌는 순간 데이터가 사라지는** 형태로 드러난다.
+
 ### 트랜잭션 중첩
 
 ```php

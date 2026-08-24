@@ -56,7 +56,7 @@ XpressEngine(XE) 1.8을 fork해 발전시킨 한국 커뮤니티 CMS다. 라이�
 | [16-i18n-and-lang.md](16-i18n-and-lang.md) | 다국어 시스템 |
 | [17-cache-and-queue.md](17-cache-and-queue.md) | 캐시와 큐 |
 | [18-mail-sms-push.md](18-mail-sms-push.md) | 메일/SMS/푸시 추상화 |
-| [19-security.md](19-security.md) | CSRF/XSS/파일 업로드/IP 차단 |
+| [19-security.md](19-security.md) | CSRF/XSS/파일 업로드/IP 차단, CSP와 신규 스킨·레이아웃 작성 규칙 |
 | [20-storage-and-files.md](20-storage-and-files.md) | 파일 스토리지 |
 | [21-cli-and-scripts.md](21-cli-and-scripts.md) | CLI 모드, cron, 정리 스크립트 |
 | [22-multi-site-and-domain.md](22-multi-site-and-domain.md) | 다중 사이트 지원 |

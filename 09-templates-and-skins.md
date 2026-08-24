@@ -582,6 +582,10 @@ XE-style 속성은 **`target`/`src`/`type`/`media`/`index`/`vars` 6개만** 인�
 
 XE-style `<load src="...">`의 경로 속성은 정적 문자열이며 `{{ }}`나 `$변수`를 평가하지 않는다. 동적 경로는 `@load($asset)`을 사용하되 반드시 allowlist로 제한한다. 외부 URL도 로드할 수 있으므로 요청값을 그대로 넘기면 원격 스크립트 삽입으로 이어질 수 있다. 조건부 로드는 `<load cond="...">`에 의존하지 말고 `@if ... @load(...) @endif`로 감싼다. `@unload()`은 로컬 경로 해제 용도로 사용하며 외부 URL을 올바르게 정규화한다고 가정하지 않는다.
 
+#### 인라인 script/style 대신 외부 파일 (CSP)
+
+**새로 만드는 스킨·레이아웃은 인라인 `<script>`/`<style>` 블록, `on*=""` 이벤트 속성, `style=""`를 쓰지 않는다.** JS/CSS는 별도 파일로 두고 `@load` / `<load>`로 로드하며, 템플릿의 값을 JS에 넘길 때는 `<script id="..." type="application/json">@json(...)</script>` 데이터 아일랜드를 쓴다. 규칙과 예제는 [19-security.md § Content Security Policy](19-security.md#content-security-policy).
+
 ### 상대 경로 자동 변환 (Blade에 없음)
 
 `_convertRelativePaths` (`TemplateParser_v2.php:274-313`)가 다음을 자동으로 절대 경로로 변환.

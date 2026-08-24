@@ -67,6 +67,67 @@ $safe_html = Rhymix\Framework\Filters\HTMLFilter::clean(
 
 기본 CSP 헤더는 출력되지 않음. 필요 시 애드온 또는 nginx/Apache에서 추가.
 
+#### 신규 스킨/레이아웃 작성 규칙
+
+향후 코어 업데이트시 CSP를 켜는 옵션을 제공할 예정이다. 나중에 `script-src`/`style-src`에서 `'unsafe-inline'`이 빠져도 화면이 깨지지 않도록, **새로 만드는 스킨·레이아웃은 처음부터 인라인 script/style 없이 작성한다.** 이미 v1으로 배포된 기존 스킨/레이아웃은 명시적 요청 없이 일괄 변환하지 않는다 (§ [09 - 새 템플릿 작성/마이그레이션 정책](09-templates-and-skins.md#새-템플릿-작성마이그레이션-정책)과 동일한 기준).
+
+지양할 것 — 모두 `'unsafe-inline'`을 요구한다:
+
+| 패턴 | 대체 |
+|---|---|
+| `<script> ... </script>` 본문 | 외부 `.js` 파일 + `@load('./js/skin.js', 'body')` |
+| `<style> ... </style>` 블록 | 외부 `.css`/`.scss` 파일 + `@load('./css/skin.css')` |
+| `onclick=""` 등 `on*` 속성 | JS 파일에서 `addEventListener`, 템플릿에는 `id`/`class`/`data-*` 훅만 남김 |
+| `href="javascript:..."` | 실제 URL + JS에서 `preventDefault()` |
+| `style="..."` 인라인 스타일 | CSS 클래스. 값이 동적이면 CSS 커스텀 속성 또는 `data-*` + JS |
+
+부수 효과로 § [컨텍스트 인식 escape](09-templates-and-skins.md#컨텍스트-인식-escape)의 까다로운 부분(`escape_js`가 따옴표를 붙이지 않는 문제, CSS 컨텍스트에 자동 escape가 없는 문제)도 함께 사라진다. 인라인 JS/CSS가 없으면 escape 실수로 XSS가 생길 표면 자체가 없다.
+
+#### 템플릿 → JS 파라미터 전달 (JSON 데이터 아일랜드)
+
+템플릿의 값을 JS로 넘겨야 할 때 `<script>var config = ...;</script>`를 만들지 말고, **`type="application/json"` 스크립트 블록에 JSON으로 심고 JS 파일에서 `getElementById`로 읽는다.** `type`이 `application/json`인 `<script>`는 브라우저가 실행하지 않는 데이터 블록이므로 CSP의 `script-src`가 차단하지 않는다.
+
+템플릿 (v2 `.blade.php` — 신규 작성 시 권장):
+
+```blade
+<script id="myBoardSkinConfig" type="application/json">@json([
+    'mid' => $module_info->mid,
+    'listCount' => (int) $module_info->list_count,
+    'isLogged' => $is_logged,
+])</script>
+
+@load('./js/skin.js', 'body')
+```
+
+JS (`js/skin.js`):
+
+```js
+document.addEventListener('DOMContentLoaded', function() {
+    var el = document.getElementById('myBoardSkinConfig');
+    if (!el) {
+        return;
+    }
+    var config = JSON.parse(el.textContent);
+    // ...
+});
+```
+
+규칙:
+
+- **`@json()`으로만 출력한다.** `<script type="application/json">`은 `src` 속성이 없으므로 v2 파서가 JS 컨텍스트로 전환하고(`common/framework/parsers/template/TemplateParser_v2.php:208-223`), 이 컨텍스트의 `@json()`은 `JSON_HEX_TAG`를 포함한 옵션으로 인코딩한다(`TemplateParser_v2.php:794-801`, `common/framework/Template.php:100-107`). `<`가 `\u003C`가 되어 값 안의 `</script>`로 블록을 탈출할 수 없다. 문자열을 손으로 이어 붙이거나 `{!! !!}`로 raw 출력하지 않는다.
+- **HTML escape 필터를 붙이지 않는다.** `<script>` 내부는 HTML raw text 영역이라 브라우저가 문자 참조를 디코드하지 않는다. `|escape`나 `htmlspecialchars`를 거친 JSON을 넣으면 `&quot;`가 그대로 남아 `JSON.parse`가 실패한다. JS 컨텍스트의 `@json()`은 이 경로를 타지 않는다.
+- **JS 쪽은 `textContent`로 읽는다.** `innerText`는 렌더링에 영향을 받고, `innerHTML`은 마크업이 섞인다.
+- **id는 페이지 전역에서 충돌하지 않게** 짓는다. 한 페이지에 레이아웃 + 여러 모듈 스킨 + 위젯이 동시에 렌더되므로 `{모듈/스킨}` prefix를 붙인 lowerCamelCase를 쓴다 — `myBoardSkinConfig`, `dailycheckWidgetParams`. 같은 스킨이 한 페이지에 두 번 이상 렌더될 수 있다면 id 대신 컨테이너 요소의 `data-*` 속성(예: `<div class="my-board" data-config="...">`)으로 인스턴스별 스코프를 잡는다.
+- **요소가 없는 경우를 항상 방어한다.** JS 파일은 그 스킨이 렌더되지 않은 페이지에서도 로드될 수 있다.
+- **비밀 값을 넣지 않는다.** 데이터 아일랜드는 페이지 소스에 그대로 노출된다. 세션 토큰·타인의 개인정보·권한 판단 근거를 담지 않으며, 권한은 항상 서버에서 다시 검사한다 (§ [관리자 보호](#관리자-보호)).
+
+v1(`.html`) 템플릿에는 `@json()`이 없고 `{$v}`가 기본 noescape이므로 옵션을 직접 지정한다. 신규 스킨/레이아웃은 v2로 작성하는 것이 원칙이며, 기존 v1 스킨을 고칠 때만 사용한다:
+
+```html
+<script id="myBoardSkinConfig" type="application/json">{json_encode($config, JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_UNESCAPED_UNICODE)}</script>
+<load target="./js/skin.js" type="body" />
+```
+
 ## 비밀번호 — `Rhymix\Framework\Password`
 
 `common/framework/Password.php`.

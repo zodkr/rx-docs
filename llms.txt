@@ -13,6 +13,7 @@
 - **PHP 8.4 문법 기준.** 단, CI는 PHP 7.4 ~ 8.5 매트릭스이므로 호환성 유지.
 - **들여쓰기**: PHP는 tabs / JSON·YAML·Markdown은 2-space. UTF-8, LF, final newline.
 - **PR base 브랜치는 `master`** (`main`이 아님).
+- **신규 스킨/레이아웃/위젯 템플릿은 인라인 script/style 금지.** CSP(`'unsafe-inline'` 없음)를 전제로 작성한다. JS/CSS는 외부 파일 + `@load`/`<load>`, 템플릿 → JS 파라미터는 `<script id="..." type="application/json">@json(...)</script>` + JS의 `getElementById`. → [19-security.md § Content Security Policy](19-security.md#content-security-policy)
 
 ## 권장 진입 순서
 
@@ -155,7 +156,7 @@ if find . -name "*.php" ! -path "./common/vendor/*" -print0 | xargs -0 -n 1 -P 8
 - [16-i18n-and-lang.md](16-i18n-and-lang.md): 다국어 시스템.
 - [17-cache-and-queue.md](17-cache-and-queue.md): 캐시와 큐.
 - [18-mail-sms-push.md](18-mail-sms-push.md): 메일/SMS/푸시 추상화.
-- [19-security.md](19-security.md): CSRF/XSS/파일 업로드/IP 차단.
+- [19-security.md](19-security.md): CSRF/XSS/파일 업로드/IP 차단, CSP와 신규 스킨·레이아웃 작성 규칙.
 - [20-storage-and-files.md](20-storage-and-files.md): 파일 스토리지.
 - [21-cli-and-scripts.md](21-cli-and-scripts.md): CLI 모드, cron, 정리 스크립트.
 - [22-multi-site-and-domain.md](22-multi-site-and-domain.md): 다중 사이트.
@@ -200,7 +201,8 @@ if find . -name "*.php" ! -path "./common/vendor/*" -print0 | xargs -0 -n 1 -P 8
 | "CLI 스크립트 추가" | [21-cli-and-scripts.md](21-cli-and-scripts.md) |
 | "다국어 추가" | [16-i18n-and-lang.md](16-i18n-and-lang.md) |
 | "라우팅 어떻게 동작?" | [07-router.md](07-router.md), [06-module-handler-lifecycle.md](06-module-handler-lifecycle.md) |
-| "위젯/레이아웃/스킨" | [27-extension-points/](27-extension-points/) 해당 파일 |
+| "위젯/레이아웃/스킨" | [27-extension-points/](27-extension-points/) 해당 파일, [19-security.md](19-security.md#content-security-policy) (CSP 작성 규칙) |
+| "템플릿에서 JS로 값 넘기기" | [19-security.md § Content Security Policy](19-security.md#content-security-policy), [09-templates-and-skins.md](09-templates-and-skins.md) |
 
 ## 만지지 말 것
 

@@ -380,6 +380,7 @@ $total_page = $output->total_page;
 | `double` | `double` |
 
 `date`가 char로 매핑되는 이유는 XE가 자체 `YYYYMMDDHHMMSS` 형식을 사용하기 때문. `ztime()` 헬퍼로 변환.
+단, 신규 테이블에서는 `datetime` 타입을 사용하고, 기존 `date` 컬럼은 그대로 유지하는 것이 권장된다.
 
 ## 시퀀스 (sequence)
 

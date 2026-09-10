@@ -10,7 +10,9 @@
 
 - **코드 인용은 `file_path:line_number` 형식.** (예: `common/autoload.php:75-86`)
 - **추측 금지** — 모든 사실은 실제 소스 또는 `info.xml`/`module.xml`에서 검증.
-- **`@deprecated` 표시는 신규 코드에 사용하지 않는다.** 설명도 생략.
+- **`@deprecated`·삭제된 API는 신규 코드와 이번 작업에서 수정하는 줄에 쓰지 않는다.** 본문 문서는 현행 API만 예시로 쓰며, deprecated 심볼을 언급할 때는 `` `X` (`@deprecated` → `대체`) `` 형식으로만 표시한다. 목록·대체 API·시점 구분은 [36-deprecated/](36-deprecated/)에서 심볼명으로 grep한다.
+- **기존 코드의 deprecated 사용:** 손대지 않는 줄은 바꾸지 않되 최종 보고에 `파일:줄 → 대체 API` 목록으로 보고한다. 파일 단위 일괄 전환은 사용자가 명시적으로 요청할 때만 한다. 삭제된 API([36-deprecated/removed.md](36-deprecated/removed.md), 예: `Object` → `BaseObject`)는 호출 즉시 fatal error이므로 발견 즉시 고친다.
+- **전역 `Security`·`Password`·`IpFilter`·`Purifier`·`EmbedFilter`는 `@deprecated` 래퍼다.** 코드와 문서에서 항상 `Rhymix\Framework\Security`, `Rhymix\Framework\Password`, `Rhymix\Framework\Filters\IpFilter`, `Rhymix\Framework\Filters\HTMLFilter`, `Rhymix\Framework\Filters\MediaFilter`처럼 전체 이름 또는 `use` 문을 쓴다.
 - **신규 코드는 신형 namespace(`Rhymix\Framework\*`, `Rhymix\Modules\*`)에 작성.**
 - **PHP 8.4 문법 기준.** 단, CI는 PHP 7.4 ~ 8.5 매트릭스이므로 호환성 유지.
 - **들여쓰기**: PHP는 tabs / JSON·`.yml`·Markdown은 2-space. `.editorconfig`에 `.yaml` 별도 규칙은 없음. UTF-8, LF, final newline.
@@ -26,6 +28,8 @@
 5. [27-extension-points/](27-extension-points/) — 확장 메커니즘 7종.
 6. 작업 대상 모듈을 [28-modules/](28-modules/)에서 찾기.
 7. 필요한 framework 클래스를 [10-framework.md](10-framework.md)에서 인덱스로 찾기.
+
+deprecated 여부는 필요할 때 [36-deprecated/](36-deprecated/)를 grep한다. 처음부터 읽지 않는다.
 
 ## 핵심 아키텍처 (반드시 기억할 것)
 
@@ -200,6 +204,10 @@ if find . -name "*.php" ! -path "./common/vendor/*" -print0 | xargs -0 -n 1 -P 8
 
 - [35-testing-and-ci.md](35-testing-and-ci.md): Codeception, GitHub Actions.
 
+### 참조
+
+- [36-deprecated/](36-deprecated/): `@deprecated`·삭제 API 목록과 대체 API. `xe.md` / `rhymix-1.x.md` / `rhymix-2.0.md` / `rhymix-2.1.md` / `javascript.md` / `removed.md`. 규칙은 [36-deprecated/README.md](36-deprecated/README.md).
+
 ## 사용자에게 X를 요청받았을 때
 
 | 요청 | 우선 읽을 문서 |
@@ -214,12 +222,14 @@ if find . -name "*.php" ! -path "./common/vendor/*" -print0 | xargs -0 -n 1 -P 8
 | "라우팅 어떻게 동작?" | [07-router.md](07-router.md), [06-module-handler-lifecycle.md](06-module-handler-lifecycle.md) |
 | "위젯/레이아웃/스킨" | [27-extension-points/](27-extension-points/) 해당 파일, [19-security.md](19-security.md#content-security-policy) (CSP 작성 규칙) |
 | "템플릿에서 JS로 값 넘기기" | [19-security.md § Content Security Policy](19-security.md#content-security-policy), [09-templates-and-skins.md](09-templates-and-skins.md) |
+| "이거 deprecated야?" / "옛 XE·2.0 코드 마이그레이션" / "기존 코드 리팩터링" | [36-deprecated/README.md](36-deprecated/README.md) 규칙 확인 후 폴더 파일을 심볼명으로 grep. 없으면 소스 docblock 확인 |
 
 ## 만지지 말 것
 
 - `common/vendor/` — 커밋된 Composer 산출물. 직접 수정 금지.
 - `files/` — 런타임 생성(gitignore). 테스트/설치 외에는 만지지 않는다.
-- `@deprecated` 표시 메서드/클래스 — 신규 코드 사용 금지.
+- `@deprecated` 표시 메서드/클래스/함수와 삭제된 API — 신규 코드·수정 줄 사용 금지. 목록과 대체 API: [36-deprecated/](36-deprecated/).
+- `36-deprecated/*.md`(README 제외) — 생성 파일. 직접 편집 금지, `tools` 브랜치의 `deprecated/overrides.json` 수정 후 재생성.
 
 ## Optional
 

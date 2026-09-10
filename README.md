@@ -13,7 +13,7 @@
 - 본문의 소스 경로는 **Rhymix 본체 루트 기준**이다. 줄 번호는 탐색을 돕는 위치 정보이므로 본체가 바뀌면 인용된 클래스·메서드명과 함께 확인한다. 문서 간 링크는 각 문서 위치 기준이다.
 - 이 문서 저장소의 라이선스는 [MIT](LICENSE)이며, Rhymix 본체의 GPL-2.0-or-later와 구분한다.
 
-본체를 갱신할 때는 `RX_VERSION`뿐 아니라 마지막 검증 커밋 이후의 변경도 확인한다. 변경된 API·설정·액션은 해당 문서와 `llms.txt`에 함께 반영하고, 의존성은 `common/composer.json`·`common/composer.lock`, 테스트 절차는 `.github/workflows/ci.yml`·`tests/`와 대조한다. 문서 검증은 PHP 실행 및 설치 테스트 통과를 의미하지 않는다.
+본체를 갱신할 때는 `RX_VERSION`뿐 아니라 마지막 검증 커밋 이후의 변경도 확인한다. 변경된 API·설정·액션은 해당 문서와 `llms.txt`에 함께 반영하고, 의존성은 `common/composer.json`·`common/composer.lock`, 테스트 절차는 `.github/workflows/ci.yml`·`tests/`와 대조한다. 문서 검증은 PHP 실행 및 설치 테스트 통과를 의미하지 않는다. `36-deprecated/`는 손으로 고치지 않고 `tools` 브랜치의 `deprecated/generate.py`로 재생성한 뒤 `check --links`를 통과시켜 검증 커밋과 함께 올린다. 대체 API는 같은 브랜치의 `deprecated/overrides.json`에서 관리한다(절차: [36-deprecated/README.md](36-deprecated/README.md#재생성-절차)).
 
 ## Rhymix가 무엇인가
 
@@ -102,6 +102,12 @@ XpressEngine(XE) 1.8을 fork해 발전시킨 한국 커뮤니티 CMS다. 라이�
 |---|---|
 | [35-testing-and-ci.md](35-testing-and-ci.md) | Codeception, GitHub Actions |
 
+### 참조
+
+| 문서 | 내용 |
+|---|---|
+| [36-deprecated/](36-deprecated/) | `@deprecated`·삭제 API 목록(XE / 1.x / 2.0 / 2.1 / JS / removed)과 대체 API. `tools` 브랜치의 스크립트로 생성 |
+
 ## "내가 X를 만들고 싶다" 빠른 참조
 
 | 만들고 싶은 것 | 가야 할 문서 |
@@ -117,6 +123,7 @@ XpressEngine(XE) 1.8을 fork해 발전시킨 한국 커뮤니티 CMS다. 라이�
 | 새 캐시/큐 드라이버 | [17-cache-and-queue.md](17-cache-and-queue.md) |
 | 새 CLI 스크립트 | [21-cli-and-scripts.md](21-cli-and-scripts.md) |
 | 기존 액션을 hook | [13-event-and-trigger-system.md](13-event-and-trigger-system.md) |
+| 옛 코드(XE/2.0)를 현재 API로 이전 | [36-deprecated/](36-deprecated/) |
 
 ## AI 어시스턴트 활용 설치방법
 
@@ -129,8 +136,8 @@ XpressEngine(XE) 1.8을 fork해 발전시킨 한국 커뮤니티 CMS다. 라이�
 가장 안전하고 편하다. 본체 저장소 히스토리에는 어떤 변경도 남지 않으므로, 본체에 PR을 보내거나 upstream을 따라가도 충돌이 생기지 않는다.
 
 ```bash
-# Rhymix 본체 루트에서
-git clone https://github.com/zodkr/rx-docs.git docs
+# Rhymix 본체 루트에서. --single-branch: 문서 생성용 tools 브랜치는 받지 않는다
+git clone --single-branch --branch main https://github.com/zodkr/rx-docs.git docs
 
 # 본체에 docs/가 untracked로 잡히지 않도록 로컬에서만 제외 (한 번만)
 echo '/docs/' >> "$(git rev-parse --git-path info/exclude)"
@@ -154,7 +161,7 @@ rm -rf docs
 
 ```bash
 # 본체 루트에서
-git submodule add https://github.com/zodkr/rx-docs.git docs
+git submodule add -b main https://github.com/zodkr/rx-docs.git docs
 git commit -m "chore: add docs submodule"
 ```
 

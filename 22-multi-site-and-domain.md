@@ -146,9 +146,9 @@ header("Location: {$url}", true, 301);
 
 URL 인자는 문자열 연결로 붙이지 않고 `Context::getUrl()`의 key/value 인자로 전달한다. 그래야 현재 rewrite 단계에 맞춰 `foo` 경로 또는 `?mid=foo` 쿼리가 올바르게 생성된다. 네 번째 인자를 `false`로 주면 HTML 이스케이프 없이(Location 헤더용) URL을 얻는다 — `@deprecated` 래퍼 `getNotEncodedSiteUrl()`이 넘기던 값과 동일하다.
 
-## site_srl (deprecated)
+## site_srl (레거시, 호환 유지)
 
-옛 XE는 `sites` 테이블과 `site_srl`을 사용했다. Rhymix는 deprecated 처리하고 항상 0을 채워 호환을 유지한다 (`modules` 스키마 `default=0`, `getDefaultDomainInfo`/`getSiteInfo`/`getSiteInfoByDomain` 모두 `site_srl = 0`을 세팅 — `modules/module/schemas/modules.xml:6`, `modules/module/module.model.php:86`). 신규 코드는 `domain_srl`을 사용.
+옛 XE는 `sites` 테이블과 `site_srl`을 사용했다. Rhymix는 레거시로 남겨 항상 0을 채워 호환을 유지한다 (`modules` 스키마 `default=0`, `getDefaultDomainInfo`/`getSiteInfo`/`getSiteInfoByDomain` 모두 `site_srl = 0`을 세팅 — `modules/module/schemas/modules.xml:6`, `modules/module/module.model.php:86`). 신규 코드는 `domain_srl`을 사용.
 
 ## 다음 문서
 

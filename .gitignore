@@ -34,3 +34,7 @@ build/
 .env
 .env.local
 .env.*.local
+
+# Python (scripts live on the tools branch)
+__pycache__/
+*.pyc

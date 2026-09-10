@@ -41,7 +41,7 @@
 |---|---|---|
 | `comment` | `_getCommentItems` | `CommentModel::getNewestCommentList` |
 | `image` | `_getImageItems` | `file.getOneFileInDocument` + `DocumentModel::getDocuments` |
-| `rss` | `getRssItems` → `_getRssItems` | `FileHandler::getRemoteResource` + `XeXmlParser` (RSS 2.0 / RSS 1.0 / Atom 1.0) |
+| `rss` | `getRssItems` → `_getRssItems` | `FileHandler::getRemoteResource` + `XeXmlParser` (`@deprecated` → `Rhymix\Framework\Parsers\XEXMLParser`; RSS 2.0 / RSS 1.0 / Atom 1.0) |
 | `trackback` | `_getTrackbackItems` | 현재 `trackback` 모듈이 없어 실행 불가 |
 | 그 외 (`document` 포함) | `_getDocumentItems` | `widgets.content.getNewestDocuments` + `DocumentModel::setToAllDocumentExtraVars` |
 

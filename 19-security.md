@@ -134,8 +134,8 @@ v1(`.html`) 템플릿에는 `@json()`이 없고 `{$v}`가 기본 noescape이므�
 
 ### 기본 정책
 
-- 회원 모듈 설정(`MemberModel::getMemberConfig()->password_hashing_algorithm`)이 우선. 미설정 시 `Password::getBestSupportedAlgorithm()` — `getSupportedAlgorithms()` 순서(`argon2id`/`bcrypt`/`pbkdf2`/`sha512`/`sha256`/`sha1`/`md5`)에서 **argon2id를 제외한 첫 항목**. 보통 **bcrypt**.
-- Work factor는 회원 설정(`password_hashing_work_factor`). `Password::getWorkFactor()`의 런타임 검증 범위는 **4-31**(포함). 그 외 값(0, 미설정, <4, >31)이면 **기본 10**(`Password.php:178-187`).
+- 회원 모듈 설정(`MemberModel::getMemberConfig()->password_hashing_algorithm`)이 우선. 미설정 시 `Rhymix\Framework\Password::getBestSupportedAlgorithm()` — `getSupportedAlgorithms()` 순서(`argon2id`/`bcrypt`/`pbkdf2`/`sha512`/`sha256`/`sha1`/`md5`)에서 **argon2id를 제외한 첫 항목**. 보통 **bcrypt**.
+- Work factor는 회원 설정(`password_hashing_work_factor`). `Rhymix\Framework\Password::getWorkFactor()`의 런타임 검증 범위는 **4-31**(포함). 그 외 값(0, 미설정, <4, >31)이면 **기본 10**(`Password.php:178-187`).
 - 관리자 UI(회원 설정 저장)는 더 좁은 **4-16** 범위로 자동 clamp한다 (`modules/member/member.admin.controller.php:340-348` — 4 미만은 4, 16 초과는 16). 즉 UI를 거치면 항상 4-16, 외부에서 DB를 직접 수정하면 4-31까지 가능.
 - 옛 XE의 **phpass**(`$P$` 시그니처)는 `portable` 알고리즘으로 자동 인식 → `\Hautelook\Phpass\PasswordHash`로 검증.
 - 그 외 인식 가능한 시그니처(`_algorithm_signatures`, `:14-34`): `argon2id`/`bcrypt`/`pbkdf2`/`md5`/`md5,sha1,md5`/`sha1`/`sha256`/`sha384`/`sha512`/`ripemd160`/`whirlpool`/`mssql_pwdencrypt`/`mysql_old_password`/`mysql_new_password`/`portable`/`drupal`/`joomla`/`kimsqrb`/`crypt`.
@@ -144,9 +144,9 @@ v1(`.html`) 템플릿에는 `@json()`이 없고 `{$v}`가 기본 noescape이므�
 
 시그니처:
 
-- `Password::hashPassword(string $password, $algos = null, ?string $salt = null): string`
+- `Rhymix\Framework\Password::hashPassword(string $password, $algos = null, ?string $salt = null): string`
   — `$algos`는 단일 알고리즘 또는 콤마 구분/배열(체인). `null`이면 default 알고리즘.
-- `Password::checkPassword(string $password, string $hash, $algos = null): bool`
+- `Rhymix\Framework\Password::checkPassword(string $password, string $hash, $algos = null): bool`
   — `$algos`가 `null`이면 hash 시그니처에서 자동 식별(`checkAlgorithm`)해 후보를 모두 시도.
 
 사용:
@@ -166,23 +166,23 @@ $ok   = Rhymix\Framework\Password::checkPassword($password, $hash);
 $temp = Rhymix\Framework\Password::getRandomPassword(16);   // 16자 (기본)
 ```
 
-랜덤 토큰/문자열은 `Security::getRandom(32, 'alnum')`, `Security::getRandomNumber($min, $max)`, `Security::getRandomUUID()`.
+랜덤 토큰/문자열은 `Rhymix\Framework\Security::getRandom(32, 'alnum')`, `Rhymix\Framework\Security::getRandomNumber($min, $max)`, `Rhymix\Framework\Security::getRandomUUID()`.
 
-### 알고리즘 점검 / 작업 강도 API
+### `Rhymix\Framework\Password` 알고리즘 점검 / 작업 강도 API
 
 | 메서드 | 의미 |
 |---|---|
-| `Password::getSupportedAlgorithms()` | 이 PHP에서 사용 가능한 알고리즘 목록 (순서 보존) |
-| `Password::getDefaultAlgorithm()` | 회원 설정 우선, 미설정 시 `getBestSupportedAlgorithm()` |
-| `Password::getBestSupportedAlgorithm()` | `getSupportedAlgorithms()`에서 argon2id 제외 첫 항목 |
-| `Password::getBackwardCompatibleAlgorithm()` | 60자 이하 해시를 만드는 알고리즘(bcrypt/pbkdf2/sha1/md5)으로 폴백 |
-| `Password::getWorkFactor()` | `member` 설정 또는 기본 10 (4-31 외 값은 10으로 리셋) |
-| `Password::checkAlgorithm($hash)` | 해시 시그니처로 후보 알고리즘 배열 추출 |
-| `Password::checkWorkFactor($hash)` | 해시에 사용된 work factor 추출 |
-| `Password::isValidAlgorithm($algos)` | 알고리즘 이름이 유효한지 |
-| `Password::addAlgorithm($name, $signature, $callback)` | 사용자 정의 알고리즘 등록 |
+| `getSupportedAlgorithms()` | 이 PHP에서 사용 가능한 알고리즘 목록 (순서 보존) |
+| `getDefaultAlgorithm()` | 회원 설정 우선, 미설정 시 `getBestSupportedAlgorithm()` |
+| `getBestSupportedAlgorithm()` | `getSupportedAlgorithms()`에서 argon2id 제외 첫 항목 |
+| `getBackwardCompatibleAlgorithm()` | 60자 이하 해시를 만드는 알고리즘(bcrypt/pbkdf2/sha1/md5)으로 폴백 |
+| `getWorkFactor()` | `member` 설정 또는 기본 10 (4-31 외 값은 10으로 리셋) |
+| `checkAlgorithm($hash)` | 해시 시그니처로 후보 알고리즘 배열 추출 |
+| `checkWorkFactor($hash)` | 해시에 사용된 work factor 추출 |
+| `isValidAlgorithm($algos)` | 알고리즘 이름이 유효한지 |
+| `addAlgorithm($name, $signature, $callback)` | 사용자 정의 알고리즘 등록 |
 
-알고리즘 직접 호출: `Password::argon2id($pw, $work_factor=10)`, `Password::bcrypt($pw, $salt=null, $work_factor=10)`, `Password::pbkdf2($pw, $salt=null, $algorithm='sha512', $iterations=16384, $length=24, $iterations_padding=7)`.
+알고리즘 직접 호출: `Rhymix\Framework\Password::argon2id($pw, $work_factor=10)`, `Rhymix\Framework\Password::bcrypt($pw, $salt=null, $work_factor=10)`, `Rhymix\Framework\Password::pbkdf2($pw, $salt=null, $algorithm='sha512', $iterations=16384, $length=24, $iterations_padding=7)`.
 
 ### 설정 위치
 
@@ -203,7 +203,7 @@ $temp = Rhymix\Framework\Password::getRandomPassword(16);   // 16자 (기본)
 - HWPX 확장자 또는 PNG 시그니처(`89504E470D0A1A0A`)가 확인되면 내용이 XML처럼 보인다는 이유로 SVG 검사에 들어가지 않는다. PNG 메타데이터에 SVG 문자열이 포함된 경우의 오탐을 줄이는 예외이며, 확장자에 따른 이미지 MIME 검사 등은 계속 수행한다 (`common/framework/filters/FileContentFilter.php:40-95`).
 - PHP 태그 검출(`<?`, XML 선언 제외)은 HTML 또는 XML-like 콘텐츠에 적용되는 `_checkHTML()` 단계의 규칙이다. 임의 확장자의 모든 파일을 PHP 코드 스캐너처럼 검사하는 것은 아니다 (`common/framework/filters/FileContentFilter.php:36-96,150-155`).
 
-(`enshrined/svg-sanitize` 기반 정화는 `Security::sanitize($str, 'svg')`에서 수행한다.)
+(`enshrined/svg-sanitize` 기반 정화는 `Rhymix\Framework\Security::sanitize($str, 'svg')`에서 수행한다.)
 
 ### `UploadFileFilter` (legacy)
 
@@ -229,7 +229,7 @@ $blocked = Rhymix\Framework\Filters\IpFilter::inRanges(RX_CLIENT_IP, $ranges);
 
 ### 기본 IP 차단 목록
 
-코어에는 알려진 악성 IP를 자동 차단하는 기본 목록이 없다. `IpFilter::inRanges()`에는 호출자가 설정한 범위를 전달해야 한다. 이름이 비슷한 `common/defaults/blacklist.php`는 IP 목록이 아니라 호환되지 않는 **deprecated addon/module/widget** 목록이다.
+코어에는 알려진 악성 IP를 자동 차단하는 기본 목록이 없다. `Rhymix\Framework\Filters\IpFilter::inRanges()`에는 호출자가 설정한 범위를 전달해야 한다. 이름이 비슷한 `common/defaults/blacklist.php`는 IP 목록이 아니라 호환되지 않는 **deprecated addon/module/widget** 목록이다.
 
 ### 한국 IP 대역
 
@@ -241,7 +241,7 @@ $is_korea = Rhymix\Framework\Korea::isKoreanIP(RX_CLIENT_IP);
 
 ### CloudFlare 실제 IP
 
-`HTTP_CF_CONNECTING_IP` 헤더가 있고, 요청이 CloudFlare 대역에서 온 경우에만 신뢰하고 `RX_CLIENT_IP`로 사용 (`common/constants.php:59-63`, `IpFilter::getCloudFlareRealIP()`).
+`HTTP_CF_CONNECTING_IP` 헤더가 있고, 요청이 CloudFlare 대역에서 온 경우에만 신뢰하고 `RX_CLIENT_IP`로 사용 (`common/constants.php:59-63`, `Rhymix\Framework\Filters\IpFilter::getCloudFlareRealIP()`).
 
 `common/defaults/cloudflare.php`에 CloudFlare IP 대역 보관.
 

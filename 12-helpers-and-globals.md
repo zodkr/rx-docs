@@ -197,8 +197,6 @@ autoloader 분기 2가 사용하는 정적 매핑 (lc 클래스명 → 파일 �
 | `executeQuery($query_id, $args=[], $column_list=[], $result_type='auto', $result_class='stdClass')` | `module.queryName` 형식. 결과 형태·행 클래스 지정 가능 |
 | `executeQueryArray($query_id, $args=[], $column_list=[], $result_class='stdClass')` | `result_type='array'`로 강제 |
 | `getNextSequence()` | 다음 시퀀스 |
-| `setUserSequence($seq)` | 세션(`$_SESSION['seq']`)에 시퀀스 저장 |
-| `checkUserSequence($seq)` | 시퀀스 소유자 검증 |
 
 ### URL 헬퍼
 
@@ -206,21 +204,17 @@ autoloader 분기 2가 사용하는 정적 매핑 (lc 클래스명 → 파일 �
 |---|---|
 | `getUrl(...)` | `Context::getUrl` |
 | `getNotEncodedUrl(...)` | URL 인코딩 안 함 |
-| `getAutoEncodedUrl(...)` | `@deprecated` — 인코딩 자동. 대체: `getUrl(...)` |
 | `getFullUrl(...)` | 도메인 포함 |
 | `getNotEncodedFullUrl(...)` | 두 옵션 결합 |
-| `getSiteUrl($domain, ...)` | `@deprecated` — 특정 도메인의 URL (`$domain`은 사이트 정보 객체가 아닌 문자열). 대체: `Context::getUrl(..., $domain)` |
-| `getNotEncodedSiteUrl($domain, ...)` | `@deprecated` — 위와 같되 HTML entity 인코딩 안 함. 대체: `Context::getUrl(..., $domain)` |
-| `getFullSiteUrl($domain, ...)` | `@deprecated` — 도메인 포함. 첫 인자는 동일하게 도메인 문자열. 대체: `Context::getUrl(..., $domain)` |
 | `getCurrentPageUrl()` | 현재 페이지 URL |
-| `isSiteID($id)` | 사이트 ID 형식 검증 |
+
+`getSiteUrl()`·`getFullSiteUrl()` 같은 `@deprecated` URL 헬퍼는 싣지 않는다. 목록과 대체 API: [36-deprecated/](36-deprecated/).
 
 ### 문자열/시간
 
 | 함수 | 비고 |
 |---|---|
 | `cut_str($str, $cut_size=0, $tail='...')` | 멀티바이트 안전 자르기 |
-| `get_time_zone_offset($timezone)` | 초 단위 오프셋 |
 | `zgap($timestamp=null)` | 사용자 ↔ 내부 timezone 오프셋 (초) |
 | `ztime($str)` | 9자리 또는 10자리(`<=2147483647`) Unix timestamp, `YYYYMMDD`, `YYYYMMDDHH[MM][SS]`, `YYYY-MM-DD[ T]HH:MM:SS[±HH:MM]` → unix time |
 | `zdate($str, $format='Y-m-d H:i:s', $conversion=false)` | `ztime()`이 지원하는 입력 → 사용자 timezone 포맷팅 |
@@ -233,16 +227,11 @@ autoloader 분기 2가 사용하는 정적 매핑 (lc 클래스명 → 파일 �
 
 | 함수 | 비고 |
 |---|---|
-| `getEncodeEmailAddress($email)` | `&#NN;` 엔티티 인코딩 |
 | `debugPrint(...)` | Debug에 추가 (개발용) |
-| `delObjectVars($target, $del)` | object에서 다른 object의 키 제거 |
-| `getDestroyXeVars($vars)` | XE 시스템 변수 제거 (error_return_url, success_return_url, ruleset, xe_validator_id, _rx_csrf_token 등) |
 | `getNumberingPath($no, $size=3)` | `12345` → `'345/012/'` (해시 디렉토리) |
-| `removeHackTag($content)` | XE 호환 XSS 정화 (`Filters\HTMLFilter` 위임) |
-| `detectUTF8($str, $return_convert=false, $urldecode=true)` | UTF-8 감지/변환 |
 | `isCrawler($ua=null)` | 봇 UA 패턴 매칭 |
-| `stripEmbedTagForAdmin(&$content, $writer_member_srl)` | 비관리자 작성 embed 차단 |
-| `checkCSRF()` | `Security::checkCSRF()` wrapper |
+
+`removeHackTag()`·`checkCSRF()`·`detectUTF8()` 등 `@deprecated` 헬퍼는 싣지 않는다. 목록과 대체 API: [36-deprecated/](36-deprecated/).
 
 ## `$GLOBALS` 사용 패턴
 

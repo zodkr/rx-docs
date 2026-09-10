@@ -49,7 +49,7 @@ Rhymix PDS API(목록 `https://api.rhymix.org/pds/index.json`, 상세 `https://a
 |---|---|
 | `autoinstall_packages` | `schemas/autoinstall_packages.xml` — 패키지 카탈로그 캐시 |
 
-과거 테이블 `ai_installed_packages`·`ai_remote_categories`(및 `autoinstall_installed_packages`·`autoinstall_remote_categories`)는 재작성 시 deprecated 처리되어, 모듈 업그레이드 시 `Autoinstall::moduleUpdate()`가 `dropTable()`로 삭제한다 (테이블 명단 `autoinstall.class.php:13-18`, 삭제 로직 `:66-85`의 `dropTable()`은 `:75`).
+과거 테이블 `ai_installed_packages`·`ai_remote_categories`(및 `autoinstall_installed_packages`·`autoinstall_remote_categories`)는 재작성 시 레거시로 분류되어, 모듈 업그레이드 시 `Autoinstall::moduleUpdate()`가 `dropTable()`로 삭제한다 (테이블 명단 `autoinstall.class.php:13-18`, 삭제 로직 `:66-85`의 `dropTable()`은 `:75`).
 
 ## 관련
 

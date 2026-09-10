@@ -174,7 +174,7 @@ CSRF 토큰 검증은 Context가 아니라 ModuleHandler::procModule에서 수�
 3. **`act` 결정** — 미지정 시 `default_index_act` 폴백. 그래도 없으면 404 (`:334-353`).
 4. **타입/kind/meta-noindex 결정** — admin이 포함된 액션은 `kind='admin'` (`:355-370`).
 5. **HTTP 메서드 검사** — `action.method`에 현재 메서드가 없으면 405 (`:372-380`).
-6. **CSRF 검증** — 비-GET/HEAD/OPTIONS + `check_csrf !== 'false'` + 설치됨이면 `Security::checkCSRF()`. 실패 시 403 (`:382-388`).
+6. **CSRF 검증** — 비-GET/HEAD/OPTIONS + `check_csrf !== 'false'` + 설치됨이면 `Rhymix\Framework\Security::checkCSRF()`. 실패 시 403 (`:382-388`).
 7. **standalone 검사** — `standalone === 'false'`이고 mid 없으면 403 (`:391-402`).
 8. **`use_mobile` 조정** — 모듈이 모바일 미지원이면 Mobile::setMobile(false) (`:404-412`).
 9. **회원 메뉴 lang 재할당** (`:414-419`).

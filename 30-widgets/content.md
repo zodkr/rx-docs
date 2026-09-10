@@ -50,7 +50,7 @@
 |---|---|---|
 | `comment` | `_getCommentItems` | `CommentModel::getNewestCommentList` |
 | `image` | `_getImageItems` | `file.getOneFileInDocument` + `DocumentModel::getDocuments` |
-| `rss` | `getRssItems` → `_getRssItems` | `FileHandler::getRemoteResource` + `XeXmlParser` (RSS 2.0 / RSS 1.0 / Atom 1.0) |
+| `rss` | `getRssItems` → `_getRssItems` | `FileHandler::getRemoteResource` + `XeXmlParser` (`@deprecated` → `Rhymix\Framework\Parsers\XEXMLParser`; RSS 2.0 / RSS 1.0 / Atom 1.0) |
 | 그 외 (`document` 포함) | `_getDocumentItems` | `widgets.content.getNewestDocuments` + `DocumentModel::setToAllDocumentExtraVars` |
 
 각 헬퍼는 `contentItem` 인스턴스(파일 하단 동명 클래스 정의)를 만들어 배열로 반환하고, `_compile($args, $content_items)`이 컨텍스트(`widget_info`/`colorset`)에 주입한 뒤 스킨의 `content.html`을 컴파일한다.

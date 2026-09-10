@@ -41,7 +41,7 @@ common.<name>    → common/scripts/<name>.php
 | `modules/communication/scripts/cleanMessageFiles.php` | `php index.php communication.cleanMessageFiles` |
 | `modules/ncenterlite/scripts/cleanNotifications.php` | `php index.php ncenterlite.cleanNotifications` |
 
-정리·업데이트 작업에는 위 모듈 스크립트를 사용한다. `common/scripts/`의 `clean_*.php`·`update_all_modules.php`는 각각 위 모듈 스크립트로 위임하는 deprecated 래퍼이므로 신규 cron에 쓰지 않는다. `common/scripts/common.php`는 공통 부트스트랩이며 직접 실행할 작업 스크립트가 아니다.
+정리·업데이트 작업에는 위 모듈 스크립트를 사용한다. `common/scripts/`의 `clean_*.php`·`update_all_modules.php`는 각각 위 모듈 스크립트로 위임하는 `@deprecated` 래퍼이므로 신규 cron에 쓰지 않는다. `common/scripts/common.php`는 공통 부트스트랩이며 직접 실행할 작업 스크립트가 아니다.
 
 ## cron 등록
 

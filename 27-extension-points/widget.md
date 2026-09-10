@@ -188,7 +188,7 @@ WYSIWYG 에디터에서 "위젯 추가" UI로 삽입하면 다음 형식의 마�
      skin="default" colorset="white" list_count="10" module_srls="3,5" />
 ```
 
-위젯 모듈이 `conf/module.xml`에 `before display` 트리거로 등록한 `WidgetController::triggerWidgetCompile()` → `transWidgetCode()`가 이를 감지해 위젯을 실행하고 결과 HTML로 치환한다 (`modules/widget/widget.controller.php:271`). (`Context::transContent()`는 현재 인자를 그대로 반환하는 deprecated 스텁이다.)
+위젯 모듈이 `conf/module.xml`에 `before display` 트리거로 등록한 `WidgetController::triggerWidgetCompile()` → `transWidgetCode()`가 이를 감지해 위젯을 실행하고 결과 HTML로 치환한다 (`modules/widget/widget.controller.php:271`). (`Context::transContent()` (`@deprecated` → 대체 없음)는 인자를 그대로 반환하는 no-op이다.)
 
 ### PHP에서 수동 호출
 

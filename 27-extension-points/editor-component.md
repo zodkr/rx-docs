@@ -162,7 +162,7 @@ $xml_obj->body = null;   // div형 컴포넌트의 내부 HTML. <img> 형태면 
 
 ## transHTML 호출 시점
 
-변환은 두 층에서 일어난다. `DocumentItem::getTransContent()`(`modules/document/document.item.php:796`)와 `widgetContent` 처리(`modules/widget/widget.controller.php:576`)가 본문 조각을 먼저 변환하고, 에디터 모듈의 `display.before` 이벤트 핸들러 `triggerEditorComponentCompile()`이 최종 HTML 문자열에도 `transComponent()`를 적용한다. `transComponent()`가 `<div|img ... editor_component="...">`를 발견하면 콜백 `transEditorComponent`가 해당 컴포넌트의 `transHTML`을 호출한다(`modules/editor/editor.controller.php:290`). 이미 변환된 마커는 다음 단계에서 다시 매칭되지 않는다. 구 API인 `Context::transContent()`는 `@deprecated` no-op이라 `$content`를 그대로 반환한다.
+변환은 두 층에서 일어난다. `DocumentItem::getTransContent()`(`modules/document/document.item.php:796`)와 `widgetContent` 처리(`modules/widget/widget.controller.php:576`)가 본문 조각을 먼저 변환하고, 에디터 모듈의 `display.before` 이벤트 핸들러 `triggerEditorComponentCompile()`이 최종 HTML 문자열에도 `transComponent()`를 적용한다. `transComponent()`가 `<div|img ... editor_component="...">`를 발견하면 콜백 `transEditorComponent`가 해당 컴포넌트의 `transHTML`을 호출한다(`modules/editor/editor.controller.php:290`). 이미 변환된 마커는 다음 단계에서 다시 매칭되지 않는다. 구 API인 `Context::transContent()` (`@deprecated` → 대체 없음)는 no-op이라 `$content`를 그대로 반환한다.
 
 본문 저장 단계에서는 마커가 그대로 DB에 보관됨 — 표시 시점에 transHTML로 변환.
 

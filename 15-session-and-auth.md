@@ -81,7 +81,7 @@ $token = Rhymix\Framework\Session::getGenericToken();
 $ok = Rhymix\Framework\Session::verifyToken($token);
 ```
 
-POST 등 비-안전 메서드 액션은 `ModuleHandler`가 `Security::checkCSRF()`를 호출해 검증하고, 실패하면 모듈 처리를 거부한다 (`classes/module/ModuleHandler.class.php:382-388`). 기본값인 `security.check_csrf_token=false`에서는 `_rx_csrf_token` 파라미터/헤더 검사를 생략하지만, `Sec-Fetch-Site`·Origin·Referer를 이용한 same-origin 검사는 계속 수행한다. 이 설정을 `true`로 켜면 로그인 사용자의 토큰 누락도 실패로 처리한다 (`common/framework/Security.php:327-380`).
+POST 등 비-안전 메서드 액션은 `ModuleHandler`가 `Rhymix\Framework\Security::checkCSRF()`를 호출해 검증하고, 실패하면 모듈 처리를 거부한다 (`classes/module/ModuleHandler.class.php:382-388`). 기본값인 `security.check_csrf_token=false`에서는 `_rx_csrf_token` 파라미터/헤더 검사를 생략하지만, `Sec-Fetch-Site`·Origin·Referer를 이용한 same-origin 검사는 계속 수행한다. 이 설정을 `true`로 켜면 로그인 사용자의 토큰 누락도 실패로 처리한다 (`common/framework/Security.php:327-380`).
 
 ### 액션별 토큰
 

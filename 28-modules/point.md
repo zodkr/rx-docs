@@ -103,7 +103,7 @@ $level = $oPointModel->getLevel($current, $config->level_step);  // getLevel($po
 |---|---|---|
 | `document.updateDocument` (before) | `triggerUpdateDocument` (controller) | `triggerBeforeUpdateDocument`/`triggerAfterUpdateDocument`로 분리됨 |
 | `document.deleteDocument` (before) | `triggerBeforeDeleteDocument` (controller) | 현재 버전은 after만 사용 |
-| `file.insertFile` (after) | `triggerInsertFile` (controller) | 더 이상 사용하지 않음 |
+| `file.insertFile` (after) | `triggerInsertFile` (controller) | 현재 등록되지 않음 |
 
 모듈별 포인트 값은 `module_part_config`에 `module='point'`, 해당 `module_srl`의 직렬화 설정으로 저장한다. 항목이 없을 때의 전역 fallback은 point 모듈의 `module_config`에서 읽는다 (`point.model.php:276-303`, `point.admin.controller.php:215,300`).
 

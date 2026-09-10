@@ -39,7 +39,7 @@ $oWidgetController = getController('widget');
 $html = $oWidgetController->execute($widget_name, $args);
 ```
 
-응답 HTML 생성 직전 `display`(before) 트리거로 호출되는 `triggerWidgetCompile`(`widget.controller.php:271`)이 본문의 `<img class="zbxe_widget_output" widget="...">` 마커를 정규식으로 찾아 `transWidgetCode`(`:280`)→`transWidget`(`:303`)를 거쳐 이 `execute()`(`:491`)를 호출해 HTML로 치환한다. (`Context::transContent()`는 현재 `@deprecated` no-op이다.)
+응답 HTML 생성 직전 `display`(before) 트리거로 호출되는 `triggerWidgetCompile`(`widget.controller.php:271`)이 본문의 `<img class="zbxe_widget_output" widget="...">` 마커를 정규식으로 찾아 `transWidgetCode`(`:280`)→`transWidget`(`:303`)를 거쳐 이 `execute()`(`:491`)를 호출해 HTML로 치환한다. (`Context::transContent()` (`@deprecated` → 대체 없음)는 no-op이다.)
 
 ## 이 모듈이 hook하는 트리거 (`conf/module.xml`의 `<eventHandlers>`)
 

@@ -263,7 +263,7 @@ XML의 `method=` 속성은 **PHP 메서드명이 아니라 허용 HTTP 메서드
 | `check_type`(=`check-type`) | 권한 확인 대상 모듈 타입(스코프) |
 | `grant` | XE 호환용 레거시 메타데이터. 파서는 기본값 `guest`와 함께 `action_info->grant`에 저장하지만 현재 실행 경로는 이 값을 접근 제어에 사용하지 않는다. 권한은 반드시 `permission` 또는 `<permissions>`로 선언 |
 | `method` | 허용 HTTP 메서드. `\|` 또는 `,`로 다중 (`GET,POST`/`GET\|POST\|PUT`). **미지정 시 자동 결정** — 아래 표 |
-| `ruleset` | `ruleset/*.xml` 파일명(확장자 제외). **v2 모듈에서는 deprecated** — `E_USER_WARNING` 발생 |
+| `ruleset` | `ruleset/*.xml` 파일명(확장자 제외). **v2 모듈에서는 사용 불가** — `Ruleset is deprecated in namespaced modules` `E_USER_WARNING` 발생 |
 | `check-csrf` | `false`면 비-GET 요청에서도 CSRF 검증 면제 (기본 검증함) |
 | `meta-noindex` | `true`면 `<meta robots="noindex">` 자동 삽입 |
 | `session` | `false`면 세션 비활성. 기본 활성 |

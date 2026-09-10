@@ -15,13 +15,13 @@
 | `file/` | `FileHandler`, `FileObject` | `Storage`/`Image` wrapper + XE 호환 |
 | `frontendfile/` | `FrontEndFileHandler` | `<link>`/`<script>` 태그 관리 |
 | `handler/` | `Handler` | 빈 concrete 기반 클래스 (`abstract` 아님) |
-| `httprequest/` | `XEHttpRequest` | XE 호환 Ajax helper |
+| `httprequest/` | `XEHttpRequest` | XE 호환 Ajax helper (`@deprecated` → `Rhymix\Framework\HTTP`) |
 | `mail/` | `Mail` | `Rhymix\Framework\Mail` wrapper |
 | `mobile/` | `Mobile` | 모바일 감지 (별도 문서 → [23-mobile-detection.md](23-mobile-detection.md)) |
 | `module/` | `ModuleHandler`, `ModuleObject` | 라이프사이클 (별도 문서 → [06-module-handler-lifecycle.md](06-module-handler-lifecycle.md)) |
 | `object/` | `BaseObject` | 모든 모듈의 조상 + 일부 레거시 객체의 기반 (`WidgetHandler`는 상속하지 않음) |
 | `page/` | `PageHandler` | XE 호환 페이지네이션 |
-| `security/` | `EmbedFilter`, `Password`, `Security`, `UploadFileFilter`, `IpFilter`, `Purifier` | 보안 wrapper |
+| `security/` | `EmbedFilter`, `Password`, `Security`, `UploadFileFilter`, `IpFilter`, `Purifier` | 보안 wrapper. `UploadFileFilter`를 제외한 전역 클래스는 `@deprecated` 래퍼 → `Rhymix\Framework\*` |
 | `template/` | `TemplateHandler` | `Rhymix\Framework\Template` 상속 |
 | `validator/` | `Validator` | ruleset XML 기반 입력 검증 |
 | `widget/` | `WidgetHandler` | 모든 위젯의 부모 (`$widget_path` 속성만 가짐) |
@@ -164,7 +164,7 @@ class FileObject extends BaseObject {
 
 ## XEHttpRequest
 
-`classes/httprequest/XEHttpRequest.class.php`. XE 호환 HTTP 요청. 신형 코드는 `Rhymix\Framework\HTTP` 사용 권장.
+`classes/httprequest/XEHttpRequest.class.php`. XE 호환 HTTP 요청. `class XEHttpRequest` (`@deprecated` → `Rhymix\Framework\HTTP`).
 
 ## Mail (legacy)
 
@@ -181,12 +181,14 @@ $oMail->send();
 
 ## Security 계열 wrapper
 
-- `Password` → `Rhymix\Framework\Password`.
-- `Security` → `Rhymix\Framework\Security`.
-- `IpFilter` → `Rhymix\Framework\Filters\IpFilter`.
-- `EmbedFilter` → `@deprecated` 스텁. `check`/`checkIframeTag`/`checkObjectTag` 등은 no-op(필터링은 `HTMLFilter`로 이관), 화이트리스트 조회는 `Filters\MediaFilter`로 위임.
-- `UploadFileFilter` → `Filters\FileContentFilter::check`로 위임 (업로드 파일 내용 검사).
-- `Purifier` → `Filters\HTMLFilter` (HTMLPurifier wrapper).
+전역 클래스는 `UploadFileFilter`를 제외하고 모두 `@deprecated` 래퍼다. 코드와 문서에서는 `Rhymix\Framework\...` 전체 이름을 쓴다 ([19-security.md](19-security.md)).
+
+- `class Password` (`@deprecated` → `Rhymix\Framework\Password`).
+- `class Security` (`@deprecated` → `Rhymix\Framework\Security`).
+- `class IpFilter` (`@deprecated` → `Rhymix\Framework\Filters\IpFilter`).
+- `class EmbedFilter` (`@deprecated` → `Rhymix\Framework\Filters\MediaFilter`). `check`/`checkIframeTag`/`checkObjectTag` 등은 no-op(필터링은 `HTMLFilter`로 이관), 화이트리스트 조회는 `Filters\MediaFilter`로 위임.
+- `class Purifier` (`@deprecated` → `Rhymix\Framework\Filters\HTMLFilter`). HTMLPurifier wrapper.
+- `UploadFileFilter` → `Filters\FileContentFilter::check`로 위임 (업로드 파일 내용 검사). deprecated 아님.
 
 ## TemplateHandler
 
@@ -232,7 +234,7 @@ class WidgetHandler {
 
 | 클래스 | 용도 |
 |---|---|
-| `XmlParser` | 범용 XML 파싱 (`@deprecated`, SimpleXML 기반 `XEXMLParser`로 위임) |
+| `XmlParser` | 범용 XML 파싱. `XeXmlParser`의 `class_alias`이며 둘 다 (`@deprecated` → `Rhymix\Framework\Parsers\XEXMLParser`) |
 | `XmlGenerator` | XML 문자열 생성 |
 | `XmlJsFilter` | ruleset XML → JavaScript 검증 코드 컴파일러 |
 | `XmlLangParser` | XE legacy lang.xml → PHP |

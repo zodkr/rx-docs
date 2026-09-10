@@ -62,7 +62,7 @@
 
 ### JSCallbackDisplayHandler
 
-- JSONP 응답. `$_GET['xe_js_callback']` 또는 `$_POST['xe_js_callback']`(`Context::getJSCallbackFunc()`)를 callback 함수명으로.
+- JSONP 응답. `$_GET['xe_js_callback']` 또는 `$_POST['xe_js_callback']`(`Context::getJSCallbackFunc()`, `@deprecated`)를 callback 함수명으로.
 - `<script>//<![CDATA[ func({...json...}); //]]></script>` 형식의 HTML 스크립트 블록으로 감싸 반환(Content-Type은 text/html).
 
 ### XMLDisplayHandler

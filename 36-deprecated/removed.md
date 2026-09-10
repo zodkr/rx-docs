@@ -9,50 +9,50 @@
 
 | 심볼 | 마지막 존재 | 대체 API | 비고 |
 |---|---|---|---|
-| `editorModel::getDrComponentXmlInfo()` | `1.8.0 modules/editor/editor.model.php:116` | 확인 필요 |  |
-| `editorModel::loadDrComponents()` | `1.8.0 modules/editor/editor.model.php:93` | 확인 필요 |  |
-| `memberController::procMemberUpdateAuthMail()` | `1.8.0 modules/member/member.controller.php:1169` | 확인 필요 |  |
-| `moduleController::insertSiteAdmin()` | `1.8.0 modules/module/module.controller.php:829` | 확인 필요 |  |
+| `editorModel::getDrComponentXmlInfo()` | `1.8.0 modules/editor/editor.model.php:116` | 없음 | DR 에디터(dreditor) 컴포넌트 제거 |
+| `editorModel::loadDrComponents()` | `1.8.0 modules/editor/editor.model.php:93` | 없음 | DR 에디터(dreditor) 컴포넌트 제거 |
+| `memberController::procMemberUpdateAuthMail()` | `1.8.0 modules/member/member.controller.php:1169` | `MemberController::procMemberResendAuthMail()` |  |
+| `moduleController::insertSiteAdmin()` | `1.8.0 modules/module/module.controller.php:829` | 없음 | 가상 사이트 제거 |
 
 ## Rhymix 2.0에서 삭제됨
 
 | 심볼 | 마지막 존재 | 대체 API | 비고 |
 |---|---|---|---|
-| `class XmlQueryParser` | `1.9.13 classes/xml/XmlQueryParser.class.php:45` | 확인 필요 |  |
-| `class SFTPModuleInstaller` | `1.9.0 modules/autoinstall/autoinstall.lib.php:320` | 확인 필요 |  |
-| `class PHPFTPModuleInstaller` | `1.9.0 modules/autoinstall/autoinstall.lib.php:489` | 확인 필요 |  |
-| `class FTPModuleInstaller` | `1.9.0 modules/autoinstall/autoinstall.lib.php:703` | 확인 필요 |  |
-| `boardAdminController::procBoardAdminUpdateBoardFroBasic()` | `1.9.13 modules/board/board.admin.controller.php:101` | 확인 필요 |  |
-| `editorModel::getCacheFile()` | `1.9.0 modules/editor/editor.model.php:576` | 확인 필요 |  |
-| `fileAdminController::procFileAdminInsertConfig()` | `1.9.0 modules/file/file.admin.controller.php:92` | 확인 필요 |  |
-| `fileController::triggerCheckAttached()` | `1.9.13 modules/file/file.controller.php:439` | 확인 필요 |  |
-| `fileController::triggerAttachFiles()` | `1.9.13 modules/file/file.controller.php:456` | 확인 필요 |  |
-| `fileController::triggerCommentCheckAttached()` | `1.9.13 modules/file/file.controller.php:488` | 확인 필요 |  |
-| `fileController::triggerCommentAttachFiles()` | `1.9.13 modules/file/file.controller.php:505` | 확인 필요 |  |
-| `memberController::procMemberResetAuthMail()` | `1.9.0 modules/member/member.controller.php:1319` | 확인 필요 |  |
-| `pointController::triggerUpdateDocument()` | `1.9.13 modules/point/point.controller.php:102` | 확인 필요 |  |
-| `spamfilterController::triggerInsertTrackback()` | `1.9.13 modules/spamfilter/spamfilter.controller.php:119` | 확인 필요 |  |
+| `class XmlQueryParser` | `1.9.13 classes/xml/XmlQueryParser.class.php:20` | `Rhymix\Framework\Parsers\DBQueryParser` | XML 쿼리는 executeQuery()가 내부에서 파싱·캐시 |
+| `class SFTPModuleInstaller` | `1.9.0 modules/autoinstall/autoinstall.lib.php:320` | `Rhymix\Modules\Autoinstall\Models\Installer` | FTP 설치 방식 제거 |
+| `class PHPFTPModuleInstaller` | `1.9.0 modules/autoinstall/autoinstall.lib.php:489` | `Rhymix\Modules\Autoinstall\Models\Installer` | FTP 설치 방식 제거 |
+| `class FTPModuleInstaller` | `1.9.0 modules/autoinstall/autoinstall.lib.php:703` | `Rhymix\Modules\Autoinstall\Models\Installer` | FTP 설치 방식 제거 |
+| `boardAdminController::procBoardAdminUpdateBoardFroBasic()` | `1.9.13 modules/board/board.admin.controller.php:111` | `BoardAdminController::procBoardAdminUpdateBoard()` |  |
+| `editorModel::getCacheFile()` | `1.9.0 modules/editor/editor.model.php:494` | 없음 | 컴포넌트 목록은 EditorModel::getComponentList()가 Cache로 관리 |
+| `fileAdminController::procFileAdminInsertConfig()` | `1.9.0 modules/file/file.admin.controller.php:92` | `FileAdminController::procFileAdminInsertUploadConfig() / procFileAdminInsertDownloadConfig() / procFileAdminInsertOtherConfig()` |  |
+| `fileController::triggerCheckAttached()` | `1.9.13 modules/file/file.controller.php:653` | `FileController::setFilesValid($upload_target_srl, $upload_target_type)` | 문서·댓글 컨트롤러가 직접 호출 |
+| `fileController::triggerAttachFiles()` | `1.9.13 modules/file/file.controller.php:670` | `FileController::setFilesValid($upload_target_srl, $upload_target_type)` | 문서·댓글 컨트롤러가 직접 호출 |
+| `fileController::triggerCommentCheckAttached()` | `1.9.13 modules/file/file.controller.php:700` | `FileController::setFilesValid($upload_target_srl, $upload_target_type)` | 문서·댓글 컨트롤러가 직접 호출 |
+| `fileController::triggerCommentAttachFiles()` | `1.9.13 modules/file/file.controller.php:715` | `FileController::setFilesValid($upload_target_srl, $upload_target_type)` | 문서·댓글 컨트롤러가 직접 호출 |
+| `memberController::procMemberResetAuthMail()` | `1.9.0 modules/member/member.controller.php:1596` | `MemberController::procMemberResendAuthMail()` |  |
+| `pointController::triggerUpdateDocument()` | `1.9.13 modules/point/point.controller.php:127` | `PointController::triggerBeforeUpdateDocument() / triggerAfterUpdateDocument()` |  |
+| `spamfilterController::triggerInsertTrackback()` | `1.9.13 modules/spamfilter/spamfilter.controller.php:117` | 없음 | 트랙백 제거 |
 
 ## Rhymix 2.1에서 삭제됨
 
 | 심볼 | 마지막 존재 | 대체 API | 비고 |
 |---|---|---|---|
-| `class Object` | `2.0.24 classes/object/Object.class.php:9` | `BaseObject` | PHP 7.2 예약어. 2.0.24까지 PHP<7.2에서만 alias, 현재 없음 |
-| `class Xml_Node_` | `2.1.0 classes/xml/XmlParser.class.php:11` | 확인 필요 |  |
-| `class Rhymix\Framework\Drivers\Cache\WinCache` | `2.0.24 common/framework/drivers/cache/wincache.php:8` | 확인 필요 |  |
-| `class Rhymix\Framework\Drivers\Cache\XCache` | `2.0.24 common/framework/drivers/cache/xcache.php:8` | 확인 필요 |  |
-| `class Rhymix\Framework\Drivers\SMS\ApiStore` | `2.1.0 common/framework/drivers/sms/apistore.php:8` | 확인 필요 |  |
-| `class XmlGenerater` | `2.1.0 modules/autoinstall/autoinstall.class.php:8` | 확인 필요 |  |
-| `class ModuleInstaller` | `2.1.0 modules/autoinstall/autoinstall.lib.php:10` | 확인 필요 |  |
-| `class DirectModuleInstaller` | `2.1.0 modules/autoinstall/autoinstall.lib.php:876` | 확인 필요 |  |
-| `class autoinstallModel` | `2.1.0 modules/autoinstall/autoinstall.model.php:8` | 확인 필요 |  |
-| `class boardWAP` | `2.0.24 modules/board/board.wap.php:10` | 확인 필요 |  |
-| `class pageWap` | `2.0.24 modules/page/page.wap.php:8` | 확인 필요 |  |
-| `class spamfilter_reCAPTCHA` | `2.0.24 modules/spamfilter/spamfilter.lib.php:3` | 확인 필요 |  |
-| `TemplateHandler::resetState()` | `2.1.0 classes/template/TemplateHandler.class.php:72` | 확인 필요 |  |
-| `Validator::mbStrLen()` | `2.1.0 classes/validator/Validator.class.php:638` | 확인 필요 |  |
-| `Rhymix\Framework\Debug::addSessionStartTime()` | `2.1.0 common/framework/debug.php:252` | 확인 필요 |  |
-| `Rhymix\Framework\Session::checkSSO()` | `2.1.0 common/framework/session.php:333` | 확인 필요 |  |
-| `layoutAdminModel::getLayoutAdminSetHTMLCSS()` | `2.1.0 modules/layout/layout.admin.model.php:100` | 확인 필요 |  |
-| `menuAdminController::procMenuAdminUploadButton()` | `2.1.0 modules/menu/menu.admin.controller.php:1497` | 확인 필요 |  |
-| `menuAdminController::procMenuAdminDeleteButton()` | `2.1.0 modules/menu/menu.admin.controller.php:1537` | 확인 필요 |  |
+| `class Object` | `2.0.24 classes/object/Object.class.php:10` | `BaseObject` | PHP 7.2 예약어. 2.0.24까지 PHP<7.2에서만 alias, 현재 없음 |
+| `class Xml_Node_` | `2.1.0 classes/xml/XmlParser.class.php:11` | `Rhymix\Framework\Parsers\XEXMLParser` | 노드도 XEXMLParser 인스턴스 |
+| `class Rhymix\Framework\Drivers\Cache\WinCache` | `2.0.24 common/framework/drivers/cache/wincache.php:8` | `Rhymix\Framework\Drivers\Cache\APC` | PHP 확장 단종. APCu 사용 |
+| `class Rhymix\Framework\Drivers\Cache\XCache` | `2.0.24 common/framework/drivers/cache/xcache.php:8` | `Rhymix\Framework\Drivers\Cache\APC` | PHP 확장 단종. APCu 사용 |
+| `class Rhymix\Framework\Drivers\SMS\ApiStore` | `2.1.0 common/framework/drivers/sms/apistore.php:8` | 없음 | 서비스 종료. 다른 SMS 드라이버(coolsms, solapi, twilio 등) 사용 |
+| `class XmlGenerater` | `2.1.0 modules/autoinstall/autoinstall.class.php:8` | 없음 | XML-RPC 요청 제거. Rhymix\Modules\Autoinstall\Models\Package가 api.rhymix.org JSON API 사용 |
+| `class DirectModuleInstaller` | `2.1.0 modules/autoinstall/autoinstall.lib.php:315` | `Rhymix\Modules\Autoinstall\Models\Installer` |  |
+| `class ModuleInstaller` | `2.1.0 modules/autoinstall/autoinstall.lib.php:8` | `Rhymix\Modules\Autoinstall\Models\Installer` |  |
+| `class autoinstallModel` | `2.1.0 modules/autoinstall/autoinstall.model.php:8` | `AutoinstallAdminModel / Rhymix\Modules\Autoinstall\Models\Package` | 패키지 조회는 Package::getPackage()·searchPackages() |
+| `class boardWAP` | `2.0.24 modules/board/board.wap.php:10` | 없음 | WAP 제거. 모바일은 m.skins와 *Mobile 클래스 |
+| `class pageWap` | `2.0.24 modules/page/page.wap.php:8` | 없음 | WAP 제거. 모바일은 m.skins와 *Mobile 클래스 |
+| `class spamfilter_reCAPTCHA` | `2.0.24 modules/spamfilter/spamfilter.lib.php:3` | `Rhymix\Modules\Spamfilter\Captcha\reCAPTCHA` |  |
+| `TemplateHandler::resetState()` | `2.1.0 classes/template/TemplateHandler.class.php:70` | 없음 | 내부 메서드. Template v2로 재작성 |
+| `Validator::mbStrLen()` | `2.1.0 classes/validator/Validator.class.php:640` | `mb_strlen($str)` |  |
+| `Rhymix\Framework\Debug::addSessionStartTime()` | `2.1.0 common/framework/Debug.php:252` | 없음 | 세션 시간은 Debug 내부 타이머(session)가 측정 |
+| `Rhymix\Framework\Session::checkSSO()` | `2.1.0 common/framework/Session.php:323` | 없음 | SSO 제거 |
+| `layoutAdminModel::getLayoutAdminSetHTMLCSS()` | `2.1.0 modules/layout/layout.admin.model.php:100` | 없음 | 레이아웃 코드 편집은 LayoutAdminView::dispLayoutAdminEdit() |
+| `menuAdminController::procMenuAdminUploadButton()` | `2.1.0 modules/menu/menu.admin.controller.php:1560` | `MenuAdminController::procMenuAdminButtonUpload()` |  |
+| `menuAdminController::procMenuAdminDeleteButton()` | `2.1.0 modules/menu/menu.admin.controller.php:1600` | 없음 | 버튼 삭제 액션 제거. 메뉴 항목 수정으로 처리 |

@@ -867,6 +867,24 @@
     "MenuAdminController::procMenuAdminDeleteButton()": {
       "replace": "없음",
       "note": "버튼 삭제 액션 제거. 메뉴 항목 수정으로 처리"
+    },
+    "Context::_getBrowserTitle()": {
+      "replace": "Context::getBrowserTitle()"
+    },
+    "Rhymix\\Framework\\DB::_fetch()": {
+      "replace": "$db->fetch($stmt, $last_index)",
+      "note": "호출 시 E_USER_WARNING 발생"
+    },
+    "DocumentController::updateUploaedCount()": {
+      "replace": "DocumentController::updateUploadedCount($document_srl_list)",
+      "note": "오타 이름의 래퍼"
+    },
+    "FileModel::getFileModuleConfig()": {
+      "replace": "FileModel::getFileConfig($module_srl)"
+    },
+    "FileModel::getFileGrant()": {
+      "replace": "FileModel::isDeletable($file_info, $member_info)",
+      "note": "원본은 is_deletable 프로퍼티를 가진 객체, 대체는 bool"
     }
   },
   "removed": {

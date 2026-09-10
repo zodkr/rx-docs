@@ -439,15 +439,9 @@ def replacement_for(key, dep, overrides):
         return ov.get("replace", "확인 필요"), ov.get("note", "")
     if dep.get("doc_replace"):
         return dep["doc_replace"], ""
-    hint = dep.get("hint")
-    if hint:
-        name, thin = hint
-        low = name.lower()
-        # Only a thin wrapper (single return statement) is evidence of a replacement.
-        if thin and low.startswith(("rhymix\\", "\\rhymix\\")):
-            return f"추정: {name.lstrip(chr(92))}()", ""
-        if thin and low.startswith(("self::", "static::", "$this->", "parent::")):
-            return f"추정: {name}()", ""
+    # No heuristics: a replacement is either verified (overrides.json / docblock)
+    # or explicitly "확인 필요".  The delegation hint is only printed by `generate`
+    # as a lead for the person filling in overrides.json.
     return "확인 필요", ""
 
 

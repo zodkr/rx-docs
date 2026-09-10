@@ -86,22 +86,22 @@
 
 | 이름 | 시점 | 호출 위치 |
 |---|---|---|
-| `member.insertMember` | before/after | `MemberController::insertMember` (`member.controller.php:2868, 3147`) |
-| `member.updateMember` | before/after | `MemberController::updateMember` (`member.controller.php:3166, 3462`) |
-| `member.deleteMember` | before/after | `MemberController::deleteMember` (`member.controller.php:3548, 3614`) |
-| `member.updateMemberEmailAddress` | **after만** | `member.controller.php:3789` (before는 호출되지 않음) |
-| `member.doLogin` | before/after | `MemberController::doLogin` (`member.controller.php:2578, 2752`) |
+| `member.insertMember` | before/after | `MemberController::insertMember` (`member.controller.php:2873, 3152`) |
+| `member.updateMember` | before/after | `MemberController::updateMember` (`member.controller.php:3171, 3467`) |
+| `member.deleteMember` | before/after | `MemberController::deleteMember` (`member.controller.php:3553, 3619`) |
+| `member.updateMemberEmailAddress` | **after만** | `member.controller.php:3794` (before는 호출되지 않음) |
+| `member.doLogin` | before/after | `MemberController::doLogin` (`member.controller.php:2583, 2757`) |
 | `member.doLogout` | before/after | `member.controller.php:124, 132` |
-| `member.doAutoLogin` | before/after | `member.controller.php:2510, 2551` |
+| `member.doAutoLogin` | before/after | `member.controller.php:2515, 2556` |
 | `member.dispMemberSignUpForm` | **before만** | `MemberView::dispMemberSignUpForm` (`member.view.php:319`) |
 | `member.procMemberInsert` | before/after | `member.controller.php:691, 934` |
 | `member.procMemberModifyInfo` | before/after | `member.controller.php:1039, 1230` |
-| `member.procMemberAuthAccount` | before/after | `member.controller.php:1974, 2053` |
+| `member.procMemberAuthAccount` | before/after | `member.controller.php:1979, 2058` |
 | `member.procMemberCheckValue` | before/after | `member.controller.php:621, 673` |
 | `member.procMemberScrapDocument` | before/after | `member.controller.php:244, 258` |
 | `member.deleteScrapDocument` | before/after | `member.controller.php:287, 301` |
-| `member.addMemberToGroup` | before/after | `member.controller.php:2333, 2353` |
-| `member.removeMemberFromGroup` | before/after | `member.controller.php:2379, 2393` |
+| `member.addMemberToGroup` | before/after | `member.controller.php:2338, 2358` |
+| `member.removeMemberFromGroup` | before/after | `member.controller.php:2384, 2398` |
 | `member.insertMemberDevice` | before/after | `Device::procMemberRegisterDevice` (`controllers/Device.php:157, 176`) |
 | `member.insertGroup` | before/after | `MemberAdminController` (`member.admin.controller.php:1402, 1436`) |
 | `member.updateGroup` | before/after | `member.admin.controller.php:1455, 1487` |

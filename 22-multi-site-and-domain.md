@@ -107,13 +107,13 @@ $info = Context::get('site_module_info');
 
 ## URL 빌드
 
-`getUrl(...)`은 현재 도메인에 대해 URL을 만든다. 다른 도메인 URL은:
+`getUrl(...)`은 현재 도메인에 대해 URL을 만든다. 다른 도메인 URL은 도메인을 세 번째 인자로 받는 `Context::getUrl()`로 만든다:
 
 ```php
-$url = getFullSiteUrl($other_site_info->domain, '', 'mid', 'free');
+$url = Context::getUrl(3, ['', 'mid', 'free'], $other_site_info->domain);
 ```
 
-`getFullSiteUrl()`의 첫 인자는 **도메인 문자열**이다 — 내부에서 `array_shift` 후 `Context::getUrl(..., $domain)`로 넘겨지고, `getUrl`은 이 값에 `strpos` 등 문자열 연산을 수행한다 (`common/legacy.php:444`, `classes/context/Context.class.php:1748`). 사이트 정보 객체를 그대로 넘기면 PHP 8에서 TypeError가 난다. 사이트 정보는 `ModuleModel::getSiteInfoByDomain($domain)` 또는 `ModuleModel::getDefaultDomainInfo()` 등으로 획득하며 (`modules/module/module.model.php:75`, `:132`), 그 객체의 `->domain` 프로퍼티를 넘겨야 한다.
+`$domain` 인자가 현재 도메인과 다르면 `getUrl`은 대상 도메인의 스킴/호스트를 붙인 절대 URL을 반환한다 (`classes/context/Context.class.php:1881`, `:1893`, `:1897`). 레거시 헬퍼 `getFullSiteUrl()`·`getSiteUrl()`·`getNotEncodedSiteUrl()`은 모두 `@deprecated`이며 (`common/legacy.php:444`, `:399`, `:422`), 첫 인자를 `array_shift`로 떼어 `Context::getUrl(..., $domain)`에 도메인으로 넘기는 래퍼다. `getUrl`은 이 도메인 인자에 `strpos` 등 문자열 연산을 수행하므로 (`classes/context/Context.class.php:1755`), 사이트 정보 객체를 그대로 넘기면 PHP 8에서 TypeError가 난다 — **도메인 문자열**을 넘겨야 한다. 사이트 정보는 `ModuleModel::getSiteInfoByDomain($domain)` 또는 `ModuleModel::getDefaultDomainInfo()` 등으로 획득하며 (`modules/module/module.model.php:132`, `:75`), 그 객체의 `->domain` 프로퍼티를 넘겨야 한다.
 
 ## domain_srl > -1 검증
 
@@ -140,11 +140,11 @@ if ($module_info->domain_srl != $site_module_info->domain_srl) {
 ## 다른 도메인으로 강제 리다이렉트
 
 ```php
-$url = getNotEncodedSiteUrl($site_module_info->domain, '', 'mid', 'foo');
+$url = Context::getUrl(3, ['', 'mid', 'foo'], $site_module_info->domain, false);
 header("Location: {$url}", true, 301);
 ```
 
-URL 인자는 문자열 연결로 붙이지 않고 `getNotEncodedSiteUrl()`의 key/value 인자로 전달한다. 그래야 현재 rewrite 단계에 맞춰 `foo` 경로 또는 `?mid=foo` 쿼리가 올바르게 생성된다.
+URL 인자는 문자열 연결로 붙이지 않고 `Context::getUrl()`의 key/value 인자로 전달한다. 그래야 현재 rewrite 단계에 맞춰 `foo` 경로 또는 `?mid=foo` 쿼리가 올바르게 생성된다. 네 번째 인자를 `false`로 주면 HTML 이스케이프 없이(Location 헤더용) URL을 얻는다 — `@deprecated` 래퍼 `getNotEncodedSiteUrl()`이 넘기던 값과 동일하다.
 
 ## site_srl (deprecated)
 

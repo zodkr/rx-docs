@@ -65,7 +65,7 @@ coverage:
 
 ### `tests/_support/`
 
-`UnitTester.php`, `InstallTester.php` 등 Codeception 헬퍼. `codecept build`로 자동 생성.
+커밋된 Codeception 헬퍼 모듈: `UnitHelper.php`, `InstallHelper.php`, `DbDropTablesHelper.php`. Actor 클래스 `UnitTester.php`·`InstallTester.php`는 `codecept build`로 자동 생성되며 커밋하지 않는다 (`.gitignore:13-14`).
 
 ## 로컬 실행
 

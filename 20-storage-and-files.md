@@ -235,14 +235,18 @@ Storage::deleteDirectory($tmp);
 
 ## 정리 스크립트
 
-| 스크립트 | 대상 |
+정리 작업은 모듈 스크립트를 CLI로 호출한다 (`ModuleHandler::procCommandLineArguments`).
+
+| CLI 호출 | 대상 |
 |---|---|
-| `common/scripts/clean_empty_dirs.php` | `files/attach/` 빈 디렉토리 |
-| `common/scripts/clean_garbage_files.php` | 모듈에서 참조하지 않는 고아 파일 |
-| `common/scripts/clean_message_files.php` | 메시지 첨부 정리 |
-| `common/scripts/clean_old_logs.php` | 오래된 로그 |
-| `common/scripts/clean_old_notifications.php` | 알림 |
-| `common/scripts/clean_old_thumbnails.php` | 썸네일 캐시 |
+| `php index.php file.cleanEmptyDirs` | `files/attach/` 빈 디렉토리 |
+| `php index.php file.cleanGarbageFiles` | 모듈에서 참조하지 않는 고아 파일 |
+| `php index.php file.cleanThumbnails` | 썸네일 캐시 |
+| `php index.php communication.cleanMessageFiles` | 메시지 첨부 정리 |
+| `php index.php module.cleanMiscLogs` | 오래된 로그 |
+| `php index.php ncenterlite.cleanNotifications` | 알림 |
+
+`common/scripts/clean_empty_dirs.php`·`clean_garbage_files.php`·`clean_message_files.php`·`clean_old_logs.php`·`clean_old_notifications.php`·`clean_old_thumbnails.php`는 위 모듈 스크립트로 위임하는 deprecated 래퍼이므로 신규 cron에는 CLI 호출을 쓴다.
 
 상세: [21-cli-and-scripts.md](21-cli-and-scripts.md).
 

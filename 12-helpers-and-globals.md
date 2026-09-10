@@ -97,7 +97,7 @@
 | `array_last(array)` | `end()` wrapper |
 | `array_last_key(array)` | `array_key_last()` |
 | `array_escape(array, $double_escape=true)` | 키와 문자열 값을 재귀 이스케이프. 숫자·불리언·null·resource 값의 타입은 보존 |
-| `array_flatten(array)` | 다차원 → 평면 |
+| `array_flatten(array, $preserve_keys=true)` | 다차원 → 평면 |
 | `class_basename($class)` | 마지막 namespace segment |
 
 `array_escape()`는 배열을 재귀 처리하고, 객체는 공개 프로퍼티를 처리한 `stdClass`로 재구성하므로 원래 객체 클래스까지 보존하지는 않는다 (`common/functions.php:110-135`). 예를 들어 `array_escape(['label' => '<b>', 'count' => 3, 'enabled' => false, 'value' => null])`의 결과는 `['label' => '&lt;b&gt;', 'count' => 3, 'enabled' => false, 'value' => null]`이다.
@@ -114,16 +114,16 @@
 
 | 함수 | 비고 |
 |---|---|
-| `escape($str, $double_escape=true)` | htmlspecialchars |
+| `escape($str, $double_escape=true, $except_lang_code=false)` | htmlspecialchars. `$except_lang_code`는 `$user_lang->userLangNN` 형식을 이스케이프에서 제외 |
 | `escape_css($str)` | CSS 컨텍스트 |
 | `escape_js($str)` | JS 컨텍스트 |
 | `escape_sqstr($str)` | `'작은따옴표'` PHP 문자열 리터럴 |
 | `escape_dqstr($str)` | `"큰따옴표"` PHP 문자열 리터럴 |
 | `explode_with_escape($delim, $str, $limit=0, $escape_char='\\')` | 이스케이프 인식 split |
-| `starts_with($needle, $haystack)` | bool |
-| `ends_with($needle, $haystack)` | bool |
+| `starts_with($needle, $haystack, $case_sensitive=true)` | bool |
+| `ends_with($needle, $haystack, $case_sensitive=true)` | bool |
 | `contains($needle, $haystack, $case_sensitive=true)` | bool |
-| `is_between($value, $min, $max)` | bool |
+| `is_between($value, $min, $max, $exclusive=false)` | bool. `$exclusive=true`면 양 끝값 제외 |
 | `force_range($value, $min, $max)` | 범위 강제 |
 
 ### 인코딩
@@ -134,7 +134,7 @@
 | `base64_decode_urlsafe($data)` | 역변환 |
 | `hex2rgb($hex)` | `[r, g, b]` |
 | `rgb2hex(array $rgb, $hash_prefix=true)` | `[r, g, b]` 배열 → `'#rrggbb'` |
-| `number_shorten($n)` | `1234` → `'1.2K'` |
+| `number_shorten($n, $significant_digits=2)` | `1234` → `'1.2K'` |
 
 ### 타입 변환
 
@@ -206,12 +206,12 @@ autoloader 분기 2가 사용하는 정적 매핑 (lc 클래스명 → 파일 �
 |---|---|
 | `getUrl(...)` | `Context::getUrl` |
 | `getNotEncodedUrl(...)` | URL 인코딩 안 함 |
-| `getAutoEncodedUrl(...)` | 인코딩 자동 |
+| `getAutoEncodedUrl(...)` | `@deprecated` — 인코딩 자동. 대체: `getUrl(...)` |
 | `getFullUrl(...)` | 도메인 포함 |
 | `getNotEncodedFullUrl(...)` | 두 옵션 결합 |
-| `getSiteUrl($domain, ...)` | 특정 도메인의 URL (`$domain`은 사이트 정보 객체가 아닌 문자열) |
-| `getNotEncodedSiteUrl($domain, ...)` | 위와 같되 HTML entity 인코딩 안 함 |
-| `getFullSiteUrl($domain, ...)` | 도메인 포함. 첫 인자는 동일하게 도메인 문자열 |
+| `getSiteUrl($domain, ...)` | `@deprecated` — 특정 도메인의 URL (`$domain`은 사이트 정보 객체가 아닌 문자열). 대체: `Context::getUrl(..., $domain)` |
+| `getNotEncodedSiteUrl($domain, ...)` | `@deprecated` — 위와 같되 HTML entity 인코딩 안 함. 대체: `Context::getUrl(..., $domain)` |
+| `getFullSiteUrl($domain, ...)` | `@deprecated` — 도메인 포함. 첫 인자는 동일하게 도메인 문자열. 대체: `Context::getUrl(..., $domain)` |
 | `getCurrentPageUrl()` | 현재 페이지 URL |
 | `isSiteID($id)` | 사이트 ID 형식 검증 |
 

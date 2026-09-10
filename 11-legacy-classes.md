@@ -52,6 +52,8 @@ class BaseObject
 
     public function set($key, $value);
     public function add($key, $value);          // set의 alias
+    public function sets($vars);                // 객체/배열의 키·값을 일괄 설정
+    public function adds($vars);                // sets의 alias
     public function get($key);
     public function gets(...$keys);
     public function getVariables();

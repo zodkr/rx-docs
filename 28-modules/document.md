@@ -96,10 +96,10 @@ document 모듈은 `conf/module.xml`에 `<grants />`(비어 있음)만 두어 �
 | `document.updateDocument` | before/after | `DocumentController::updateDocument` (`document.controller.php:1044, 1414`) |
 | `document.deleteDocument` | before/after | `DocumentController::deleteDocument` (`document.controller.php:1488, 1544`) |
 | `document.moveDocumentToTrash` | before/after (단수) | `document.controller.php:1630, 1687` |
-| `document.restoreTrash` | after | `DocumentAdminController::procDocumentAdminRestoreTrash` (`document.admin.controller.php:888`) |
-| `document.moveDocumentModule` | before/after | `document.admin.controller.php:659, 703` |
-| `document.copyDocumentModule` | before/after/add | `document.admin.controller.php:756, 792, 818` |
-| `document.copyDocumentModule.each` | before/after (한 문서마다) | `document.admin.controller.php:793, 812` |
+| `document.restoreTrash` | after | `DocumentAdminController::procDocumentAdminRestoreTrash` (`document.admin.controller.php:902`) |
+| `document.moveDocumentModule` | before/after | `document.admin.controller.php:673, 717` |
+| `document.copyDocumentModule` | before/after/add | `document.admin.controller.php:770, 832, 806` |
+| `document.copyDocumentModule.each` | before/after (한 문서마다) | `document.admin.controller.php:807, 826` |
 | `document.getDocumentList` | before/after | `DocumentModel::getDocumentList` (`document.model.php:264, 309`) |
 | `document.getNoticeList` | before/after | `DocumentModel::getNoticeList` (`document.model.php:329, 366`) |
 | `document.getDocumentMenu` | before/after | `DocumentModel::getDocumentMenu` (`document.model.php:537, 599`) |

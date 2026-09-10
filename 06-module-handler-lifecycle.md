@@ -92,7 +92,7 @@ protected static $_nocsrf_methods = ['GET', 'HEAD', 'OPTIONS'];
 9. `module_info->site_srl` 오버라이드(레거시).
 10. **트리거** — `moduleHandler.init.after`.
 
-> `success_return_url`/`error_return_url` 내부 URL 검증은 더 이상 init()에 없다. 요청 변수 사니타이즈 단계(`Context.class.php:1533-1541`)로 옮겨져 **비(非)GET 요청에 한해** `URL::isInternalURL()` 실패 시 `security_check = 'DENY ALL'`로 처리된다. GET 요청은 앞선 분기(`Context.class.php:1525`)에서 escape만 되고 이 검증을 거치지 않는다 (`19-security.md` Open Redirect 참고).
+> `success_return_url`/`error_return_url` 내부 URL 검증은 더 이상 init()에 없다. 요청 변수 사니타이즈 단계(`Context.class.php:1540-1548`)로 옮겨져 **비(非)GET 요청에 한해** `URL::isInternalURL()` 실패 시 `security_check = 'DENY ALL'`로 처리된다. GET 요청은 앞선 분기(`Context.class.php:1532`)에서 escape만 되고 이 검증을 거치지 않는다 (`19-security.md` Open Redirect 참고).
 
 ## procModule() (`:320`)
 

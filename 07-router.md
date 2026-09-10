@@ -99,7 +99,7 @@ route 값의 `$변수명:타입`에서 `:타입`은 해당 세그먼트에 대�
 3. 안 맞으면 글로벌 라우트 시도.
 4. 안 맞으면 query string으로 폴백 (`index.php?mid=...&act=...`).
 
-호출자: `Context::getUrl()`, `getUrl()`, `getNotEncodedUrl()` 등 (`common/legacy.php`, `classes/context/Context.class.php`). 실제로 `Router::getURL`을 호출하는 것은 `Context::getUrl()` (`classes/context/Context.class.php:1726`, 호출 지점 `:1862`)이며, `getUrl()`/`getNotEncodedUrl()`은 `common/legacy.php:279,302`에서 이를 감싼다.
+호출자: `Context::getUrl()`, `getUrl()`, `getNotEncodedUrl()` 등 (`common/legacy.php`, `classes/context/Context.class.php`). 실제로 `Router::getURL`을 호출하는 것은 `Context::getUrl()` (`classes/context/Context.class.php:1733`, 호출 지점 `:1869`)이며, `getUrl()`/`getNotEncodedUrl()`은 `common/legacy.php:279,302`에서 이를 감싼다.
 
 ## forwarded 라우트
 

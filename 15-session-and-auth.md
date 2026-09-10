@@ -35,7 +35,7 @@ if (!Rhymix\Framework\Session::isMember()) {
 }
 ```
 
-> `Session::login()`은 **member_srl(int)을 받는다**. 회원 정보 객체에서 로그인하려면 `member.controller.php`의 `MemberController::doLogin($user_id, $password, $keep_signed)`(`:2566`) 같은 상위 API를 사용한다.
+> `Session::login()`은 **member_srl(int)을 받는다**. 회원 정보 객체에서 로그인하려면 `member.controller.php`의 `MemberController::doLogin($user_id, $password, $keep_signed)`(`:2571`) 같은 상위 API를 사용한다.
 
 ### 회원 정보·비밀번호 변경 후 갱신
 

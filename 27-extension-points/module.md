@@ -510,7 +510,7 @@ mid 없이 도메인 루트에서 직접 도달할 추가 URL prefix.
 | `all-managers` / `same-managers` / `<module>-managers` | 모듈 매니저 일반/같은 모듈/특정 모듈 |
 | custom (콤마 다중) | `<grants>`에 정의된 ID. 콤마로 여러 grant 모두 통과해야 함 |
 
-예를 들어 `permission="manager:config:*"`는 매니저 여부와 `Permission::can('config:*')`를 함께 확인한다. 전체 관리 범위 또는 `config:*`가 부여되어야 하며 콘텐츠 관리 범위만으로 설정 변경을 허용하지 않는다 (`classes/module/ModuleObject.class.php:429-444`, `modules/module/models/Permission.php:150-175`). `can()`은 회원 정보인 `SessionHelper`가 아니라 `ModuleModel::getGrant()`가 반환하는 권한 객체의 메서드다.
+예를 들어 `permission="manager:config:*"`는 매니저 여부와 `Permission::can('config:*')`를 함께 확인한다. 전체 관리 범위 또는 `config:*`가 부여되어야 하며 콘텐츠 관리 범위만으로 설정 변경을 허용하지 않는다 (`classes/module/ModuleObject.class.php:425-436`, `modules/module/models/Permission.php:150-175`). `can()`은 회원 정보인 `SessionHelper`가 아니라 `ModuleModel::getGrant()`가 반환하는 권한 객체의 메서드다.
 
 `check_var`/`check_type`이 지정되면 Context에서 모듈 SRL을 읽어 해당 모듈의 권한으로 검사한다(예: 다른 게시판의 관리자 권한 확인). 실패 사유에 따라 로그인 필요 또는 권한 없음 메시지로 처리를 중단한다. 별도로 모듈 인스턴스의 기본 `access` grant가 거부된 경우에는 액션 실행 직전에 `msg_not_permitted_act`로 중단한다.
 

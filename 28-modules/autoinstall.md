@@ -39,7 +39,7 @@
 
 ## 저장소
 
-Rhymix PDS API(목록 `https://api.rhymix.org/pds/index.json`, 상세 `https://api.rhymix.org/pds/detail/{srl}.json`)에서 패키지 목록을 가져와 로컬 `autoinstall_packages` 테이블에 캐시한다 (`models/Package.php:18-19`). 관리자 뷰 진입 시 마지막 갱신 후 4시간이 지났으면 `Package::updatePackageList()`가 테이블을 비우고(`TRUNCATE`) 최신 목록으로 다시 채운다 (`models/Package.php:434-488`).
+Rhymix PDS API(목록 `https://api.rhymix.org/pds/index.json`, 상세 `https://api.rhymix.org/pds/detail/{srl}.json`)에서 패키지 목록을 가져와 로컬 `autoinstall_packages` 테이블에 캐시한다 (`models/Package.php:18-19`). 관리자 뷰 진입 시 마지막 갱신 후 4시간이 지났으면 `Package::updatePackageList()`가 테이블을 비우고(`TRUNCATE`) 최신 목록으로 다시 채운다 (`models/Package.php:442-506`, `TRUNCATE`는 `:464`).
 
 패키지 상세 조회와 다운로드는 `Accept: application/json` 및 `User-Agent: Autoinstall Rhymix/<RX_VERSION> PHP/<PHP_VERSION> (<PHP_OS_FAMILY>)`를 전달한다 (`modules/autoinstall/models/Package.php:395-402`, `modules/autoinstall/models/Installer.php:36-42`). 서버가 호환 패키지를 선택할 때 사용할 버전 정보이며, 이 코드만으로 API 서버의 실제 호환성 필터링까지 보장되지는 않는다. 목록·상세·다운로드의 요청 timeout은 모두 20초지만, 목록 요청에는 이 추가 헤더를 명시하지 않는다 (`Package.php:443-445`).
 
@@ -49,7 +49,7 @@ Rhymix PDS API(목록 `https://api.rhymix.org/pds/index.json`, 상세 `https://a
 |---|---|
 | `autoinstall_packages` | `schemas/autoinstall_packages.xml` — 패키지 카탈로그 캐시 |
 
-과거 테이블 `ai_installed_packages`·`ai_remote_categories`(및 `autoinstall_installed_packages`·`autoinstall_remote_categories`)는 재작성 시 deprecated 처리되어, 모듈 업그레이드 시 `Autoinstall::moduleUpdate()`가 `dropTable()`로 삭제한다 (`autoinstall.class.php:13-18`).
+과거 테이블 `ai_installed_packages`·`ai_remote_categories`(및 `autoinstall_installed_packages`·`autoinstall_remote_categories`)는 재작성 시 deprecated 처리되어, 모듈 업그레이드 시 `Autoinstall::moduleUpdate()`가 `dropTable()`로 삭제한다 (테이블 명단 `autoinstall.class.php:13-18`, 삭제 로직 `:66-85`의 `dropTable()`은 `:75`).
 
 ## 관련
 

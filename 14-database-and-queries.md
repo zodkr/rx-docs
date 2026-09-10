@@ -68,13 +68,13 @@ MySQL/MariaDB 연결은 **unbuffered 모드**로 열린다 (`common/framework/DB
 | `prepare()` | **닫지 않는다.** `_last_stmt`만 교체한다 (`DB.php:202-203`) |
 | `begin()`, `commit()`, `rollback()` | 닫지 않는다 |
 
-커서가 열린 채로 `commit()`에 도달하면 PDO가 `HY000 2014 Cannot execute queries while other unbuffered queries are active`를 던질 수 있다. 그런데 최외곽 `commit()`은 이 예외를 catch해 `setError()`에 저장하고 트랜잭션 레벨을 감소시킨다 (`DB.php:684-717`). 즉 **반환값만으로 커밋 성공을 판단하면 안 된다**. 커넥션이 IN-TRANSACTION 상태로 남은 채 요청이 끝나면 PDO가 암묵적으로 롤백한다. 최외곽 `rollback()`도 PDO 예외를 내부 오류 상태에 저장한다 (`DB.php:644-677`).
+커서가 열린 채로 `commit()`에 도달하면 PDO가 `HY000 2014 Cannot execute queries while other unbuffered queries are active`를 던질 수 있다. 그런데 최외곽 `commit()`은 이 예외를 catch해 `setError()`에 저장하고 트랜잭션 레벨을 감소시킨다 (`DB.php:684-712`). 즉 **반환값만으로 커밋 성공을 판단하면 안 된다**. 커넥션이 IN-TRANSACTION 상태로 남은 채 요청이 끝나면 PDO가 암묵적으로 롤백한다. 최외곽 `rollback()`도 PDO 예외를 내부 오류 상태에 저장한다 (`DB.php:644-673`).
 
 증상이 특히 알아보기 어렵다.
 
 - 컨트롤러는 정상적으로 `success`를 반환하고 화면에도 성공으로 보인다.
 - 그런데 INSERT/UPDATE가 전부 사라진다. 문서 작성이라면 `rx_sequence`의 번호만 소모되고 `rx_documents`에는 행이 남지 않는다.
-- 미처리 예외용 PHP 에러 로그만으로 놓칠 수 있다. `$db->isError()`/`getError()`로 확인하며, 해당 사용자에 대해 Debug가 활성화되어 있으면 COMMIT 쿼리 로그에도 오류 상태가 기록된다 (`DB.php:699-701`, `:1287-1300`).
+- 미처리 예외용 PHP 에러 로그만으로 놓칠 수 있다. `$db->isError()`/`getError()`로 확인하며, 해당 사용자에 대해 Debug가 활성화되어 있으면 COMMIT 쿼리 로그에도 오류 상태가 기록된다 (`DB.php:694-697`, `:1287-1300`).
 
 특히 위험한 자리는 **트리거 핸들러**다. `document.insertDocument` / `publishDocument` 같은 after 트리거는 코어가 연 트랜잭션 **안에서** 실행되므로, 여기서 커서를 남기면 트리거를 호출한 쪽의 커밋이 통째로 날아간다.
 
@@ -117,7 +117,7 @@ try {
 }
 ```
 
-`rollback()`은 항상 가장 바깥까지 한 번에 롤백하는 API가 아니다. 트랜잭션 레벨이 2 이상이면 가장 가까운 savepoint로만 되돌리고 레벨을 하나 줄이며, 레벨 1에서 호출할 때만 실제 PDO transaction 전체를 롤백한다 (`common/framework/DB.php:651-679`).
+`rollback()`은 항상 가장 바깥까지 한 번에 롤백하는 API가 아니다. 트랜잭션 레벨이 2 이상이면 가장 가까운 savepoint로만 되돌리고 레벨을 하나 줄이며, 레벨 1에서 호출할 때만 실제 PDO transaction 전체를 롤백한다 (`common/framework/DB.php:644-673`).
 
 예제에서 내부 `commit()` 전에 예외가 나면 catch 시점에도 레벨 2이므로 바깥 트랜잭션은 남는다. 호출자가 소유한 트랜잭션 범위를 기준으로 정리해야 하며, `commit()`의 반환값은 성공 여부가 아닌 남은 중첩 레벨이다.
 
@@ -140,7 +140,7 @@ $list = executeQueryArray('board.getBoardList', $args)->data ?? [];
 
 ### Query ID 포맷
 
-`DB::executeQuery()` (`common/framework/DB.php:299-304`)는 `query_id`를 `.`로 split한 뒤:
+`DB::executeQuery()` (`common/framework/DB.php:295-307`)는 `query_id`를 `.`로 split한 뒤:
 
 - 2조각이면 앞에 `'modules'`를 자동 prepend → `board.getBoardList` → `modules/board/queries/getBoardList.xml`
 - 3조각이면 그대로 → `widgets.content.getMids` → `widgets/content/queries/getMids.xml`, `addons.<name>.<query>` 등 비-모듈 플러그인도 같은 식으로 호출 가능
@@ -445,7 +445,7 @@ $seq = getNextSequence();       // rx_sequence 테이블에서 발급
 
 ### 쿼리 주석
 
-`config('debug.query_comment') = true`면 실행되는 모든 SQL의 끝에 `/* <query_id> <클라이언트 IP> */` 형태의 주석이 자동 부착된다 (예: `/* board.getBoardList 1.2.3.4 */`). 직접 `prepare()` / `query()` / `_query()`로 실행하는 경우에는 query_id 대신 각각 `prepare()` / `query()` / `_query()` 라벨이 들어간다 (`DB.php:384`, `DB.php:236`, `DB.php:198`, `DB.php:1425`).
+`config('debug.query_comment') = true`면 실행되는 모든 SQL의 끝에 `/* <query_id> <클라이언트 IP> */` 형태의 주석이 자동 부착된다 (예: `/* board.getBoardList 1.2.3.4 */`). 직접 `prepare()` / `query()` / `_query()`로 실행하는 경우에는 query_id 대신 각각 `prepare()` / `query()` / `_query()` 라벨이 들어간다 (`DB.php:380`, `DB.php:198`, `DB.php:235`, `DB.php:1418`).
 
 ### 전체 스택
 
@@ -460,7 +460,7 @@ $slow = Rhymix\Framework\Debug::getSlowQueries(); // 슬로우 쿼리
 // { query_id, query_string, query_time, query_connection, message, error_code, file, line, method, backtrace, count, time, type }
 ```
 
-`Debug::getQueryLog()`는 존재하지 않는다. `DB::getQueryLog($query, $elapsed_time)`는 로그 항목 하나를 만드는 DB 인스턴스 내부용 빌더다 (`DB.php:1289`).
+`Debug::getQueryLog()`는 존재하지 않는다. `DB::getQueryLog($query, $elapsed_time)`는 로그 항목 하나를 만드는 DB 인스턴스 내부용 빌더다 (`DB.php:1282`).
 
 ## 헬퍼
 

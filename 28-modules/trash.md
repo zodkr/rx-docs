@@ -45,7 +45,7 @@
 
 ## 트리거
 
-`trash` 모듈은 자체 트리거를 발사하지 않고 `<eventHandlers>`도 등록하지 않는다 (`conf/module.xml` 확인). 휴지통 이동은 호출자(`document.moveDocumentToTrash`/`comment.moveCommentToTrash`)가 발사하는 트리거를 다른 모듈(point 등)이 hook해서 처리한다. trash 자체는 이벤트 없이 관리자 View/Controller와 Model로 저장·목록·비우기·복구를 수행한다 (`trash.admin.controller.php:18-28,36-67,76-128`).
+`trash` 모듈은 자체 트리거를 발사하지 않고 `<eventHandlers>`도 등록하지 않는다 (`conf/module.xml` 확인). 휴지통 이동은 호출자(`document.moveDocumentToTrash`/`comment.moveCommentToTrash`)가 발사하는 트리거를 다른 모듈(point 등)이 hook해서 처리한다. trash 자체는 이벤트 없이 관리자 View/Controller와 Model로 저장·목록·비우기·복구를 수행한다 (`trash.admin.controller.php:18`(`insertTrash`, 저장), `:36`(비우기), `:135`(복구), `:191`(목록)).
 
 ## 관련
 

@@ -75,7 +75,7 @@ modules/<module>/
 | `tag_list.html` | 태그 목록 |
 | `_header.html`, `_footer.html`, `_comment.html` | 부분 템플릿 |
 
-글 상세는 `view.html` 같은 별도 진입 템플릿이 없다. `list.html`이 문서가 존재하면 `_read.html`을 include해 목록과 같은 진입점에서 상세를 렌더한다 (`board.view.php:224` → `list.html:2`). 댓글 목록 템플릿명은 `comment.html`이며 `board.view.php:844`에서 지정된다. RSS/Atom은 board 스킨이 아니라 별도 `rss` 모듈이 처리한다.
+글 상세는 `view.html` 같은 별도 진입 템플릿이 없다. `list.html`이 문서가 존재하면 `_read.html`을 include해 목록과 같은 진입점에서 상세를 렌더한다 (`board.view.php:230` → `list.html:2`). 댓글 목록 템플릿명은 `comment.html`이며 `board.view.php:867`에서 지정된다. RSS/Atom은 board 스킨이 아니라 별도 `rss` 모듈이 처리한다.
 
 ### member (회원)
 

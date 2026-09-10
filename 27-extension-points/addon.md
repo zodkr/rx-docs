@@ -57,7 +57,7 @@ addons/<name>/                # 코어/사용자 영역
 | `textarea` | 여러 줄 텍스트 |
 | `select` | 드롭다운 (options 필요) |
 
-애드온 설정 화면(`setup_addon.html`)은 위 3종만 입력 폼으로 렌더링한다 (`modules/addon/tpl/setup_addon.html:70-74`의 `text`/`textarea`/`select` cond 분기). radio/checkbox/image/filebox/color/date 등 다른 타입은 애드온 설정 UI에서 지원되지 않는다.
+애드온 설정 화면(`setup_addon.html`)은 위 3종만 입력 폼으로 렌더링한다 (`modules/addon/tpl/setup_addon.html:69-73`의 `text`/`textarea`/`select` cond 분기). radio/checkbox/image/filebox/color/date 등 다른 타입은 애드온 설정 UI에서 지원되지 않는다.
 
 `select` 선택지는 위 예제처럼 반복되는 `<options value="...">` 요소로 선언한다. `<options>` 안에 `<option>`을 중첩하는 일반 HTML select 형태는 `BaseParser::_getExtraVars()`가 인식하지 않는다.
 
@@ -130,7 +130,7 @@ addon 코드는 컴파일된 캐시(`files/cache/addons/<type>.php`) 안에서 `
 | `$addon_file` | 이 addon의 `<name>.addon.php` 절대 경로 (호출자가 넘긴 캐시 경로를 덮어씀) |
 | `$rm` | run method 문자열 (`run_selected`/`no_run_selected`) |
 | `$ml` | mid 목록 (`array_fill_keys`로 만든 lookup 배열) |
-| `$_m` | 현재 mid (`Context::get('mid')`) |
+| `$_m` | 현재 mid (`Context::get('mid') ?? ''` — mid가 비어 있으면 빈 문자열. 커밋 1e4b0f9ef에서 `?? ''` 추가로 mid 미확정 시 경고 방지) |
 | `$run` | 이 addon이 현재 요청에서 실행되어야 하는지 — `if($run && file_exists($addon_file)): include $addon_file;` 조건이므로 addon 코드 진입 시 항상 `true` |
 | `$before_time` | `microtime(true)` |
 

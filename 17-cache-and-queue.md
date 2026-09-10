@@ -38,6 +38,8 @@
 | `get(string $key)` | `mixed` | 값 조회; miss는 `null` |
 | `delete(string $key)` | `bool` | 키 삭제 |
 | `exists(string $key)` | `bool` | 존재 여부 |
+| `incr(string $key, int $amount = 1)` | `int` | 원자적 증가. 새 값 반환(없던 키는 0에서 시작), 실패 시 `-1` |
+| `decr(string $key, int $amount = 1)` | `int` | 원자적 감소. 새 값 반환, 실패 시 `-1` |
 | `clearGroup(string $group_name)` | `bool` | 그룹 버전 증가 |
 | `getGroupVersion(string $group_name)` | `int` | 현재 그룹 버전 |
 | `clearAll()` | `bool` | 전체 비우기 |
@@ -65,7 +67,7 @@ Cache::clearGroup('mymodule');
 
 ### prefix
 
-prefix는 설정 항목이 아니라 자동 생성된다 (`cache.prefix` 같은 설정 키는 없음). 드라이버의 `$prefix` 플래그가 `true`인 분산 드라이버(`redis`/`memcached`)는 `substr(sha1(RX_BASEDIR), 0, 10) . ':' . RX_VERSION . ':'`, `file`/`dummy`는 `RX_VERSION . ':'`를 쓴다. 도메인/사이트 정보가 아니라 설치 경로(`RX_BASEDIR`) 해시 기반으로 멀티 인스턴스 키 충돌을 방지한다.
+prefix는 설정 항목이 아니라 자동 생성된다 (`cache.prefix` 같은 설정 키는 없음). 드라이버의 `$prefix` 플래그가 `true`인 공유 저장소 드라이버(`apc`/`redis`/`memcached`)는 `substr(sha1(RX_BASEDIR), 0, 10) . ':' . RX_VERSION . ':'`, 플래그가 `false`인 `file`/`dummy`/`sqlite`는 `RX_VERSION . ':'`를 쓴다 (`common/framework/Cache.php:76-83`, 각 드라이버의 `public $prefix`). 도메인/사이트 정보가 아니라 설치 경로(`RX_BASEDIR`) 해시 기반으로 멀티 인스턴스 키 충돌을 방지한다.
 
 ### TTL
 

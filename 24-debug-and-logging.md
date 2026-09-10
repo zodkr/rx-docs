@@ -21,6 +21,7 @@
     'log_filename' => null,         // null = files/debug/YYYYMMDD.php (날짜별 회전)
     'query_comment' => false,
     'query_full_stack' => false,
+    'consolidate' => true,          // 동일 쿼리 합산(기본 true)
 ]
 ```
 
@@ -80,6 +81,8 @@ SELECT ... [3.45ms]
   caller: DocumentModel::getDocumentList (modules/document/document.model.php)
 ```
 
+`config('debug.consolidate')`(기본 `true`)이면 동일한 쿼리(같은 query ID·SQL·연결·호출 위치)가 반복될 때 개별 항목 대신 실행 횟수(`count`)와 누적 시간으로 합산된다 (`common/framework/Debug.php:442-460`).
+
 ### 슬로우 쿼리만
 
 `display_content`에 `slow_queries`. 임계 `log_slow_queries` (초).
@@ -93,7 +96,7 @@ SELECT * FROM rx_documents WHERE document_srl = 123
 /* board.getDocumentList 127.0.0.1 */
 ```
 
-쿼리 끝에 붙는 형식은 `/* {쿼리 ID} {클라이언트 IP} */`다 (`common/framework/DB.php:384`). 디버그 패널/주석 템플릿 화면에 표시되는 `Caller:`(호출 위치)와는 별개다.
+쿼리 끝에 붙는 형식은 `/* {쿼리 ID} {클라이언트 IP} */`다 (`common/framework/DB.php:380`). 디버그 패널/주석 템플릿 화면에 표시되는 `Caller:`(호출 위치)와는 별개다.
 
 ### 전체 스택
 
@@ -162,7 +165,7 @@ Rhymix\Framework\Debug::disable();
 
 ## 외부 시스템 연동
 
-`common.flushDebugInfo`/`common.writeSlowlog` 트리거는 프레임워크가 능동적으로 호출하지 않는다 — 이름 참조는 `ModuleHandler::triggerCall`의 재귀 방지용 예외 처리로만 남아 있고(`classes/module/ModuleHandler.class.php:1350`), `writeSlowlog()` 함수는 no-op이다(`common/legacy.php:1472`). Debug는 자체 정적 배열(`$_triggers`/`$_slow_triggers`/`$_queries` 등)에 누적 후 `DisplayHandler::getDebugInfo()`가 직접 출력/로그 파일에 기록한다.
+`common.flushDebugInfo`/`common.writeSlowlog` 트리거는 프레임워크가 능동적으로 호출하지 않는다 — 이름 참조는 `ModuleHandler::triggerCall`의 재귀 방지용 예외 처리로만 남아 있고(`classes/module/ModuleHandler.class.php:1350`, `:1387`), `writeSlowlog()` 함수는 no-op이다(`common/legacy.php:1472`). Debug는 자체 정적 배열(`$_triggers`/`$_slow_triggers`/`$_queries` 등)에 누적 후 `DisplayHandler::getDebugInfo()`가 직접 출력/로그 파일에 기록한다.
 
 외부 시스템(Sentry/Datadog 등)으로 보내려면 `Debug::registerErrorHandlers`가 등록하는 PHP shutdown 핸들러나 `display.after`/`moduleHandler.proc.after` 같은 라이프사이클 트리거에서 직접 송신한다.
 

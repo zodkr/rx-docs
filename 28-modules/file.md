@@ -139,12 +139,16 @@ $url = FileModel::getDownloadUrl($file_srl, $sid, 0, $source_filename);
 
 ## 정리 스크립트
 
-| 스크립트 | 용도 |
+정리 작업은 모듈 스크립트를 CLI로 호출한다.
+
+| CLI 호출 | 용도 |
 |---|---|
-| `common/scripts/clean_empty_dirs.php` | 빈 `files/attach/` 디렉토리 |
-| `common/scripts/clean_garbage_files.php` | 고아 파일 (참조 없는) |
-| `common/scripts/clean_message_files.php` | 메시지 첨부 |
-| `common/scripts/clean_old_thumbnails.php` | 썸네일 캐시 |
+| `php index.php file.cleanEmptyDirs` | 빈 `files/attach/` 디렉토리 (`modules/file/scripts/cleanEmptyDirs.php`) |
+| `php index.php file.cleanGarbageFiles` | 고아 파일 (참조 없는) (`modules/file/scripts/cleanGarbageFiles.php`) |
+| `php index.php file.cleanThumbnails` | 썸네일 캐시 (`modules/file/scripts/cleanThumbnails.php`) |
+| `php index.php communication.cleanMessageFiles` | 메시지 첨부 (`modules/communication/scripts/cleanMessageFiles.php`) |
+
+과거의 `common/scripts/clean_empty_dirs.php`·`clean_garbage_files.php`·`clean_old_thumbnails.php`·`clean_message_files.php`는 위 모듈 스크립트로 위임하는 `@deprecated` 래퍼다(각 파일 상단 주석에 대체 CLI 명령 명시). 상세: [../21-cli-and-scripts.md](../21-cli-and-scripts.md).
 
 ## 관련 모듈
 

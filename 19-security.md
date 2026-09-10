@@ -158,7 +158,7 @@ $ok   = Rhymix\Framework\Password::checkPassword($password, $hash);
 
 `hashPassword`의 `$algos`는 콤마 구분 문자열(예: `'md5,sha1,md5'`) 또는 배열을 받아 chain hash를 만든다 (`:238-358`). argon2id/bcrypt/portable/pbkdf2/drupal/joomla/kimsqrb/crypt 등은 체인에서 마지막에 와야 한다.
 
-`checkPassword($password, $hash)`의 알고리즘 자동 감지 경로는 Argon2id·bcrypt 해시를 발견하면 PHP의 `password_verify()`로 검증한다. 해시 문자열을 다시 만들어 직접 비교하는 경로와 구분한다 (`common/framework/Password.php:364-413`). 이 동작은 `tests/unit/framework/PasswordTest.php:65-78`에서 각 알고리즘으로 만든 해시를 자동 감지해 확인한다.
+`checkPassword($password, $hash)`의 알고리즘 자동 감지 경로는 Argon2id·bcrypt 해시를 발견하면 PHP의 `password_verify()`로 검증한다. 해시 문자열을 다시 만들어 직접 비교하는 경로와 구분한다 (`common/framework/Password.php:374-403`). 이 동작은 `tests/unit/framework/PasswordTest.php:65-78`에서 각 알고리즘으로 만든 해시를 자동 감지해 확인한다.
 
 ### 랜덤 비밀번호
 
@@ -193,7 +193,7 @@ $temp = Rhymix\Framework\Password::getRandomPassword(16);   // 16자 (기본)
 ### `Rhymix\Framework\Filters\FilenameFilter`
 
 - `.php` 파일은 실행되지 않도록 `.phps`로 변환.
-- 오인 유발 이중 확장자 제거: `php`/`jsp`/`asp(x)`/`exe`/`bat`/`msi`/`scr`/`com`/`zip`/`doc(x)`/`xls(x)`/`ppt(x)`/`hwp(x)` 등 뒤에 다른 확장자가 붙은 경우 앞쪽을 제거(예: `file.php.jpg` → `file.jpg`).
+- 오인 유발 이중 확장자 제거: `php`/`txt`/`pdf`/`jsp`/`asp(x)`/`exe`/`bat`/`msi`/`scr`/`com`/`zip`/`doc(x)`/`xls(x)`/`ppt(x)`/`hwp(x)` 등 뒤에 다른 확장자가 붙은 경우 앞쪽을 제거(예: `file.php.jpg` → `file.jpg`).
 - 허용 확장자 화이트리스트는 FilenameFilter가 아니라 file 모듈 설정 `allowed_extensions`(file 모듈 업로드 흐름)에서 검사.
 
 ### `Rhymix\Framework\Filters\FileContentFilter`
@@ -201,7 +201,7 @@ $temp = Rhymix\Framework\Password::getRandomPassword(16);   // 16자 (기본)
 - JPEG/PNG/GIF/WebP 및 지정된 audio/video 확장자는 `fileinfo`로 판별한 대분류가 선언 확장자와 맞는지 검사한다.
 - SVG 또는 XML/HTML로 보이는 콘텐츠는 스크립트·이벤트 핸들러·외부 entity 등 위험 패턴을 정규식으로 탐지한다.
 - HWPX 확장자 또는 PNG 시그니처(`89504E470D0A1A0A`)가 확인되면 내용이 XML처럼 보인다는 이유로 SVG 검사에 들어가지 않는다. PNG 메타데이터에 SVG 문자열이 포함된 경우의 오탐을 줄이는 예외이며, 확장자에 따른 이미지 MIME 검사 등은 계속 수행한다 (`common/framework/filters/FileContentFilter.php:40-95`).
-- PHP 태그 검출(`<?`, XML 선언 제외)은 HTML 또는 XML-like 콘텐츠에 적용되는 `_checkHTML()` 단계의 규칙이다. 임의 확장자의 모든 파일을 PHP 코드 스캐너처럼 검사하는 것은 아니다 (`common/framework/filters/FileContentFilter.php:36-96,138-155`).
+- PHP 태그 검출(`<?`, XML 선언 제외)은 HTML 또는 XML-like 콘텐츠에 적용되는 `_checkHTML()` 단계의 규칙이다. 임의 확장자의 모든 파일을 PHP 코드 스캐너처럼 검사하는 것은 아니다 (`common/framework/filters/FileContentFilter.php:36-96,150-155`).
 
 (`enshrined/svg-sanitize` 기반 정화는 `Security::sanitize($str, 'svg')`에서 수행한다.)
 
@@ -346,12 +346,12 @@ $decoded = JWT::decode($token, new Key($key, 'HS256'));
 ## SQL Injection
 
 - 모든 XML 쿼리는 PDO prepared statement로 실행 — 자동 보호.
-- 동적 SQL이 필요하면 `DB::query($sql, ...$args)`의 placeholder나 `prepare()`/bound parameter를 사용한다. `DB::addQuotes()`는 레거시 호환용이므로 prepared statement가 우선이다. `escape_sqstr()`는 **PHP의 single-quoted 문자열 리터럴**을 만들기 위한 함수이지 SQL 이스케이프 함수가 아니다 (`common/functions.php:228-238`).
+- 동적 SQL이 필요하면 `DB::query($sql, ...$args)`의 placeholder나 `prepare()`/bound parameter를 사용한다. `DB::addQuotes()`는 레거시 호환용이므로 prepared statement가 우선이다. `escape_sqstr()`는 **PHP의 single-quoted 문자열 리터럴**을 만들기 위한 함수이지 SQL 이스케이프 함수가 아니다 (`common/functions.php:239-242`).
 
 ## Open Redirect
 
 - `Rhymix\Framework\URL::isInternalURL()`은 상대 경로를 내부 URL로 인정하고, 절대 URL은 현재 요청의 host(포트 포함) 또는 `domains` 테이블에 등록된 도메인과 일치해야 통과시킨다. 등록 도메인의 비표준 HTTP/HTTPS 포트도 해당 scheme의 설정 포트와 정확히 일치해야 한다. 역슬래시는 `/`로 정규화하며, `http`/`https` 외의 명시적 scheme(`javascript:`, `data:`, `file:`, `ftp:`, `mailto:` 등)은 거부한다 (`common/framework/URL.php:106-158`, `tests/unit/framework/URLTest.php:123-151`).
-- `Context`의 요청 변수 필터링(`_filterRequestVar()`) 단계에서 `success_return_url`/`error_return_url`을 검증한다. 단, **이 검증은 GET이 아닌 요청(POST 등)에만 적용된다.** `_filterRequestVar()`의 `elseif` 체인에서 GET 요청은 앞선 분기(`classes/context/Context.class.php:1525`)에 먼저 걸려 값이 escape만 되고, `Rhymix\Framework\URL::isInternalURL()` 검증(`classes/context/Context.class.php:1533-1541`)까지 도달하지 못한다.
+- `Context`의 요청 변수 필터링(`_filterRequestVar()`) 단계에서 `success_return_url`/`error_return_url`을 검증한다. 단, **이 검증은 GET이 아닌 요청(POST 등)에만 적용된다.** `_filterRequestVar()`의 `elseif` 체인에서 GET 요청은 앞선 분기(`classes/context/Context.class.php:1532`)에 먼저 걸려 값이 escape만 되고, `Rhymix\Framework\URL::isInternalURL()` 검증(`classes/context/Context.class.php:1540-1547`)까지 도달하지 못한다.
 - 비(非)GET 요청에서 외부 URL이 감지되면 값을 null로 제거하고 `security_check`를 `DENY ALL`로 설정해 요청 전체를 차단한다.
 - 따라서 `?success_return_url=https://...`처럼 **GET 파라미터로 전달된 리다이렉트 URL은 이 단계에서 내부 URL 여부가 검사되지 않으므로**, 그 값을 소비해 리다이렉트하는 쪽에서 별도로 내부 URL임을 보장해야 한다.
 

@@ -95,7 +95,7 @@ board 모듈은 **자체 스키마 테이블이 전혀 없다** (`modules/board/
 
 ## 확장 포인트
 
-- **스킨**: `modules/board/skins/<skin>/` (PC), `m.skins/<mskin>/` (모바일). 표준 진입 템플릿: `list.html`, `write_form.html`, `comment_form.html`, `delete_form.html`, `input_password_form.html`, ... (글 상세는 `dispBoardContent`가 `list.html` + `_read.html` 부분 템플릿으로 렌더 — `board.view.php:224`)
+- **스킨**: `modules/board/skins/<skin>/` (PC), `m.skins/<mskin>/` (모바일). 표준 진입 템플릿: `list.html`, `write_form.html`, `comment_form.html`, `delete_form.html`, `input_password_form.html`, ... (글 상세는 `dispBoardContent`가 `list.html` + `_read.html` 부분 템플릿으로 렌더 — `board.view.php:230`의 `setTemplateFile('list')`)
 - **카테고리**: 관리자 UI로 트리 구조 관리.
 - **상담형 게시판**: `consultation_read` grant + 별도 템플릿.
 

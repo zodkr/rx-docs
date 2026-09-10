@@ -116,7 +116,7 @@ Rhymix\Framework\Cache::init(Config::get('cache'));    // 캐시 드라이버 �
 1. **중복 호출 방지** — `_init_called` 플래그 (`:189-194`).
 2. **DB 설정 로드** — `loadDBInfo()` (`:203`).
 3. **전역 변수 sanitize** — `_checkGlobalVars()` 안에서 `_check_patterns`(`:140`) 정규식으로 입력 검사 (`:206`).
-4. **HTTP 요청 분석** — `setRequestMethod()`, `Router::parseURL()`로 URL을 모듈/액션/변수로 분해, `setRequestArguments`(`:207-219`). 이 과정의 `_filterRequestVar()`(`:1483`)가 개별 요청 변수를 필터링한다. `success_return_url`/`error_return_url`은 **비(非)GET 요청(POST 등)에 한해** `URL::isInternalURL()`로 내부 URL 여부를 검사해 외부 URL이면 `security_check='DENY ALL'` 처리 후 값을 제거한다 (`:1533-1541`). GET 요청은 elseif 체인의 앞선 분기(`:1525`)에서 escape만 되고 이 검증에 도달하지 않는다 (자세한 내용은 `19-security.md` Open Redirect 참고).
+4. **HTTP 요청 분석** — `setRequestMethod()`, `Router::parseURL()`로 URL을 모듈/액션/변수로 분해, `setRequestArguments`(`:207-219`). 이 과정의 `_filterRequestVar()`(`:1483`)가 개별 요청 변수를 필터링한다. `success_return_url`/`error_return_url`은 **비(非)GET 요청(POST 등)에 한해** `URL::isInternalURL()`로 내부 URL 여부를 검사해 외부 URL이면 `security_check='DENY ALL'` 처리 후 값을 제거한다 (`:1540-1548`). GET 요청은 elseif 체인의 앞선 분기(`:1532`)에서 escape만 되고 이 검증에 도달하지 않는다 (자세한 내용은 `19-security.md` Open Redirect 참고).
 5. **업로드 정리** — `setUploadInfo()` — `$_FILES`를 일반 입력과 같은 형태로 변환 (`:220`).
 6. **`site_module_info` 결정** — 설치 상태면 `ModuleModel::getDefaultMid()`, 아니면 임시 객체 (`:222-250`).
 7. **SSL 강제** — `site_module_info->security !== 'none'`이고 현재 HTTPS가 아니면 301 redirect (`:252-258`).

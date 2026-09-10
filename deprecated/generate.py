@@ -564,7 +564,31 @@ def removed_candidates(dated, snaps, head, overrides):
             removed_in = era_of(after)
             if key in out and order[out[key]["last_ref"]] >= order[last]:
                 continue
-            loc = info["file"] + ":" + str(info["line"])
+            # Report the symbol as it was at the last snapshot where it existed
+            # (baseline line numbers are stale by then), and apply the path
+            # exclusions to that location as well.
+            ls = snaps[last]
+            kind, _, rest = key.partition(":")
+            linfo = None
+            if kind == "class":
+                # Keep the removed name itself (it may have been a class_alias
+                # of a class that still exists, e.g. Object -> BaseObject).
+                r = ls.resolve_class(rest)
+                linfo = ls.classes.get(r) if r else None
+            elif kind == "func":
+                linfo = ls.funcs.get(rest)
+            else:
+                cls, _, mname = rest.rpartition("::")
+                r = ls.resolve_class(cls)
+                linfo = ls.methods.get((r, mname)) if r else None
+            if linfo:
+                if kind != "class":
+                    display = linfo["display"]
+                if linfo["file"].startswith(excl_paths):
+                    continue
+            else:
+                linfo = info
+            loc = linfo["file"] + ":" + str(linfo["line"])
             ov = overrides["_norm"].get(nk)
             repl = (ov.get("replace") if isinstance(ov, dict) else ov) if ov else "확인 필요"
             note = (ov.get("note", "") if isinstance(ov, dict) else "")

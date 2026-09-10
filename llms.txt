@@ -206,7 +206,7 @@ if find . -name "*.php" ! -path "./common/vendor/*" -print0 | xargs -0 -n 1 -P 8
 
 ### 참조
 
-- [36-deprecated/](36-deprecated/): `@deprecated`·삭제 API 목록과 대체 API. `xe.md` / `rhymix-1.x.md` / `rhymix-2.0.md` / `rhymix-2.1.md` / `javascript.md` / `removed.md`. 규칙은 [36-deprecated/README.md](36-deprecated/README.md).
+- [36-deprecated/](36-deprecated/): 기존 서드파티·코드의 deprecated된 부분에 대한 가이드. `@deprecated`·삭제 API 목록과 대체 API. `xe.md` / `rhymix-1.x.md` / `rhymix-2.0.md` / `rhymix-2.1.md` / `javascript.md` / `removed.md`. 규칙은 [36-deprecated/README.md](36-deprecated/README.md).
 
 ## 사용자에게 X를 요청받았을 때
 

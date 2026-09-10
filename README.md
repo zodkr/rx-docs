@@ -106,7 +106,7 @@ XpressEngine(XE) 1.8을 fork해 발전시킨 한국 커뮤니티 CMS다. 라이�
 
 | 문서 | 내용 |
 |---|---|
-| [36-deprecated/](36-deprecated/) | `@deprecated`·삭제 API 목록(XE / 1.x / 2.0 / 2.1 / JS / removed)과 대체 API. `tools` 브랜치의 스크립트로 생성 |
+| [36-deprecated/](36-deprecated/) | 기존 서드파티·코드의 deprecated된 부분에 대한 가이드. `@deprecated`·삭제 API 목록(XE / 1.x / 2.0 / 2.1 / JS / removed)과 대체 API. `tools` 브랜치의 스크립트로 생성 |
 
 ## "내가 X를 만들고 싶다" 빠른 참조
 

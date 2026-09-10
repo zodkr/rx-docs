@@ -34,15 +34,28 @@
 
 `Rhymix\Framework\UA` (480줄). 정규식 기반 분류.
 
+| 메서드 시그니처 | 의미 |
+|---|---|
+| `isMobile(?string $ua = null): bool` | 휴대전화 |
+| `isTablet(?string $ua = null): bool` | 태블릿 |
+| `isRobot(?string $ua = null): bool` | 봇/크롤러 |
+| `getLocale(?string $header = null): string` | 브라우저 우선 locale |
+| `getColorScheme(): string` | `light` / `dark` / `auto` |
+| `getBrowserInfo(?string $ua = null): self` | OS·브라우저·디바이스·버전 정보를 담은 UA 객체 |
+
+현재 요청의 User-Agent를 사용하는 호출 예:
+
 ```php
-Rhymix\Framework\UA::isMobile(?string $ua = null): bool;     // 휴대전화
-Rhymix\Framework\UA::isTablet(?string $ua = null): bool;     // 태블릿
-Rhymix\Framework\UA::isRobot(?string $ua = null): bool;      // 봇/크롤러
-Rhymix\Framework\UA::getLocale(?string $header = null): string;  // 브라우저 우선 locale
-Rhymix\Framework\UA::getColorScheme(): string;               // 'light' / 'dark' / 'auto'
+use Rhymix\Framework\UA;
+
+$is_mobile = UA::isMobile();
+$is_tablet = UA::isTablet();
+$is_robot = UA::isRobot();
+$locale = UA::getLocale();
+$color_scheme = UA::getColorScheme();
 
 // OS/브라우저/디바이스/버전을 한 번에
-$info = Rhymix\Framework\UA::getBrowserInfo(?string $ua = null): UA;
+$info = UA::getBrowserInfo();
 // $info->os, $info->os_version, $info->device, $info->browser, $info->version
 ```
 

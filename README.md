@@ -6,6 +6,15 @@
 
 > LLM 어시스턴트가 이 저장소에서 작업한다면 [`llms.txt`](llms.txt)부터 읽는다. 그쪽은 진입 순서·명명 규칙·작성 규약을 압축한 LLM 전용 진입 문서다.
 
+## 검증 기준
+
+- 확인일: **2026-09-10**.
+- 대조한 본체: **Rhymix 2.1.36**, 커밋 `1ae6ce181` (2026-09-02). 2.1.36 태그 이후의 배열 값 타입 보존, 애드온·외부 페이지·다국어 레이아웃 캐시 수정까지 포함한다.
+- 본문의 소스 경로는 **Rhymix 본체 루트 기준**이다. 줄 번호는 탐색을 돕는 위치 정보이므로 본체가 바뀌면 인용된 클래스·메서드명과 함께 확인한다. 문서 간 링크는 각 문서 위치 기준이다.
+- 이 문서 저장소의 라이선스는 [MIT](LICENSE)이며, Rhymix 본체의 GPL-2.0-or-later와 구분한다.
+
+본체를 갱신할 때는 `RX_VERSION`뿐 아니라 마지막 검증 커밋 이후의 변경도 확인한다. 변경된 API·설정·액션은 해당 문서와 `llms.txt`에 함께 반영하고, 의존성은 `common/composer.json`·`common/composer.lock`, 테스트 절차는 `.github/workflows/ci.yml`·`tests/`와 대조한다. 문서 검증은 PHP 실행 및 설치 테스트 통과를 의미하지 않는다.
+
 ## Rhymix가 무엇인가
 
 XpressEngine(XE) 1.8을 fork해 발전시킨 한국 커뮤니티 CMS다. 라이선스는 GPL v2+이며 PHP 7.4 이상에서 동작한다. 현재 버전은 `common/constants.php:6`의 `RX_VERSION` 상수에서 확인할 수 있다.
@@ -115,7 +124,7 @@ XpressEngine(XE) 1.8을 fork해 발전시킨 한국 커뮤니티 CMS다. 라이�
 
 > Rhymix 본체가 아직 없다면 먼저: `git clone https://github.com/rhymix/rhymix.git`
 
-### 방법 1: clone + `.gitignore` (권장)
+### 방법 1: clone + 로컬 제외 설정 (권장)
 
 가장 안전하고 편하다. 본체 저장소 히스토리에는 어떤 변경도 남지 않으므로, 본체에 PR을 보내거나 upstream을 따라가도 충돌이 생기지 않는다.
 
@@ -123,8 +132,8 @@ XpressEngine(XE) 1.8을 fork해 발전시킨 한국 커뮤니티 CMS다. 라이�
 # Rhymix 본체 루트에서
 git clone https://github.com/zodkr/rx-docs.git docs
 
-# 본체에 docs/가 untracked로 잡히지 않도록 무시 처리 (한 번만)
-echo '/docs/' >> .gitignore
+# 본체에 docs/가 untracked로 잡히지 않도록 로컬에서만 제외 (한 번만)
+echo '/docs/' >> "$(git rev-parse --git-path info/exclude)"
 ```
 
 업데이트:

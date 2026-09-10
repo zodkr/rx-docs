@@ -17,9 +17,9 @@ Rhymix가 사용하는 외부 PHP/JS/CSS 라이브러리를 Composer 패키지, 
 | `ezyang/htmlpurifier` | `4.18.*` | HTML 정화 (HTMLFilter 백엔드). |
 | `firebase/php-jwt` | `6.4.0` | JWT 토큰. |
 | `google/auth` | `1.26.*` | Google OAuth (FCM v1). |
-| `guzzlehttp/guzzle` | `7.12.*` | HTTP 클라이언트 (`Rhymix\Framework\HTTP` 백엔드). |
+| `guzzlehttp/guzzle` | `7.15.*` | HTTP 클라이언트 (`Rhymix\Framework\HTTP` 백엔드). |
 | `guzzlehttp/promises` | `2.5.*` | Guzzle 비동기 프로미스. |
-| `guzzlehttp/psr7` | `2.12.*` | PSR-7 메시지. |
+| `guzzlehttp/psr7` | `2.13.*` | PSR-7 메시지. |
 | `jbbcode/jbbcode` | `1.4.*` | BBCode 파서. |
 | `leafo/lessphp` | `dev-master` | LESS → CSS 컴파일. |
 | `league/html-to-markdown` | `5.1.*` | HTML → Markdown. |

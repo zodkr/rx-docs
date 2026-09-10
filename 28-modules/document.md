@@ -26,7 +26,7 @@
 $oDoc = DocumentModel::getDocument($document_srl);
 $oDoc->isExists();
 $oDoc->getTitle($cut_size = 0, $tail = '...');
-$oDoc->getContent($add_popup_menu=true, $add_content_info=true, ...);
+$oDoc->getContent();           // 기본 옵션으로 본문 출력
 $oDoc->getContentPlainText($strlen = 0);
 $oDoc->getSummary($str_size = 50, $tail = '...');
 $oDoc->getNickName();
@@ -37,7 +37,7 @@ $oDoc->isAccessible($strict = false);
 $oDoc->isGranted();             // 작성자 또는 관리자
 $oDoc->getThumbnail($width = 80, $height = 0, $thumbnail_type = '');
 $oDoc->getCommentCount();
-$oDoc->getComments(?int $page = null);   // 댓글 트리 (getCommentList 아님)
+$oDoc->getComments();          // 현재 페이지의 댓글 트리; 특정 페이지는 getComments($page)
 $oDoc->getExtraValue($idx);     // 확장 변수
 $oDoc->getExtraVars();          // 전체 (extravar Value 객체 배열)
 $oDoc->getUrl();
@@ -60,6 +60,7 @@ $oDoc->getTags();
 | `procDocumentDeclare` / `procDocumentDeclareCancel` | 신고/취소 |
 | `getDocumentMenu` | 메뉴 데이터 (모든 모듈에서 호출) |
 | `getDocumentCategories` / `getDocumentCategoryTree` | (all-managers) 카테고리 |
+| `getDocumentCategoryTplInfo` | 카테고리 템플릿 정보 (`permission="manager:config:*"`, `check_var="module_srl"`) |
 | `procDocumentInsertModuleConfig` / `procDocumentInsertCategory` / `procDocumentDeleteCategory` / `procDocumentMoveCategory` | 모듈/카테고리 설정 |
 | `dispDocumentAdminList` 등 6개 disp Admin / `procDocumentAdmin*` 13개 | 관리자 |
 
@@ -128,11 +129,17 @@ document 모듈은 `conf/module.xml`에 `<grants />`(비어 있음)만 두어 �
 
 게시판마다 다른 사용자 정의 필드. `document_extra_keys`에 정의, `document_extra_vars`에 값.
 
+`procDocumentAdminInsertExtraVar()`는 `var_idx`를 정수로 정규화하고 표시 이름을 이스케이프한다. 필드 ID인 `eid`는 `/^[a-zA-Z][a-zA-Z0-9_]*$/`에 맞아야 하며, `type`은 `lang('column_type_list')`에 등록된 유형이어야 한다. XML ruleset과 별도로 서버에서 검사하므로 사용자 요청만으로 임의 유형을 추가할 수 없다 (`modules/document/document.admin.controller.php:171-207`).
+
 ```php
 $value_by_idx = $oDoc->getExtraValue($var_idx);
 $value_by_eid = $oDoc->getExtraEidValue('my_field');
 $all = $oDoc->getExtraVars();   // var_idx를 키로 한 extravar Value 객체 배열
 ```
+
+## 문서 수 조회의 검색어 호환
+
+`DocumentModel::getDocumentCount()`와 `getDocumentCountByGroupStatus()`는 `s_title`·`s_content`가 기존 `%첫째%둘째%` 형식이면 공백으로 구분한 검색어로 변환한다. 변환 조건은 `/^%[^%]+%[^%]+%$/`이므로 임의의 `%` 패턴을 모두 같은 방식으로 처리하는 것은 아니다 (`modules/document/document.model.php:638-686`). 새 코드는 `%`를 직접 붙이지 않고 XML 쿼리의 LIKE 처리에 맡긴다. 단일 집계는 데이터가 없으면 `0`, 상태별 집계는 실패하거나 데이터가 없으면 `[]`를 반환한다.
 
 ## 문서 status 문자열
 

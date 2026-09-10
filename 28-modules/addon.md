@@ -42,6 +42,8 @@
 
 (`addons_module` 같은 테이블은 없다 — 애드온 활성화는 사이트 단위이며, 모듈별 실행 제어는 애드온 설정 화면(`dispAddonAdminSetup`)에서 선택한 `mid_list`(`extra_vars`에 직렬화 저장)로 관리한다. `makeCacheFile`이 이 값을 이용해 현재 `mid`에 따라 실행 여부를 결정한다 — `modules/addon/addon.controller.php:95-128`.)
 
+생성된 캐시는 `Context::get('mid') ?? ''`로 현재 mid를 읽는다. mid가 아직 정해지지 않은 요청도 빈 문자열로 실행 범위를 판정하므로 null에 의한 경고를 피한다 (`modules/addon/addon.controller.php:108`).
+
 ## 활성화 단위
 
 - 일반 site 설정 (`gtype='site'`)은 `addons_site`에 저장하며 기본 사이트도 `site_srl=0` 레코드를 사용한다.

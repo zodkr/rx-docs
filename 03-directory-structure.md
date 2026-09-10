@@ -101,22 +101,24 @@ rhymix/
 
 | 경로 | 용도 | 정리 스크립트 |
 |---|---|---|
-| `files/attach/binaries/<YYYY>/<MM>/<DD>/` | 업로드 파일 본문 (신규 설치 기본값 `file.folder_structure=2`, 날짜별 경로; 레거시(1/0)는 `.../<module_srl>/<srl 3자리 분할>/`) | `common/scripts/clean_garbage_files.php` |
+| `files/attach/binaries/<YYYY>/<MM>/<DD>/` | 업로드 파일 본문 (신규 설치 기본값 `file.folder_structure=2`, 날짜별 경로; 레거시(1/0)는 `.../<module_srl>/<srl 3자리 분할>/`) | `modules/file/scripts/cleanGarbageFiles.php` |
 | `files/attach/images/<YYYY>/<MM>/<DD>/` | 이미지 업로드 + 썸네일 (경로 규칙은 binaries와 동일) | 동일 |
 | `files/attach/xeicon/` | 사용자 정의 xeicon | — |
-| `files/cache/` | 일반 캐시 | `Cache::clearAll`로 비움 |
+| `files/cache/` | 컴파일·출력 캐시와 파일 기반 데이터 캐시 | 관리자 캐시파일 재생성; `Cache::clearAll()`은 선택된 데이터 캐시 드라이버만 비움 |
 | `files/cache/template/` | 컴파일된 템플릿 | 자동 무효화 |
 | `files/cache/store/` | Dummy 캐시의 `force=true` 영속 항목 저장소(File 구현은 직접 선택 불가) | 만료 항목은 조회 시 제거 |
 | `files/cache/assets/` (하위 `minified/`=minify, `compiled/`=LESS·SCSS 컴파일, `combined/`=concat 결합) | CSS/JS minify·compile·concat 산출물 | 자동 |
 | `files/cache/lang/` | 컴파일된 다국어 캐시 | 자동 |
 | `files/cache/addons/` | 컴파일된 애드온 (PC/모바일) | 변경 시 자동 |
+| `files/cache/layout/` | 레이아웃 종류별 정보 캐시, 미리보기 임시 파일 | 설정·소스에 따라 재생성 |
+| `files/cache/page/` / `files/cache/opage/` | 위젯 페이지 / 외부 페이지 출력 캐시 | [page 모듈](28-modules/page.md)의 만료·삭제 정책 |
 | `files/locks/` | 파일 기반 락 (`Storage::getLock`) | — |
 | `files/config/` | `config.php` 등 런타임 설정 | 수동 |
 | `files/env/` | 환경 캐시 (mid info 등) | 자동 |
 | `files/member_extra_info/` | 회원 부가 정보 (프로필 이미지/서명) | — |
-| `files/faceOff/` | 레이아웃 소스 편집(faceOff)이 레이아웃별 layout.html/layout.css 저장 | — |
+| `files/faceOff/` | 일반 레이아웃도 사용하는 인스턴스별·언어별 정보 캐시, 기존 FaceOff 편집 소스 | 인스턴스 설정 갱신 시 모든 언어 정보 캐시 삭제 |
 | `files/ruleset/` | 생성·커스터마이즈된 ruleset XML (런타임에 PHP가 읽음) | 자동 |
-| `files/thumbnails/` | 문서 썸네일 | `common/scripts/clean_old_thumbnails.php` |
+| `files/thumbnails/` | 문서 썸네일 | `modules/file/scripts/cleanThumbnails.php` |
 | `files/cache/tmp/` | 일시 작업 디렉토리 | — |
 | `files/debug/YYYYMMDD.php` | 디버그 로그 (옵션, 경로는 설정 `debug.log_filename`) | 수동/날짜별 파일 로테이션 |
 

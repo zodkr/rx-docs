@@ -8,7 +8,7 @@
 
 | 상수 | 의미 | 정의 위치 |
 |---|---|---|
-| `RX_VERSION` | 현재 Rhymix 버전 (예: `'2.1.35'`) | `:6` |
+| `RX_VERSION` | 검증한 본체 버전 `'2.1.36'` | `:6` |
 | `RX_MICROTIME` | 스크립트 시작 microtime (float) | `:11` |
 | `RX_TIME` | 시작 unix time (int) | `:16` |
 | `RX_BASEDIR` | 서버측 절대 경로 (trailing `/`) | `:21` |
@@ -96,9 +96,11 @@
 | `array_first_key(array)` | `array_key_first()` |
 | `array_last(array)` | `end()` wrapper |
 | `array_last_key(array)` | `array_key_last()` |
-| `array_escape(array, $double_escape=true)` | 재귀 htmlspecialchars |
+| `array_escape(array, $double_escape=true)` | 키와 문자열 값을 재귀 이스케이프. 숫자·불리언·null·resource 값의 타입은 보존 |
 | `array_flatten(array)` | 다차원 → 평면 |
 | `class_basename($class)` | 마지막 namespace segment |
+
+`array_escape()`는 배열을 재귀 처리하고, 객체는 공개 프로퍼티를 처리한 `stdClass`로 재구성하므로 원래 객체 클래스까지 보존하지는 않는다 (`common/functions.php:110-135`). 예를 들어 `array_escape(['label' => '<b>', 'count' => 3, 'enabled' => false, 'value' => null])`의 결과는 `['label' => '&lt;b&gt;', 'count' => 3, 'enabled' => false, 'value' => null]`이다.
 
 ### 경로/URL
 
@@ -139,7 +141,6 @@
 | 함수 | 비고 |
 |---|---|
 | `tobool($val)` | `'Y'`/`'N'`/`'true'`/`'false'`/`1`/`0` → bool |
-| `countobj($var)` | array/Countable이면 count, 객체이면 프로퍼티 개수, 그 외 truthy면 1·falsy면 0 (`@deprecated`) |
 
 ### UTF-8
 
@@ -185,7 +186,6 @@ autoloader 분기 2가 사용하는 정적 매핑 (lc 클래스명 → 파일 �
 | `getAdminModel($name)` | `getModuleInstance($name, 'model', 'admin')` |
 | `getAPI($name)` | `getModuleInstance($name, 'api')` |
 | `getMobile($name)` | `getModuleInstance($name, 'mobile')` |
-| `getWAP($name)` | `getModuleInstance($name, 'wap')` (deprecated) |
 | `getClass($name)` | `getModuleInstance($name, 'class')` |
 
 모두 `$GLOBALS['_module_instances_']` 캐시를 사용한다.
@@ -263,7 +263,7 @@ autoloader 분기 2가 사용하는 정적 매핑 (lc 클래스명 → 파일 �
 <a href="{getUrl('', 'mid', 'free')}">자유게시판</a>
 <p>{$lang->cmd_login}</p>
 <p>{lang('member.cmd_login')}</p>
-<p>{config('site.title')}</p>
+<p>{config('seo.main_title')}</p>
 ```
 
 ### 템플릿 v2
@@ -277,7 +277,7 @@ autoloader 분기 2가 사용하는 정적 매핑 (lc 클래스명 → 파일 �
 ### PHP
 
 ```php
-$theme = config('view.theme');
+$jquery_version = config('view.jquery_version');
 $prompt = lang('member.cmd_login');
 $url = getUrl('', 'mid', 'free', 'document_srl', $srl);
 ```

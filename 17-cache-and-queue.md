@@ -30,23 +30,28 @@
 
 ### 정적 API
 
+아래 표는 메서드 시그니처다. `Cache::init(Config::get('cache'))`는 부트스트랩에서 자동 호출된다.
+
+| 메서드 | 반환형 | 의미 |
+|---|---|---|
+| `set(string $key, $value, int $ttl = 0, bool $force = false)` | `bool` | 값 저장 |
+| `get(string $key)` | `mixed` | 값 조회; miss는 `null` |
+| `delete(string $key)` | `bool` | 키 삭제 |
+| `exists(string $key)` | `bool` | 존재 여부 |
+| `clearGroup(string $group_name)` | `bool` | 그룹 버전 증가 |
+| `getGroupVersion(string $group_name)` | `int` | 현재 그룹 버전 |
+| `clearAll()` | `bool` | 전체 비우기 |
+| `getPrefix()` | `string` | 현재 전역 prefix |
+| `getDriverName()` | `?string` | 실제 드라이버 이름 |
+
+호출 예제 (그룹 키는 호출자가 `그룹:키` 형태로 합성):
+
 ```php
-Cache::init(Config::get('cache'));                              // 부트스트랩 시 자동
-Cache::set(string $key, $value, int $ttl = 0, bool $force = false): bool;
-$value = Cache::get(string $key);
-Cache::delete(string $key): bool;
-$bool = Cache::exists(string $key): bool;
+use Rhymix\Framework\Cache;
 
-// 그룹 단위 (그룹 키는 사용자가 "{group}:{key}" 형태로 직접 합성)
-Cache::set("{$group}:{$key}", $value);    // 키 prefix 형식
-Cache::get("{$group}:{$key}");
-Cache::clearGroup(string $group_name): bool;     // 그룹 전체 무효화 (group_version 증가)
-Cache::getGroupVersion(string $group_name): int; // 현재 버전 카운터
-
-Cache::clearAll(): bool;                          // 전체 비우기
-
-Cache::getPrefix(): string;                       // 현재 전역 prefix
-Cache::getDriverName(): ?string;                  // 실제 사용 중인 드라이버 이름
+Cache::set('mymodule:item:42', ['title' => '예시'], 300);
+$value = Cache::get('mymodule:item:42');
+Cache::clearGroup('mymodule');
 ```
 
 `dummy`도 일반 `set()`/`get()`은 같은 요청 안에서 적중한다. `Cache::set(..., $force=true)`를 사용하면 `dummy`가 부모 file driver에 위임하여 필수 캐시를 `files/cache/store/`에 영속 저장한다 (`drivers/cache/dummy.php:43-87`). `file` driver 자체는 `isSupported()`가 항상 false이므로 직접 설정할 수 없다 (`drivers/cache/file.php:54-62`).
@@ -85,6 +90,8 @@ PSR-6 호환 라이브러리(예: Symfony Cache 사용자)와 연동 시 유용.
 ### 캐시 truncate 방식
 
 `config('cache.truncate_method')` — `files/cache` 폴더 정리 방식만 결정한다 (개별 키 삭제나 DB cache와 무관).
+
+`Cache::clearAll()`은 현재 드라이버의 데이터 저장소를 비우며 템플릿·레이아웃·애드온의 모든 생성 파일을 삭제하는 API가 아니다 (`common/framework/Cache.php:351-365`). 관리자 캐시파일 재생성과 구분한다.
 
 - `'delete'` (기본) — `files/cache` 폴더 전체를 `files/cache_<timestamp>`로 옮긴 뒤 재생성 (폴더 자체 삭제).
 - `'empty'` — 폴더는 유지하고 내부 내용만 삭제 (마운트포인트 등 폴더 자체를 지울 수 없을 때).

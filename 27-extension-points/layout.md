@@ -227,6 +227,8 @@ $module_info->mlayout_srl      // 모바일 레이아웃 srl
 
 기존 FaceOff 인스턴스의 편집 결과는 `files/faceOff/<numbering>/layout.html`에 저장되며(예: `layout_srl=5` → `files/faceOff/005/layout.html`; `getNumberingPath`는 3자리 0채움, 1000 이상부터 디렉토리를 중첩) `ModuleObject::edited_layout_file`로 적용된다. `files/cache/layout/`에는 info.xml 파싱 결과(레이아웃 정보 객체) 캐시인 `*.cache.php`와 관리자 미리보기용 `tmp.tpl`이 저장된다. 레이아웃 템플릿 자체의 컴파일 캐시는 `files/cache/template/*.compiled.php`에 별도로 저장된다.
 
+`layout_srl`이 있는 인스턴스의 정보 캐시는 일반 레이아웃도 `files/faceOff/<numbering>/<lang>.cache.php`에 저장한다. 설정 갱신 성공 시 해당 인스턴스의 모든 언어 캐시와 `layout:<layout_srl>` 키를 삭제한다. 캐시 종류별 경로는 [layout 모듈](../28-modules/layout.md#정보-캐시와-설정-변경) 참고.
+
 ## 최소 예제
 
 ### `layouts/mylayout/conf/info.xml`

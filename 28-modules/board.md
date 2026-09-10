@@ -49,6 +49,12 @@
 - `procBoardAdminInsertBoard` / `procBoardAdminDeleteBoard` / `procBoardAdminUpdateBoard` / `procBoardAdminInsertCombinedConfig` / `procBoardAdminSaveCategorySettings` — 처리.
 - `getBoardAdminSimpleSetup` — 간이 설정 진입.
 
+## 목록 요청의 오류 처리
+
+`dispBoardContentList()`는 음수 `page`, 존재하지 않는 카테고리, 카테고리 기능이 꺼진 게시판의 카테고리 요청에 404를 반환한다. 쉼표로 여러 카테고리를 요청하면 각각 존재하는지 검사한다 (`modules/board/board.view.php:552-608`). `dispBoardContent()`는 목록 처리 후 HTTP 상태가 200보다 크면 후속 처리를 중단한다 (`:205-213`).
+
+이 검사를 모든 페이지 범위 초과 요청의 404 보장으로 확대하지 않는다. XML 페이지네이션은 `page > total_page`이면 본문 쿼리를 생략하고 빈 데이터를 반환한다 (`common/framework/DB.php:356-365`).
+
 ## 권한 (grants)
 
 | grant | 기본 | 의미 |

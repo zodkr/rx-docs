@@ -53,6 +53,16 @@
 
 ## 모델 메서드
 
+### 정보 캐시와 설정 변경
+
+- 레이아웃 종류만 조회하는 정보 캐시: `files/cache/layout/<layout>.<lang>.cache.php` (모바일은 `m.` 접두사).
+- `layout_srl`이 있는 인스턴스 정보 캐시: `files/faceOff/<numbering>/<lang>.cache.php`. 디렉토리 이름과 달리 일반 레이아웃 인스턴스의 설정 캐시도 여기에 저장한다 (`modules/layout/layout.model.php:499-505`, `:601-604`, `:720-741`).
+- 레이아웃 템플릿의 PHP 컴파일 캐시는 별도의 `files/cache/template/`에 있다.
+
+`LayoutAdminController::updateLayout()`은 DB 갱신 성공 후 해당 인스턴스의 **모든 언어** `*.cache.php`와 `Cache` 키 `layout:<layout_srl>`을 삭제한다 (`modules/layout/layout.admin.controller.php:215-230`). 현재 언어만 무효화하는 것으로 이해하면 다른 언어의 오래된 설정을 놓치게 된다.
+
+### 조회 API
+
 ```php
 LayoutModel::getLayout($layout_srl);             // 단일 레이아웃 정보
 LayoutModel::getLayoutList($site_srl, $type);    // 현재 $site_srl은 호환용이며 조회에서 사용하지 않음

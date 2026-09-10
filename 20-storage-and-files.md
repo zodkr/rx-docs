@@ -97,7 +97,7 @@ Rhymix\Framework\Storage::protectDirectory($path);
 ## 잠금 (lock)
 
 ```php
-if (Rhymix\Framework\Storage::getLock(string $name): bool) {
+if (Rhymix\Framework\Storage::getLock('my_module_job')) {
     try {
         // 배타적 잠금(exclusive lock) 획득됨 — 작업 진행
         // (LOCK_NB 논블로킹이라 이미 다른 프로세스가 잠금 중이면 getLock()은 즉시 false 반환)

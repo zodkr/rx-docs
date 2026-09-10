@@ -37,6 +37,10 @@ if (!Rhymix\Framework\Session::isMember()) {
 
 > `Session::login()`은 **member_srl(int)을 받는다**. 회원 정보 객체에서 로그인하려면 `member.controller.php`의 `MemberController::doLogin($user_id, $password, $keep_signed)`(`:2566`) 같은 상위 API를 사용한다.
 
+### 회원 정보·비밀번호 변경 후 갱신
+
+`procMemberModifyInfo()`와 `procMemberModifyPassword()`는 변경 성공 후 회원 캐시를 비우고 `$_SESSION['RHYMIX']['next_refresh'] = true`로 다음 갱신을 예약한다 (`modules/member/member.controller.php:1234-1236`, `:1295-1297`). `Session::start()`는 이 플래그를 확인해 `refresh(true)`를 호출하지만, GET이 아닌 요청과 파일 다운로드 요청에서는 갱신을 미룬다 (`common/framework/Session.php:115-168`). 따라서 변경 POST 안에서 곧바로 세션 ID가 바뀐다고 가정하지 않는다.
+
 ## 현재 회원 정보 — `SessionHelper`
 
 ```php
@@ -202,19 +206,23 @@ public function dispBoardAdminContent()
 }
 ```
 
-### 토큰이 필요한 POST 액션
+### 일회용 액션 토큰을 확인하는 POST 액션
+
+확장 모듈의 폼을 표시할 때 `Session::createToken('mymodule.confirm')`으로 발급한 값을 `action_token` 필드로 전달한다. 처리 액션은 `module.xml`에 `permission="member" method="POST"`로 등록하고 CSRF 검사도 유지한다. 액션 토큰은 비밀번호 재확인과 별개의 검증이다.
 
 ```php
-public function procMemberDelete()
+public function procMyModuleConfirm()
 {
-    if (!Rhymix\Framework\Session::isTrusted()) {
-        $url = getUrl('', 'act', 'dispMemberCheckPassword', 'ru_act', 'procMemberDelete');
-        $this->setRedirectUrl($url);
-        return;
+    $token = Context::get('action_token');
+    if (!is_string($token) || !Rhymix\Framework\Session::verifyToken($token, 'mymodule.confirm')) {
+        throw new Rhymix\Framework\Exceptions\InvalidRequest;
     }
-    // ... 실제 삭제 ...
+    Rhymix\Framework\Session::invalidateToken($token);
+    // ... 권한이 확인된 작업 처리 ...
 }
 ```
+
+코어의 `dispMemberCheckPassword` 흐름은 `Session::setTrusted()`를 호출하지 않는다. 그 화면으로 이동시킨 뒤 `Session::isTrusted()`만 기다리는 구현은 재확인에 성공해도 통과하지 못한다.
 
 ## 다음 문서
 

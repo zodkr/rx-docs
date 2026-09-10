@@ -28,13 +28,6 @@ common.<name>    → common/scripts/<name>.php
 | 스크립트 | 호출 | 용도 |
 |---|---|---|
 | `cron.php` | `php index.php common.cron` | 큐 워커 (예약 작업 실행) |
-| `clean_empty_dirs.php` | `php index.php common.clean_empty_dirs` | **@deprecated** — `file.cleanEmptyDirs` wrapper (빈 첨부 디렉토리 정리) |
-| `clean_garbage_files.php` | `php index.php common.clean_garbage_files` | **@deprecated** — `file.cleanGarbageFiles` wrapper (고아 첨부 파일 정리) |
-| `clean_message_files.php` | `php index.php common.clean_message_files` | **@deprecated** — `communication.cleanMessageFiles` wrapper (메시지 첨부 정리) |
-| `clean_old_logs.php` | `php index.php common.clean_old_logs` | **@deprecated** — `module.cleanMiscLogs` wrapper (오래된 로그 정리) |
-| `clean_old_notifications.php` | `php index.php common.clean_old_notifications` | **@deprecated** — `ncenterlite.cleanNotifications` wrapper (알림 정리) |
-| `clean_old_thumbnails.php` | `php index.php common.clean_old_thumbnails` | **@deprecated** — `file.cleanThumbnails` wrapper (썸네일 캐시 정리) |
-| `update_all_modules.php` | `php index.php common.update_all_modules` | **@deprecated** — `module.updateAllModules` wrapper (모든 모듈 일괄 업데이트) |
 
 ### 모듈 스크립트
 
@@ -48,7 +41,7 @@ common.<name>    → common/scripts/<name>.php
 | `modules/communication/scripts/cleanMessageFiles.php` | `php index.php communication.cleanMessageFiles` |
 | `modules/ncenterlite/scripts/cleanNotifications.php` | `php index.php ncenterlite.cleanNotifications` |
 
-(`cron.php`를 제외한 `common/scripts` 스크립트는 모두 `@deprecated`된 wrapper이며, 대응 모듈 스크립트를 직접 부르는 것과 동등하다. 각 파일 docblock이 권장 호출을 지시한다. 신규 cron 등록에는 위 모듈 스크립트를 직접 사용한다.)
+정리·업데이트 작업에는 위 모듈 스크립트를 사용한다. `common/scripts/common.php`는 공통 부트스트랩이며 직접 실행할 작업 스크립트가 아니다.
 
 ## cron 등록
 

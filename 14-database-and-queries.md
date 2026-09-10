@@ -36,8 +36,8 @@ $db = Rhymix\Framework\DB::getInstance('slave');  // 다중 DB 분리 시
 
 | 메서드 | 비고 |
 |---|---|
-| `prepare($sql, $opts=[])` | PDO 준비 (`DBStmtHelper` 반환) |
-| `query($sql, ...$args)` | 즉시 실행 |
+| `prepare($sql, $opts=[])` | PDO 준비. 선언 반환형은 `?DBStmtHelper`; 하위 `DBHelper::prepare()`의 실패는 `DBError` 예외로 전달될 수 있음 |
+| `query($sql, ...$args)` | 즉시 실행, `?DBStmtHelper` 반환. 인자 없는 쿼리 실패는 `null`; prepared 경로는 예외 또는 오류 상태를 가진 statement가 가능하므로 `isError()`도 확인 |
 | `executeQuery($query_id, $args=[], $col=[], $result_type='auto', $result_class='')` | XML 쿼리 실행. `$result_type='array'`로 강제 가능 |
 | `fetch($stmt, $last_index=0, $result_type='auto', $result_class='')` | row fetch |
 | `getAffectedRows()` | 마지막 쿼리의 영향 행 |
@@ -54,7 +54,7 @@ $db = Rhymix\Framework\DB::getInstance('slave');  // 다중 DB 분리 시
 
 ### 이전 statement 정리와 실패 후 재실행
 
-`query()`/`executeQuery()`/페이지네이션 count query는 새 쿼리를 준비하기 전에 직전 statement를 정리한다. 이때 `closeCursor()`는 직전 값이 실제 `PDOStatement`인 경우에만 호출하고, `DBHelper::query()`가 실행 실패 시 반환해 저장한 `false`는 cursor 메서드를 호출하지 않고 제거한다 (`common/framework/DB.php:239-247`, `:386-395`, `:479-488`, `common/framework/helpers/DBHelper.php:99-126`). 따라서 한 쿼리가 실패한 직후 같은 DB 인스턴스로 다음 쿼리를 실행해도, `false`에 `closeCursor()`를 호출하는 2차 오류가 발생하지 않는다.
+`query()`/`executeQuery()`/페이지네이션 count query는 새 쿼리를 준비하기 전에 직전 값이 실제 `PDOStatement`인지 확인한 뒤 `closeCursor()`를 호출한다. `_last_stmt`의 초기값은 `null`이고, `prepare()`/`query()`는 하위 결과의 falsy 값을 `null`로 정규화한다. XML 쿼리의 SQL 실행 오류 경로도 `_last_stmt`를 `null`로 비운다 (`common/framework/DB.php:32`, `:188-255`, `:383-430`, `:475-497`). 따라서 실패 결과 `false`에 `closeCursor()`를 호출하는 2차 오류를 피한다. `query()`의 prepared 경로는 `execute()` 실패 후에도 statement를 반환할 수 있으므로 반환값만으로 SQL 성공을 판단하지 않는다. 이 정리는 다음 절의 raw SQL 커서 회수 책임까지 대신하지는 않는다.
 
 ### unbuffered 연결과 커서 회수
 
@@ -68,13 +68,13 @@ MySQL/MariaDB 연결은 **unbuffered 모드**로 열린다 (`common/framework/DB
 | `prepare()` | **닫지 않는다.** `_last_stmt`만 교체한다 (`DB.php:202-203`) |
 | `begin()`, `commit()`, `rollback()` | 닫지 않는다 |
 
-커서가 열린 채로 `commit()`에 도달하면 PDO가 `HY000 2014 Cannot execute queries while other unbuffered queries are active`를 던진다. 그런데 `commit()`은 이 예외를 catch해 `setError()`로 삼키고 트랜잭션 레벨만 감소시킨다 (`DB.php:680-692`). 즉 **커밋이 조용히 실패**하고 커넥션은 IN-TRANSACTION 상태로 남아, 요청이 끝날 때 PDO가 암묵적으로 롤백한다. `rollback()`도 같은 구조다 (`DB.php:644-672`).
+커서가 열린 채로 `commit()`에 도달하면 PDO가 `HY000 2014 Cannot execute queries while other unbuffered queries are active`를 던질 수 있다. 그런데 최외곽 `commit()`은 이 예외를 catch해 `setError()`에 저장하고 트랜잭션 레벨을 감소시킨다 (`DB.php:684-717`). 즉 **반환값만으로 커밋 성공을 판단하면 안 된다**. 커넥션이 IN-TRANSACTION 상태로 남은 채 요청이 끝나면 PDO가 암묵적으로 롤백한다. 최외곽 `rollback()`도 PDO 예외를 내부 오류 상태에 저장한다 (`DB.php:644-677`).
 
 증상이 특히 알아보기 어렵다.
 
 - 컨트롤러는 정상적으로 `success`를 반환하고 화면에도 성공으로 보인다.
 - 그런데 INSERT/UPDATE가 전부 사라진다. 문서 작성이라면 `rx_sequence`의 번호만 소모되고 `rx_documents`에는 행이 남지 않는다.
-- 에러 로그에도 남지 않는다. 예외가 `setError()`로 흡수되기 때문이다.
+- 미처리 예외용 PHP 에러 로그만으로 놓칠 수 있다. `$db->isError()`/`getError()`로 확인하며, 해당 사용자에 대해 Debug가 활성화되어 있으면 COMMIT 쿼리 로그에도 오류 상태가 기록된다 (`DB.php:699-701`, `:1287-1300`).
 
 특히 위험한 자리는 **트리거 핸들러**다. `document.insertDocument` / `publishDocument` 같은 after 트리거는 코어가 연 트랜잭션 **안에서** 실행되므로, 여기서 커서를 남기면 트리거를 호출한 쪽의 커밋이 통째로 날아간다.
 
@@ -112,12 +112,14 @@ try {
     // ...
     $db->commit();             // 진짜 commit
 } catch (Throwable $e) {
-    $db->rollback();           // 현재는 레벨 1이므로 실제 전체 rollback
+    $db->rollback();           // 실패한 시점의 현재 레벨 하나만 롤백
     throw $e;
 }
 ```
 
 `rollback()`은 항상 가장 바깥까지 한 번에 롤백하는 API가 아니다. 트랜잭션 레벨이 2 이상이면 가장 가까운 savepoint로만 되돌리고 레벨을 하나 줄이며, 레벨 1에서 호출할 때만 실제 PDO transaction 전체를 롤백한다 (`common/framework/DB.php:651-679`).
+
+예제에서 내부 `commit()` 전에 예외가 나면 catch 시점에도 레벨 2이므로 바깥 트랜잭션은 남는다. 호출자가 소유한 트랜잭션 범위를 기준으로 정리해야 하며, `commit()`의 반환값은 성공 여부가 아닌 남은 중첩 레벨이다.
 
 ## XML 쿼리 시스템
 

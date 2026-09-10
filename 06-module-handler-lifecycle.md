@@ -247,7 +247,7 @@ ModuleHandler::triggerCall($trigger_name, $called_position, $obj_or_data);
 |---|---|
 | `guest` | 누구나 |
 | `member` | 로그인한 회원 |
-| `not_member` | 비로그인만 |
+| `not_member` / `not-member` | 비로그인 또는 모듈 매니저 (root도 우선 통과) |
 | `manager` | 모듈 매니저 |
 | `root` | 슈퍼 관리자 |
 | `manager:scope` | 특정 scope의 매니저 |
@@ -255,6 +255,8 @@ ModuleHandler::triggerCall($trigger_name, $called_position, $obj_or_data);
 | custom grant name | `<grants>`에 정의된 grant ID |
 
 `checkPermission()`이 현재 사용자와 grant를 평가해 boolean을 반환한다.
+
+`manager:config:*`는 `manager` 확인에 더해 `$grant->can('config:*')`를 요구한다. 전체 관리 범위 또는 `config:*`가 부여된 매니저는 통과하지만, 콘텐츠 관리 권한만으로는 통과하지 않는다 (`classes/module/ModuleObject.class.php:429-444`, `modules/module/models/Permission.php:150-175`). `check_var="module_srl"`을 함께 쓰면 지정된 대상 모듈의 권한으로 검사한다. 현재 페이지 설정 액션과 모듈 권한·스킨·언어 설정 액션이 이 범위를 사용한다.
 
 `grant` 객체는 다음 boolean 속성을 가질 수 있다.
 

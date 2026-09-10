@@ -32,9 +32,12 @@ Rhymix를 실행/배포할 때 필요한 PHP 환경, DB, 드라이버, 웹서버
 |---|---|---|
 | `memory_limit` | 128M ~ 256M | 큰 파일/일괄 작업 시 |
 | `post_max_size` | 32M ~ | 첨부 업로드 한도 |
-| `upload_max_filesize` | 32M ~ | 위와 일치 |
+| `upload_max_filesize` | 32M ~ | `post_max_size`보다 작게 설정 |
 | `max_execution_time` | 60 ~ 300 | 큐/일괄 처리 |
 | `default_charset` | `UTF-8` | autoload에서 강제 (`common/autoload.php:34`) |
+| `session.auto_start` | `off` | Rhymix가 세션 시작 시점을 제어 |
+
+업로드·실행 시간 값은 작업량에 맞춘 예시다. [공식 설치 환경](https://rhymix.org/manual/introduction/requirements)은 `memory_limit` 최소 128M와 `upload_max_filesize < post_max_size < memory_limit` 관계를 안내한다. 분할 업로드를 사용하므로 업로드 파일 전체 크기와 한 요청의 PHP 제한은 구분한다.
 
 ## 데이터베이스
 
@@ -117,7 +120,7 @@ Queue는 기본 실행 드라이버가 없으며, 설정하지 않은 상태에�
 
 | 파일 | 역할 | 커밋 여부 |
 |---|---|---|
-| `config/config.inc.php` | autoload 진입점 (얇은 brigde) | 커밋됨 |
+| `config/config.inc.php` | autoload 진입점 (얇은 bridge) | 커밋됨 |
 | `files/config/config.php` | 런타임 설정 — DB/캐시/메일/보안 등 | gitignore |
 | `config/config.user.inc.php` | 코드 기반 설정 override | gitignore |
 | `files/config/db.config.php` | XE 호환용 더미 | gitignore |
@@ -144,7 +147,7 @@ php index.php <plugin>.<script>
 
 ```bash
 php index.php common.cron                       # 큐 워커
-php index.php common.clean_old_logs             # 오래된 로그 정리
+php index.php module.cleanMiscLogs              # 오래된 로그 정리
 php index.php module.updateAllModules           # 모든 모듈 업데이트
 ```
 

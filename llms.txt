@@ -4,6 +4,8 @@
 
 이 파일은 LLM/AI 어시스턴트가 Rhymix 코드베이스를 효율적으로 탐색하기 위한 진입 가이드다. 인간 독자는 [README.md](README.md)부터 본다.
 
+검증 기준: **2026-09-10**, Rhymix **2.1.36**, 본체 커밋 `1ae6ce181` (2.1.36 태그 이후 수정 포함). 버전·검증 범위와 갱신 절차는 [README.md](README.md#검증-기준) 참고. 다른 checkout에서 사용하면 변경된 소스를 다시 확인한다.
+
 ## 작업 전 필수 규약
 
 - **코드 인용은 `file_path:line_number` 형식.** (예: `common/autoload.php:75-86`)
@@ -11,7 +13,7 @@
 - **`@deprecated` 표시는 신규 코드에 사용하지 않는다.** 설명도 생략.
 - **신규 코드는 신형 namespace(`Rhymix\Framework\*`, `Rhymix\Modules\*`)에 작성.**
 - **PHP 8.4 문법 기준.** 단, CI는 PHP 7.4 ~ 8.5 매트릭스이므로 호환성 유지.
-- **들여쓰기**: PHP는 tabs / JSON·YAML·Markdown은 2-space. UTF-8, LF, final newline.
+- **들여쓰기**: PHP는 tabs / JSON·`.yml`·Markdown은 2-space. `.editorconfig`에 `.yaml` 별도 규칙은 없음. UTF-8, LF, final newline.
 - **PR base 브랜치는 `master`** (`main`이 아님).
 - **신규 스킨/레이아웃/위젯 템플릿은 인라인 script/style 금지.** CSP(`'unsafe-inline'` 없음)를 전제로 작성한다. JS/CSS는 외부 파일 + `@load`/`<load>`, 템플릿 → JS 파라미터는 `<script id="..." type="application/json">@json(...)</script>` + JS의 `getElementById`. → [19-security.md § Content Security Policy](19-security.md#content-security-policy)
 
@@ -49,15 +51,17 @@ CLI 모드는 `ModuleHandler::procCommandLineArguments($argv)`로 분기 ([21-cl
 
 ### 컨벤션 기반 라우팅
 
-액션 메서드 접두사가 의미를 가진다. `ModuleActionParser`가 `module.xml`의 type을 자동 결정.
+액션 메서드 접두사는 이름 관례다. `ModuleActionParser`의 type 자동 판정은 **`class`가 있고 `type`을 생략한 액션**에만 적용된다 (`common/framework/parsers/ModuleActionParser.php:164-179`).
 
 | 접두사 | 의미 |
 |---|---|
-| `disp*` | HTML 페이지 (View) |
-| `proc*` | 처리/변경 (Controller) |
-| `get*`  | 데이터 조회 (Model/API) |
+| `disp*` | HTML 페이지, 자동 판정 `view` |
+| `proc*` | 처리/변경, 자동 판정 `controller` |
+| `get*` 및 그 밖의 이름 | 자동 판정 `auto`. v1 Model 액션은 `type="model"`을 명시 |
 
 `module.xml`의 `<action class="Controllers\Foo" />`는 namespace 모듈 등록이며, `method=` 속성은 **PHP 메서드명이 아니라 허용 HTTP 메서드**(GET/POST 등)다. 호출되는 PHP 메서드는 액션 이름과 동일.
+
+`permission="manager:config:*"`는 설정 관리 범위까지 검사한다. 세부 권한 확인은 `ModuleModel::getGrant()`가 반환하는 `Permission` 객체의 `can()`을 사용한다. `SessionHelper`에는 `can()`이 없다. → [06-module-handler-lifecycle.md](06-module-handler-lifecycle.md#권한-체계-grant)
 
 ### 인스턴스 캐싱
 
@@ -80,7 +84,7 @@ CLI 모드는 `ModuleHandler::procCommandLineArguments($argv)`로 분기 ([21-cl
 
 ### raw SQL은 커서를 직접 회수한다
 
-DB 연결이 **unbuffered**라 raw `query()`/`prepare()` 결과셋을 끝까지 읽지 않으면 커서가 열린 채 남고, 그 상태로 `commit()`에 도달하면 `HY000 2014`가 난다. `commit()`은 이 예외를 삼키므로 **커밋이 조용히 실패하고 트랜잭션이 통째로 롤백**된다 — 컨트롤러는 `success`를 반환하는데 데이터만 사라진다. `fetchColumn()`/`fetch()` 뒤에는 반드시 `closeCursor()`를 부르고(`fetchAll()`은 안전), 결과를 읽지 않는 `SELECT GET_LOCK/RELEASE_LOCK`도 예외가 아니다. 트리거 핸들러는 코어 트랜잭션 안에서 돌기 때문에 특히 위험하다. `executeQuery()`(XML 쿼리)만 쓰면 코어가 정리한다. 상세: [14-database-and-queries.md](14-database-and-queries.md).
+DB 연결이 **unbuffered**라 raw `query()`/`prepare()` 결과셋을 끝까지 읽지 않으면 커서가 열린 채 남고, 그 상태로 `commit()`에 도달하면 `HY000 2014`로 실패할 수 있다. 최외곽 `commit()`은 PDO 예외를 내부 오류 상태에 저장하므로 **반환값만으로 성공을 판단하면 안 된다**. 열린 트랜잭션이 요청 종료 시 롤백되어 컨트롤러의 성공 응답과 DB 결과가 달라질 수 있다. `$db->isError()`/`getError()`로 확인한다. `fetchColumn()`/`fetch()` 뒤에는 `closeCursor()`를 호출하고(`fetchAll()`은 결과를 전부 소비), 결과를 읽지 않는 `SELECT GET_LOCK/RELEASE_LOCK`도 회수한다. 트리거는 코어 트랜잭션 안에서 실행될 수 있다. `executeQuery()`(XML 쿼리)는 코어가 정리한다. 상세: [14-database-and-queries.md](14-database-and-queries.md).
 
 ## 레거시 클래스 명명 ↔ 파일 매핑
 
@@ -106,6 +110,8 @@ autoloader 정규식(`common/autoload.php:75`)은 `Wap` kind(`BoardWap` → `mod
 
 테스트는 **Composer dev 의존성이 아니라 `codecept.phar`를 직접** 사용.
 
+본체 루트에서 실행한다. **전체 실행 및 `install` 스위트는 테스트마다 `files/`를 삭제하고 테스트 DB를 정리하므로, 전용 checkout·전용 DB에서만 실행한다** (`tests/_support/InstallHelper.php:8-10`, `tests/install.suite.dist.yml`). 자세한 준비·서버 실행 순서는 [35-testing-and-ci.md](35-testing-and-ci.md#로컬-실행) 참고.
+
 ```bash
 wget https://res.rhymix.org/ci/php8.4/codecept.phar
 mysql -uroot -e "CREATE DATABASE rhymix; CREATE USER 'rhymix'@'localhost' IDENTIFIED BY 'rhymix'; GRANT ALL ON rhymix.* TO 'rhymix'@'localhost';"
@@ -113,9 +119,10 @@ php codecept.phar build
 php codecept.phar run unit
 php codecept.phar run unit framework/RouterTest.php
 php codecept.phar run unit framework/RouterTest.php:testParseURL
-php codecept.phar run --debug --fail-fast
-# install 스위트는 PHP dev 서버 필요
+# 전체 또는 install 스위트 실행 전에 PHP dev 서버 시작
 php -S localhost:8000 &
+php codecept.phar run --debug --fail-fast
+# install 스위트만 실행하려면:
 php codecept.phar run install
 ```
 

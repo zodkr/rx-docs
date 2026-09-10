@@ -73,7 +73,7 @@ class DB extends Rhymix\Framework\DB {}
 
 ## 버전과 호환성
 
-- 현재 버전: **2.1.35** (`common/constants.php:6`).
+- 검증한 본체 버전: **2.1.36** (`common/constants.php:6`), 커밋 `1ae6ce181`. 검증일과 갱신 절차는 [README.md](README.md#검증-기준) 참고.
 - 최소 PHP: **7.4** (`common/autoload.php:14-19`에서 런타임 강제). 참고로 `common/composer.json`의 `require.php`는 `>=7.2.5`로 더 느슨하다.
 - 공식 운영 권장 PHP: **8.2 이상** ([공식 설치 환경](https://rhymix.org/manual/introduction/requirements)).
 - 이 문서의 신규 코드 작성 기준: **PHP 8.4**. 단, 코어에 기여하는 코드는 아래 CI 범위와 호환되어야 한다.

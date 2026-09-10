@@ -167,8 +167,8 @@ $sms->send();
 
 ```php
 $push = new Rhymix\Framework\Push();
-$push->setFrom(int $member_srl);              // 발송자 회원 srl (옵션)
-$push->addTo(int $member_srl);                // 수신자 회원 srl (디바이스 토큰이 아닌 member_srl)
+$push->setFrom($sender_member_srl);          // int, 발송자 회원 srl (옵션)
+$push->addTo($recipient_member_srl);         // int, 수신자 회원 srl (디바이스 토큰이 아닌 member_srl)
 $push->addTo($another_member_srl);
 $push->setSubject('알림 제목');
 $push->setContent('알림 본문');

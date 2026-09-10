@@ -57,6 +57,8 @@ coverage:
 
 설정: `tests/install.suite.dist.yml` (로컬에서 DB 접속정보 등을 바꾸려면 `install.suite.dist.yml`을 `install.suite.yml`로 복사해서 오버라이드; CI는 복사 없이 `.dist.yml`을 그대로 사용).
 
+이 스위트는 `PhpBrowser`로 HTTP 요청과 HTML 폼을 검증한다. 실제 브라우저의 JavaScript 실행이나 화면 렌더링까지 검증하는 테스트는 아니다 (`tests/install.suite.dist.yml:4-8`).
+
 ### `tests/_data/`
 
 테스트용 fixture. 특히 템플릿 엔진 테스트는 `tests/_data/template/`의 `v1*.html`/`v2*.html` 입력 + `*.executed.html` 골든 출력을 비교.
@@ -66,6 +68,8 @@ coverage:
 `UnitTester.php`, `InstallTester.php` 등 Codeception 헬퍼. `codecept build`로 자동 생성.
 
 ## 로컬 실행
+
+아래 명령은 **Rhymix 본체 루트**에서 실행한다. `tests/_support/InstallHelper.php:8-10`은 각 설치 테스트 전에 `files/` 전체를 삭제한다. 테스트 DB도 `Db`·`DbDropTablesHelper`로 정리하고 `config/install.config.php`를 생성·삭제하므로, **전용 checkout과 전용 DB를 준비하고 기존 설치에 전체 스위트 또는 install 스위트를 실행하지 않는다**. DB 접속정보를 바꾸면 `Db`와 `DbDropTablesHelper` 양쪽 설정을 함께 바꾼다.
 
 ### 의존성
 
@@ -91,9 +95,6 @@ php codecept.phar build
 ### Run
 
 ```bash
-# 모든 스위트
-php codecept.phar run --debug --fail-fast
-
 # unit만
 php codecept.phar run unit
 
@@ -104,10 +105,21 @@ php codecept.phar run unit framework/RouterTest.php
 php codecept.phar run unit framework/RouterTest.php:testParseURL
 ```
 
-### install 스위트만
+### 전체 또는 install 스위트
+
+서버를 먼저 실행한다. 한 터미널에서 본체 루트를 작업 디렉토리로 두고 다음 명령을 유지한다.
 
 ```bash
-php -S localhost:8000 &
+php -S localhost:8000
+```
+
+다른 터미널에서 같은 루트로 이동한 뒤 필요한 실행 범위를 선택한다.
+
+```bash
+# 모든 스위트 (install 포함)
+php codecept.phar run --debug --fail-fast
+
+# 또는 install 스위트만
 php codecept.phar run install
 ```
 

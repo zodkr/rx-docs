@@ -145,11 +145,9 @@ Context::isInstalled();        // bool
 Context::isLocked();           // bool — 점검 모드
 ```
 
-### 인코딩 / IDN
+### IDN
 
 ```php
-Context::convertEncodingStr($str);                       // 문자열 자동 감지 → UTF-8 (@deprecated)
-Context::convertEncoding($obj);                          // 객체 내 문자열 프로퍼티 일괄 변환, 자동 감지 → UTF-8 (@deprecated)
 Context::encodeIdna('한글도메인.kr');                     // punycode
 Context::decodeIdna('xn--...');
 ```
@@ -164,6 +162,16 @@ Context::decodeIdna('xn--...');
 - `</?script` — `<script>`/`</script>`.
 
 발견 시 `security_check`를 `DENY ALL` 또는 `ALLOW ADMIN ONLY`로 설정해 이후 `ModuleHandler` 생성자가 거부 처리한다.
+
+### 요청 변수의 배열 입력
+
+`_filterRequestVar()`는 모든 배열을 문자열로 변환하지 않는다 (`classes/context/Context.class.php:1490-1548`).
+
+- `mid`, `vid`, `act`, `module`이 배열이면 `DENY ALL`/`ERR_UNSAFE_VAR`로 표시하고 해당 값을 `null`로 반환한다.
+- `search_target`, `search_keyword`, `is_keyword`, `xe_validator_id`, `success_return_url`, `error_return_url`이 배열이면 해당 값을 `null`로 반환한다.
+- 그 밖의 배열은 원소별로 재귀 처리한다. 문자열 `search_target`·`search_keyword`·`is_keyword`·`xe_validator_id`는 GET 이외 요청에서도 이스케이프한다.
+
+이 처리는 예약된 입력에 대한 방어다. 확장 모듈이 정의한 필드의 타입·필수 여부·허용값은 해당 모듈에서 검증한다.
 
 ## 예약어
 

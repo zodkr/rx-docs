@@ -69,7 +69,7 @@ $safe_html = Rhymix\Framework\Filters\HTMLFilter::clean(
 
 #### 신규 스킨/레이아웃 작성 규칙
 
-향후 코어 업데이트시 CSP를 켜는 옵션을 제공할 예정이다. 나중에 `script-src`/`style-src`에서 `'unsafe-inline'`이 빠져도 화면이 깨지지 않도록, **새로 만드는 스킨·레이아웃은 처음부터 인라인 script/style 없이 작성한다.** 이미 v1으로 배포된 기존 스킨/레이아웃은 명시적 요청 없이 일괄 변환하지 않는다 (§ [09 - 새 템플릿 작성/마이그레이션 정책](09-templates-and-skins.md#새-템플릿-작성마이그레이션-정책)과 동일한 기준).
+현재 코어에는 CSP 활성화 설정이 없다 (`common/defaults/config.php:137-143`, `classes/display/DisplayHandler.class.php:118-131`). 별도로 적용한 `script-src`/`style-src`에 `'unsafe-inline'`이 없어도 화면이 동작하도록, **새로 만드는 스킨·레이아웃은 처음부터 인라인 script/style 없이 작성한다.** 이미 v1으로 배포된 기존 스킨/레이아웃은 명시적 요청 없이 일괄 변환하지 않는다 (§ [09 - 새 템플릿 작성/마이그레이션 정책](09-templates-and-skins.md#새-템플릿-작성마이그레이션-정책)과 동일한 기준).
 
 지양할 것 — 모두 `'unsafe-inline'`을 요구한다:
 
@@ -158,6 +158,8 @@ $ok   = Rhymix\Framework\Password::checkPassword($password, $hash);
 
 `hashPassword`의 `$algos`는 콤마 구분 문자열(예: `'md5,sha1,md5'`) 또는 배열을 받아 chain hash를 만든다 (`:238-358`). argon2id/bcrypt/portable/pbkdf2/drupal/joomla/kimsqrb/crypt 등은 체인에서 마지막에 와야 한다.
 
+`checkPassword($password, $hash)`의 알고리즘 자동 감지 경로는 Argon2id·bcrypt 해시를 발견하면 PHP의 `password_verify()`로 검증한다. 해시 문자열을 다시 만들어 직접 비교하는 경로와 구분한다 (`common/framework/Password.php:364-413`). 이 동작은 `tests/unit/framework/PasswordTest.php:65-78`에서 각 알고리즘으로 만든 해시를 자동 감지해 확인한다.
+
 ### 랜덤 비밀번호
 
 ```php
@@ -198,6 +200,7 @@ $temp = Rhymix\Framework\Password::getRandomPassword(16);   // 16자 (기본)
 
 - JPEG/PNG/GIF/WebP 및 지정된 audio/video 확장자는 `fileinfo`로 판별한 대분류가 선언 확장자와 맞는지 검사한다.
 - SVG 또는 XML/HTML로 보이는 콘텐츠는 스크립트·이벤트 핸들러·외부 entity 등 위험 패턴을 정규식으로 탐지한다.
+- HWPX 확장자 또는 PNG 시그니처(`89504E470D0A1A0A`)가 확인되면 내용이 XML처럼 보인다는 이유로 SVG 검사에 들어가지 않는다. PNG 메타데이터에 SVG 문자열이 포함된 경우의 오탐을 줄이는 예외이며, 확장자에 따른 이미지 MIME 검사 등은 계속 수행한다 (`common/framework/filters/FileContentFilter.php:40-95`).
 - PHP 태그 검출(`<?`, XML 선언 제외)은 HTML 또는 XML-like 콘텐츠에 적용되는 `_checkHTML()` 단계의 규칙이다. 임의 확장자의 모든 파일을 PHP 코드 스캐너처럼 검사하는 것은 아니다 (`common/framework/filters/FileContentFilter.php:36-96,138-155`).
 
 (`enshrined/svg-sanitize` 기반 정화는 `Security::sanitize($str, 'svg')`에서 수행한다.)
@@ -273,6 +276,16 @@ XE 호환. iframe/object/embed/applet 화이트리스트.
 - `is_admin === 'Y'` 회원만 root.
 - root는 모든 모듈의 매니저 권한 보유.
 - 관리자 페이지 접근 IP 제한은 위의 `config('admin.allow')`/`config('admin.deny')`로 수행한다(별도의 root 차단 설정 키는 없음).
+
+### 모듈 매니저의 설정 범위
+
+`manager`는 매니저 여부만 검사하지만 `manager:config:*`는 설정 관리 범위까지 검사한다. 페이지 설정, 모듈 권한·스킨·언어 저장, 문서 카테고리 템플릿 정보 조회는 현재 이 범위를 요구한다 (`modules/page/conf/module.xml:17-30`, `modules/module/conf/module.xml:47-49`, `modules/document/conf/module.xml:14`).
+
+직접 검사할 때는 `ModuleModel::getGrant()`가 반환하는 `Rhymix\Modules\Module\Models\Permission` 객체의 `can('config:*')`를 사용한다. `SessionHelper::isModuleAdmin()`의 boolean 결과만으로 설정 변경까지 허용하면 세부 범위를 반영하지 못한다. 동작과 `check_var`는 [06-module-handler-lifecycle.md](06-module-handler-lifecycle.md#권한-체계-grant) 참고.
+
+### 로그인 후 돌아갈 URL
+
+`MemberView::checkRefererUrl()`은 같은 사이트인지 확인하고 인증 화면 경로와 `javascript:`·이벤트 속성 형태가 포함된 URL을 제외한다. 유효한 Referer는 `escape()`를 적용해 `$_SESSION['member_auth_referer']`에 저장한다 (`modules/member/member.view.php:31-67`). 로그인 스킨에서 HTTP Referer를 직접 출력하거나 이 값을 원본 URL이라고 가정해 이스케이프를 해제하지 않는다.
 
 ## 사이트 잠금 (점검 모드)
 

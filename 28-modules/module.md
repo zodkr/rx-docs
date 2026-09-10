@@ -48,8 +48,8 @@
 | `getModuleAdminModuleList` / `getModuleAdminModuleInfo` / `getModuleAdminGrant` 외 6개 | 관리자 모델 조회 |
 | `procModuleAdminInsertCategory` / `UpdateCategory` / `DeleteCategory` | 카테고리 CRUD (ruleset 동명) |
 | `procModuleAdminModuleSetup` / `procModuleAdminModuleGrantSetup` / `procModuleAdminCopyModule` | 모듈 설정/권한/복사 (ruleset=insertModuleSetup/insertModulesGrant/copyModule) |
-| `procModuleAdminInsertGrant` / `procModuleAdminUpdateSkinInfo` | 권한/스킨 (manager) |
-| `procModuleAdminInsertLang` / `procModuleAdminDeleteLang` | 다국어 코드 CRUD (`procModuleAdminInsertLang`만 permission=manager, `procModuleAdminDeleteLang`은 권한 속성 없음) |
+| `procModuleAdminInsertGrant` / `procModuleAdminUpdateSkinInfo` | 권한/스킨 (`permission="manager:config:*"`, `check_var="module_srl"`) |
+| `procModuleAdminInsertLang` / `procModuleAdminDeleteLang` | 다국어 코드 CRUD (`procModuleAdminInsertLang`은 `permission="manager:config:*"`, `procModuleAdminDeleteLang`은 권한 속성이 없어 Admin 액션 기본값인 root 적용) |
 | `procModuleAdminGetList` / `procModuleAdminSetDesignInfo` / `procModuleAdminUpdateUseMobile` | 목록/디자인/모바일 토글 |
 
 > **모듈 인스턴스 자체의 생성/수정/삭제(`insertModule`/`updateModule`/`deleteModule`)는 module.xml 액션이 아니다** — `ModuleController`의 인스턴스 메서드로만 제공되어, autoinstall/page/menu 등 다른 모듈에서 직접 호출한다. **모듈 자체 설치/업데이트는 `install` 모듈(`procInstallAdminInstall`은 내부적으로 `InstallController::installModule` 호출, `procInstallAdminUpdate`는 모듈의 `moduleUpdate` 실행 후 라우트/트리거/네임스페이스/접두사 재등록. `InstallController::updateModule`은 `updateAllModules` 스크립트 등 다른 경로에서 사용)이, PDS 패키지 설치/제거는 `autoinstall` 모듈(`procAutoinstallAdminInstallPackage`/`procAutoinstallAdminUninstallPackage`)이 담당한다. `procModuleAdminInstall`/`Uninstall`/`Update` 같은 액션은 존재하지 않는다.**

@@ -77,7 +77,7 @@
 
 ```
 SELECT ... [3.45ms]
-  caller: BoardModel::getDocumentList (modules/board/board.model.php:152)
+  caller: DocumentModel::getDocumentList (modules/document/document.model.php)
 ```
 
 ### 슬로우 쿼리만
@@ -110,25 +110,25 @@ $triggers = Rhymix\Framework\Debug::getTriggers();
 
 ## 트리거 로깅
 
-```php
-Rhymix\Framework\Debug::addTrigger(array $trigger): void;
-// $trigger = ['name' => 'document.insertDocument.after', 'target' => ..., 'target_plugin' => ..., 'elapsed_time' => 0.012]
-```
+시그니처: `Rhymix\Framework\Debug::addTrigger(array $trigger): void`. 인자는 `name`, `target`, `target_plugin`, `elapsed_time` 키를 가진 배열이다.
 
 `display_content`에 `slow_triggers` 포함 시 임계 초과만 표시. `ModuleHandler::triggerCall`이 자동 호출한다.
 
 ## 위젯 로깅
 
-```php
-Rhymix\Framework\Debug::addWidget(array $widget): void;
-```
+시그니처: `Rhymix\Framework\Debug::addWidget(array $widget): void`.
 
 ## 시간 측정 / 사용자 정의 entry
 
+| 메서드 시그니처 | 의미 |
+|---|---|
+| `addTime(string $type, float $time): void` | `template`, `db` 등의 유형별 시간 누적 |
+| `addEntry($message): void` | 사용자 정의 entries 누적 |
+| `addQuery(array $query): void` | 쿼리 로그 기록 |
+
 ```php
-Rhymix\Framework\Debug::addTime(string $type, float $time): void;  // type='template'/'db'/...
-Rhymix\Framework\Debug::addEntry($message): void;                  // entries 누적
-Rhymix\Framework\Debug::addQuery(array $query): void;
+Rhymix\Framework\Debug::addTime('my_module', 0.012);
+Rhymix\Framework\Debug::addEntry('일괄 처리 완료');
 ```
 
 `entries` 표시 시 출력.

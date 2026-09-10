@@ -156,7 +156,7 @@ return URL만 제외하려면 `no-error-return-url="true"` 또는 호환 별칭 
 {getUrl('', 'mid', 'free')}
 {$lang->key_name}
 {Context::getRequestUri()}
-{config('view.theme')}
+{config('seo.main_title')}
 ```
 
 ### 로컬 자원의 브라우저 캐시 무효화

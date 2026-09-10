@@ -7,7 +7,7 @@
 
 | 심볼 | 위치 | 유래 | 대체 API | 비고 |
 |---|---|---|---|---|
-| `Context::_getBrowserTitle()` | `classes/context/Context.class.php:839` | XE | 추정: `self::getBrowserTitle()` |  |
+| `Context::_getBrowserTitle()` | `classes/context/Context.class.php:839` | XE | `Context::getBrowserTitle()` |  |
 | `Context::normalizeFilePath()` | `classes/context/Context.class.php:2174` | XE | 없음 | 내부 경로 정규화. 절대 경로는 FileHandler::getRealPath(); 코어 호출 있음 |
 | `Context::getAbsFileUrl()` | `classes/context/Context.class.php:2196` | XE | `RX_BASEURL . '상대경로'` | 절대 URL은 Rhymix\Framework\URL::fromServerPath() |
 | `Context::addJsFile()` | `classes/context/Context.class.php:2268` | XE | `Context::loadFile([$file, 'head'\|'body', $targetie, $index])` | 2·3번 인자는 무시됨; 코어 호출 있음 |

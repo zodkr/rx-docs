@@ -52,7 +52,7 @@
 | 심볼 | 위치 | 유래 | 대체 API | 비고 |
 |---|---|---|---|---|
 | `Rhymix\Framework\DB::_query()` | `common/framework/DB.php:1409` | 2.0 | `query()` | 2.1.0에서 표시 |
-| `Rhymix\Framework\DB::_fetch()` | `common/framework/DB.php:1431` | 2.0 | 추정: `$this->fetch()` | 2.1.0에서 표시 |
+| `Rhymix\Framework\DB::_fetch()` | `common/framework/DB.php:1431` | 2.0 | `$db->fetch($stmt, $last_index)` | 호출 시 E_USER_WARNING 발생; 2.1.0에서 표시 |
 | `Rhymix\Framework\Formatter::convertIECondition()` | `common/framework/Formatter.php:564` | 1.x | 없음 | IE 조건부 주석 지원 제거, FeatureDisabled 예외; 2.1.0에서 표시 |
 
 ## common/legacy.php
@@ -114,7 +114,7 @@
 
 | 심볼 | 위치 | 유래 | 대체 API | 비고 |
 |---|---|---|---|---|
-| `DocumentController::updateUploaedCount()` | `modules/document/document.controller.php:3889` | XE | 추정: `$this->updateUploadedCount()` |  |
+| `DocumentController::updateUploaedCount()` | `modules/document/document.controller.php:3889` | XE | `DocumentController::updateUploadedCount($document_srl_list)` | 오타 이름의 래퍼 |
 | `DocumentItem::_addAllowScriptAccess()` | `modules/document/document.item.php:669` | XE | 없음 | Flash allowscriptaccess 처리. HTMLFilter::clean()이 대체 |
 | `DocumentItem::_checkAllowScriptAccess()` | `modules/document/document.item.php:682` | XE | 없음 | Flash allowscriptaccess 처리. HTMLFilter::clean()이 대체 |
 
@@ -129,8 +129,8 @@
 | 심볼 | 위치 | 유래 | 대체 API | 비고 |
 |---|---|---|---|---|
 | `FileController::procFileImageResize()` | `modules/file/file.controller.php:272` | XE | 없음 | FeatureDisabled 예외. 이미지 변환은 Rhymix\Framework\Image |
-| `FileModel::getFileModuleConfig()` | `modules/file/file.model.php:557` | XE | 추정: `self::getFileConfig()` | 2.1.0에서 표시 |
-| `FileModel::getFileGrant()` | `modules/file/file.model.php:567` | XE | 추정: `self::isDeletable()` | 2.1.0에서 표시 |
+| `FileModel::getFileModuleConfig()` | `modules/file/file.model.php:557` | XE | `FileModel::getFileConfig($module_srl)` | 2.1.0에서 표시 |
+| `FileModel::getFileGrant()` | `modules/file/file.model.php:567` | XE | `FileModel::isDeletable($file_info, $member_info)` | 원본은 is_deletable 프로퍼티를 가진 객체, 대체는 bool; 2.1.0에서 표시 |
 
 ## modules/integration_search/
 

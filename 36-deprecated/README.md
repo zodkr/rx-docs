@@ -47,7 +47,7 @@ grep -rn "addJsFile" docs/36-deprecated/
 | 심볼 | `Context::addJsFile()`, `checkCSRF()`, `class Security`, `file common/scripts/clean_old_logs.php`. 메서드는 정적·인스턴스 구분 없이 `Class::method()`. 대소문자는 HEAD 선언 기준 |
 | 위치 | HEAD의 선언 줄. 본체 루트 기준 `file:line` |
 | 유래 | 심볼이 처음 존재한 스냅숏. `XE` / `1.x` / `2.0` / `2.1`. 학습 데이터 시대를 짐작하는 데 쓴다 |
-| 대체 API | `tools` 브랜치 `deprecated/overrides.json`의 값이 최우선. 없으면 docblock의 `Use X instead`. 그것도 없으면 deprecated 본문이 한 줄 위임일 때만 `추정: X`. 나머지는 `확인 필요`(소스를 직접 읽는다) 또는 `없음`(대체 없이 제거된 기능) |
+| 대체 API | `tools` 브랜치 `deprecated/overrides.json`에 소스로 확인해 적은 값이 최우선. 없으면 docblock의 `Use X instead`. 그 밖에는 `확인 필요`(아직 조사하지 않음, 소스를 직접 읽는다) 또는 `없음`(대체 없이 제거된 기능, 비고에 사유). 추정값은 쓰지 않는다 |
 | 비고 | docblock 메모, 표시된 태그, `코어 호출 있음`, 이름 충돌 경고, 수기 메모 |
 
 `removed.md`의 "마지막 존재"는 `태그 경로:줄`이고, 절 제목의 제거 시점은 그 다음 릴리스 태그 기준이다.
@@ -114,7 +114,7 @@ python3 ../rx-docs-tools/deprecated/generate.py check --links --rhymix /path/to/
 - 시점 판정은 태그 스냅숏 diff다. 태그 사이의 커밋은 보지 않으므로 릴리스 단위 정밀도다.
 - 대소문자 무시로 매칭한다. 파일 이동이나 클래스 개명은 새 심볼로 보인다. `XmlParser` → `XeXmlParser`처럼 alias가 있으면 잡지만, alias 없는 개명은 유래가 늦게 나온다.
 - `1.9.13`이 `2.0.0`보다 뒤라 날짜순으로 판정한다. 1.9.13에서만 표시된 항목은 백포트일 수 있어 비고에 남긴다.
-- `추정:`은 deprecated 본문이 한 줄 위임일 때의 첫 호출이며 항상 옳지는 않다. `overrides.json`이 우선하고, `확인 필요`는 소스를 직접 읽어야 한다.
+- 대체 API는 사람이 소스로 확인해 `overrides.json`에 적은 값만 싣는다. 생성기는 추정값을 만들지 않으며, 아직 조사하지 않은 항목은 `확인 필요`로 남긴다.
 - 삭제 목록은 상속·alias를 해석하지만 `__call`/`__callStatic` 같은 동적 디스패치와 PHP 버전 가드 안의 조건부 `class_alias`는 잡지 못한다. 모듈 메서드는 `overrides.json`의 `removed.method_classes`에 적힌 클래스만 본다.
 - 런타임 `E_USER_DEPRECATED`가 없으므로 이 문서와 docblock 외에 deprecated를 알 방법이 없다. 본체 갱신 시 반드시 재생성한다.
 - `common/libraries/`·`common/vendor/`·`tests/`·`tools/`·`modules/editor/components/`는 스캔하지 않는다.

@@ -164,7 +164,7 @@ width=device-width, initial-scale=1.0, user-scalable=yes
 
 ## Mobile 클래스의 deprecated 메서드
 
-`@deprecated`로 표시된 메서드는 사용하지 않음 (예: 일부 옛 헬퍼). 신형 코드는 `Mobile::isFromMobilePhone()`만 사용.
+`Mobile`의 `@deprecated` 메서드(`isMobileCheckByAgent()` 등)와 대체 API는 [36-deprecated/](36-deprecated/) 참고. 신형 코드는 `Mobile::isFromMobilePhone()` 또는 `Rhymix\Framework\UA`를 쓴다.
 
 ## 봇 분기
 

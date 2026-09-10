@@ -69,7 +69,6 @@ Context::getUrl(5, ['', 'mid', 'foo', 'act', 'bar']);    // 또는 flat 배열 (
 getUrl('', 'mid', 'foo', 'act', 'bar');                  // 실무 권장: 전역 헬퍼가 가변 인자를 배열로 모아 전달
 Context::getRequestUrl();                                // 현재 요청 전체 URL (base URI + RX_REQUEST_URL, 원본 요청 URL)
 Context::getDefaultUrl();                                // 사이트 기본 URL
-Context::pathToUrl($path);                               // 경로 → URL
 ```
 
 `Context::getUrl`의 두 번째 인자 `$args_list`는 **배열**이어야 한다. `(개수, key, val, key, val, ...)`식 가변 인자 나열은 전역 헬퍼 `getUrl()`(`common/legacy.php:279`, 내부에서 `func_get_args()`를 배열로 모아 `Context::getUrl`에 전달) 전용이다.
@@ -116,8 +115,8 @@ Context::setCanonicalURL('https://...');
 
 ```php
 Context::loadFile([$path, 'head'|'body', $targetie, $index]);
-Context::addJsFile('./common/js/foo.js');
-Context::addCSSFile('./common/css/foo.css');
+Context::loadFile(['./common/js/foo.js', 'body', '', null]);    // JS: [파일, head|body, targetie, index]
+Context::loadFile(['./common/css/foo.css', 'all', '', null]);   // CSS: [파일, media, targetie, index]
 Context::loadJavascriptPlugin('jquery.fileupload');
 $list = Context::getJsFile('head');
 $list = Context::getCSSFile();
@@ -139,8 +138,8 @@ Context::redirect($url, 302);
 
 ```php
 Context::loadDBInfo();         // 자체 호출 — config 로드
-Context::getDBType();          // 'mysql'
-Context::getDBInfo();          // stdClass (db 설정)
+config('db.master.type');      // 'mysql' — Rhymix\Framework\Config::get 축약 헬퍼
+config('db.master');           // host/port/user/... 배열
 Context::isInstalled();        // bool
 Context::isLocked();           // bool — 점검 모드
 ```
@@ -148,9 +147,11 @@ Context::isLocked();           // bool — 점검 모드
 ### IDN
 
 ```php
-Context::encodeIdna('한글도메인.kr');                     // punycode
-Context::decodeIdna('xn--...');
+Rhymix\Framework\URL::encodeIdna('한글도메인.kr');       // punycode
+Rhymix\Framework\URL::decodeIdna('xn--...');
 ```
+
+`Context`의 `@deprecated` 메서드(`getDBType()`, `addJsFile()`, `pathToUrl()` 등)는 이 문서에 싣지 않는다. 목록과 대체 API: [36-deprecated/](36-deprecated/).
 
 ## 보안 체크 패턴 (`_check_patterns`)
 

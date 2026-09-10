@@ -73,13 +73,13 @@ files/attach/binaries/<module_srl>/<upload_target_srl 3자리씩 끊은 경로>/
 files/attach/images/<module_srl>/<upload_target_srl 3자리씩 끊은 경로>/<32자리 무작위 hex>
 ```
 
-- 실제 파일명은 `<srl>`이 아니라 `Security::getRandom(32, 'hex')`로 만든 32자리 무작위 hex 문자열(`file.controller.php:1083`)이며, 직접 다운로드 파일에는 확장자가 붙는다.
+- 실제 파일명은 `<srl>`이 아니라 `Rhymix\Framework\Security::getRandom(32, 'hex')`로 만든 32자리 무작위 hex 문자열(`file.controller.php:1083`)이며, 직접 다운로드 파일에는 확장자가 붙는다.
 - 분산 디렉토리 패턴으로 inode 폭발 방지.
 - `.htaccess`/nginx 차단으로 직접 접근 불가 → 모듈 거쳐서 다운로드.
 
 ## 파일 키 (file_key)
 
-`file_key`는 `procFileDownload`이 발급하는 서명 토큰으로 총 48자다. 앞 8자리는 발급 시각의 hex 타임스탬프(`dechex(RX_TIME)`), 뒤 40자는 HMAC-SHA256 기반 서명(`Security::createSignature` — salt 8자 + base64url 해시 32자, `Security.php:106-112`)이다. 발급 후 300초(5분) 동안만 유효하고 클라이언트 IP·`uploaded_filename`에 바인딩된다(`file.controller.php:416-419`, 검증은 `:456-469`). 별도의 소비/무효화 저장소가 없어 5분 이내에는 재사용 가능하다.
+`file_key`는 `procFileDownload`이 발급하는 서명 토큰으로 총 48자다. 앞 8자리는 발급 시각의 hex 타임스탬프(`dechex(RX_TIME)`), 뒤 40자는 HMAC-SHA256 기반 서명(`Rhymix\Framework\Security::createSignature` — salt 8자 + base64url 해시 32자, `Security.php:106-112`)이다. 발급 후 300초(5분) 동안만 유효하고 클라이언트 IP·`uploaded_filename`에 바인딩된다(`file.controller.php:416-419`, 검증은 `:456-469`). 별도의 소비/무효화 저장소가 없어 5분 이내에는 재사용 가능하다.
 
 다운로드 링크 자체는 `FileModel`의 정적 메서드가 생성한다 (`File` 클래스에는 `getDownloadUrl`이 없다). 이 URL에는 `file_key`가 아니라 파일의 `sid`가 들어간다.
 
@@ -122,7 +122,7 @@ $url = FileModel::getDownloadUrl($file_srl, $sid, 0, $source_filename);
 - 파일명의 위험 문자를 치환하고 오해를 부르는 이중 확장자를 정리하며, 최종 `.php`는 `.phps`로 바꾼다. 비관리자는 세션 또는 모듈의 허용 확장자 목록에 없는 파일을 거부한다.
 - 지정된 이미지·오디오·동영상 확장자는 `fileinfo`가 판별한 MIME 대분류와 비교.
 - HTML/XML처럼 보이는 콘텐츠에서는 PHP 태그와 위험한 스크립트·외부 entity 패턴 검사.
-- 비관리자의 SVG 업로드는 `Security::sanitize(..., 'svg')`로 한 번 더 정화.
+- 비관리자의 SVG 업로드는 `Rhymix\Framework\Security::sanitize(..., 'svg')`로 한 번 더 정화.
 
 상세: [../19-security.md](../19-security.md).
 

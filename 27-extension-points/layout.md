@@ -223,7 +223,7 @@ $module_info->mlayout_srl      // 모바일 레이아웃 srl
 
 ## 사용자 편집 레이아웃
 
-드래그앤드롭 편집은 모든 레이아웃의 공통 기능이 아니라 `type="faceoff"`인 레거시 FaceOff 레이아웃 전용이다. 현재 `procLayoutAdminInsert()`는 새 `faceoff` 인스턴스 생성을 `not supported`로 거부하고 관련 API도 deprecated 상태다. 일반 레이아웃은 관리자 설정 화면에서 `extra_vars`·메뉴·헤더 스크립트를 편집하며, 템플릿 자체를 시각적으로 재구성하지 않는다.
+드래그앤드롭 편집은 모든 레이아웃의 공통 기능이 아니라 `type="faceoff"`인 레거시 FaceOff 레이아웃 전용이다. 현재 `procLayoutAdminInsert()`는 새 `faceoff` 인스턴스 생성을 `not supported`로 거부하고 관련 API(`LayoutAdminController::procLayoutAdminInsert()` 등)도 `@deprecated`다([../36-deprecated/xe.md](../36-deprecated/xe.md)). 일반 레이아웃은 관리자 설정 화면에서 `extra_vars`·메뉴·헤더 스크립트를 편집하며, 템플릿 자체를 시각적으로 재구성하지 않는다.
 
 기존 FaceOff 인스턴스의 편집 결과는 `files/faceOff/<numbering>/layout.html`에 저장되며(예: `layout_srl=5` → `files/faceOff/005/layout.html`; `getNumberingPath`는 3자리 0채움, 1000 이상부터 디렉토리를 중첩) `ModuleObject::edited_layout_file`로 적용된다. `files/cache/layout/`에는 info.xml 파싱 결과(레이아웃 정보 객체) 캐시인 `*.cache.php`와 관리자 미리보기용 `tmp.tpl`이 저장된다. 레이아웃 템플릿 자체의 컴파일 캐시는 `files/cache/template/*.compiled.php`에 별도로 저장된다.
 

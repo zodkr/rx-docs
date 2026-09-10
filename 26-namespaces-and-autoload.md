@@ -206,7 +206,7 @@ $GLOBALS['RX_NAMESPACES']['mapping'] = [
 ```
 modules/admin/
 ├── admin.class.php                 ← 기반 클래스 (Admin = Rhymix\Modules\Admin\Controllers\Base 별칭)
-├── admin.admin.controller.php      ← 레거시 진입점 (class AdminAdminController, @deprecated 얇은 wrapper)
+├── admin.admin.controller.php      ← 레거시 진입점 (class AdminAdminController, @deprecated → Rhymix\Modules\Admin\Controllers\*)
 ├── admin.admin.model.php
 ├── admin.admin.view.php
 ├── controllers/
@@ -228,7 +228,7 @@ modules/admin/
 
 ## 신구 혼합 패턴
 
-`admin.admin.controller.php`(레거시, `class AdminAdminController`)에 `procAdmin*` wrapper 메서드 그대로 두고, 새 액션은 `controllers/Xyz.php`에 namespace로 작성 — 점진적 전환.
+`admin.admin.controller.php`(`class AdminAdminController`, `@deprecated`)에 `procAdmin*` wrapper 메서드 그대로 두고, 새 액션은 `controllers/Xyz.php`에 namespace로 작성 — 점진적 전환.
 
 ## 안전성
 

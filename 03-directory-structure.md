@@ -146,7 +146,7 @@ modules/<name>/
 ├── lang/<lang>.php               # 다국어
 ├── queries/*.xml                 # 선언적 쿼리
 ├── schemas/*.xml                 # 테이블 정의
-├── ruleset/*.xml                 # v1 입력 검증 (v2 deprecated)
+├── ruleset/*.xml                 # v1 입력 검증 (v2 모듈은 E_USER_WARNING)
 ├── tpl/                          # 모듈 내장 템플릿(관리자 화면 등)
 ├── skins/<skin>/                 # PC 스킨
 ├── m.skins/<skin>/               # 모바일 스킨

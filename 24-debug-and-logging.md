@@ -161,11 +161,11 @@ Rhymix\Framework\Debug::disable();
 - `null` → `files/debug/YYYYMMDD.php` (날짜별로 회전되는 파일).
 - 사용자 정의 가능.
 
-기본 파일명의 `YYYY`/`YY`/`MM`/`DD` 토큰은 로그를 쓸 때마다 현재 내부 날짜로 치환되므로 일자별 파일 생성은 코어가 직접 수행한다 (`classes/display/DisplayHandler.class.php:290-308`). 외부 logrotate나 별도 정리 작업은 오래된 파일의 보존 기간·압축·삭제를 관리할 때만 필요하다. `common/scripts/clean_old_logs.php`(현재 `module.cleanMiscLogs`로 위임)는 DB에 쌓인 로그(메일러 메일/SMS/푸시, 스팸필터 로그 등)를 regdate 기준 일수(기본 30일)로 삭제하는 스크립트이며 디버그 로그 파일은 대상이 아니다.
+기본 파일명의 `YYYY`/`YY`/`MM`/`DD` 토큰은 로그를 쓸 때마다 현재 내부 날짜로 치환되므로 일자별 파일 생성은 코어가 직접 수행한다 (`classes/display/DisplayHandler.class.php:290-308`). 외부 logrotate나 별도 정리 작업은 오래된 파일의 보존 기간·압축·삭제를 관리할 때만 필요하다. `php index.php module.cleanMiscLogs`(구 `common/scripts/clean_old_logs.php`는 `@deprecated` 래퍼)는 DB에 쌓인 로그(메일러 메일/SMS/푸시, 스팸필터 로그 등)를 regdate 기준 일수(기본 30일)로 삭제하는 스크립트이며 디버그 로그 파일은 대상이 아니다.
 
 ## 외부 시스템 연동
 
-`common.flushDebugInfo`/`common.writeSlowlog` 트리거는 프레임워크가 능동적으로 호출하지 않는다 — 이름 참조는 `ModuleHandler::triggerCall`의 재귀 방지용 예외 처리로만 남아 있고(`classes/module/ModuleHandler.class.php:1350`, `:1387`), `writeSlowlog()` 함수는 no-op이다(`common/legacy.php:1472`). Debug는 자체 정적 배열(`$_triggers`/`$_slow_triggers`/`$_queries` 등)에 누적 후 `DisplayHandler::getDebugInfo()`가 직접 출력/로그 파일에 기록한다.
+`common.flushDebugInfo`/`common.writeSlowlog` 트리거는 프레임워크가 능동적으로 호출하지 않는다 — 이름 참조는 `ModuleHandler::triggerCall`의 재귀 방지용 예외 처리로만 남아 있고(`classes/module/ModuleHandler.class.php:1350`, `:1387`), `writeSlowlog()` 함수(`@deprecated` → 대체 없음)는 no-op이다(`common/legacy.php:1472`). Debug는 자체 정적 배열(`$_triggers`/`$_slow_triggers`/`$_queries` 등)에 누적 후 `DisplayHandler::getDebugInfo()`가 직접 출력/로그 파일에 기록한다.
 
 외부 시스템(Sentry/Datadog 등)으로 보내려면 `Debug::registerErrorHandlers`가 등록하는 PHP shutdown 핸들러나 `display.after`/`moduleHandler.proc.after` 같은 라이프사이클 트리거에서 직접 송신한다.
 

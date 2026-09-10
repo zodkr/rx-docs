@@ -14,9 +14,9 @@
 | 클래스 | 파일 |
 |---|---|
 | `Admin` | `admin.class.php` — `class_alias('Rhymix\Modules\Admin\Controllers\Base', 'Admin')`만 정의 |
-| `AdminAdminController` | `admin.admin.controller.php` |
-| `AdminAdminModel` | `admin.admin.model.php` |
-| `AdminAdminView` | `admin.admin.view.php` |
+| `AdminAdminController` | `admin.admin.controller.php` (`@deprecated` → `Rhymix\Modules\Admin\Controllers\*`) |
+| `AdminAdminModel` | `admin.admin.model.php` (`@deprecated` → `Rhymix\Modules\Admin\Controllers\*`) |
+| `AdminAdminView` | `admin.admin.view.php` (`@deprecated` → `Rhymix\Modules\Admin\Controllers\*`) |
 
 > 일반 사용자용 `admin.controller.php`/`admin.model.php`/`admin.view.php`는 없다 — admin 모듈은 관리자 전용이므로 admin 클래스만 존재.
 
@@ -65,7 +65,7 @@
 
 ## 권한
 
-`is_admin === 'Y'` 회원(관리자)만 접근 가능. 모든 admin 컨트롤러는 `init()`에서 `isAdmin()`을 검사해 관리자가 아니면 `NotPermitted` 예외를 던진다 — namespace 컨트롤러 및 `AdminAdminView`는 `Base::init()`(`controllers/Base.php:23-25`), 레거시 `AdminAdminController`는 자체 init override에서 동일 체크(`admin.admin.controller.php:13-19`). `module.xml`의 `<grants />`는 비어 있고(`conf/module.xml:3`), `getSiteAllList`만 추가로 root 권한을 요구한다(`conf/module.xml:53`). 모듈 매니저(`*-managers`)에게 부분 허용하는 액션은 없다.
+`is_admin === 'Y'` 회원(관리자)만 접근 가능. 모든 admin 컨트롤러는 `init()`에서 `isAdmin()`을 검사해 관리자가 아니면 `NotPermitted` 예외를 던진다 — namespace 컨트롤러 및 `AdminAdminView`(`@deprecated`)는 `Base::init()`(`controllers/Base.php:23-25`), 레거시 `AdminAdminController`(`@deprecated`)는 자체 init override에서 동일 체크(`admin.admin.controller.php:13-19`). `module.xml`의 `<grants />`는 비어 있고(`conf/module.xml:3`), `getSiteAllList`만 추가로 root 권한을 요구한다(`conf/module.xml:53`). 모듈 매니저(`*-managers`)에게 부분 허용하는 액션은 없다.
 
 ## DB 스키마
 

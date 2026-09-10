@@ -160,7 +160,7 @@ php index.php module.updateAllModules           # 모든 모듈 업데이트
 
 ## CloudFlare/리버스 프록시
 
-- 클라이언트 IP: `HTTP_CF_CONNECTING_IP`가 있으면 `IpFilter::getCloudFlareRealIP()`로 `REMOTE_ADDR`을 실제 IP로 덮어쓴 뒤 정규 분기 진행 (`common/constants.php:59-83`).
+- 클라이언트 IP: `HTTP_CF_CONNECTING_IP`가 있으면 `Rhymix\Framework\Filters\IpFilter::getCloudFlareRealIP()`로 `REMOTE_ADDR`을 실제 IP로 덮어쓴 뒤 정규 분기 진행 (`common/constants.php:59-83`).
 - HTTPS: `$_SERVER['HTTPS']`(`off`가 아님), `HTTP_X_FORWARDED_PROTO=https`, `HTTP_X_FORWARDED_SSL=on`, `HTTP_CF_VISITOR`에 `https`, 또는 `SERVER_PORT=443` 중 하나로 `RX_SSL` 자동 감지 (`common/constants.php:88-111`).
 
 ## 다음 문서

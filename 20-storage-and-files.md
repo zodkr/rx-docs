@@ -246,7 +246,7 @@ Storage::deleteDirectory($tmp);
 | `php index.php module.cleanMiscLogs` | 오래된 로그 |
 | `php index.php ncenterlite.cleanNotifications` | 알림 |
 
-`common/scripts/clean_empty_dirs.php`·`clean_garbage_files.php`·`clean_message_files.php`·`clean_old_logs.php`·`clean_old_notifications.php`·`clean_old_thumbnails.php`는 위 모듈 스크립트로 위임하는 deprecated 래퍼이므로 신규 cron에는 CLI 호출을 쓴다.
+`common/scripts/clean_empty_dirs.php`·`clean_garbage_files.php`·`clean_message_files.php`·`clean_old_logs.php`·`clean_old_notifications.php`·`clean_old_thumbnails.php`는 위 모듈 스크립트로 위임하는 `@deprecated` 래퍼이므로 신규 cron에는 CLI 호출을 쓴다.
 
 상세: [21-cli-and-scripts.md](21-cli-and-scripts.md).
 

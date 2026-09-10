@@ -36,7 +36,7 @@
 | `getModuleSkinInfoList` / `getFileBoxListHtml` / `getModuleInfoByMenuItemSrl` | 모델 (root) |
 | `getLangListByLangcodeForAutoComplete` / `getLangByLangcode` | 다국어 자동완성 |
 | `procModuleFileBoxAdd` / `procModuleFileBoxDelete` | 파일박스 CRUD (root) |
-| `procModuleClearCache` | 서명 인증 JSON 캐시 삭제 API(CSRF 면제). `keys`와 `Security::verifySignature(implode('\|', $keys), $signature)` 검증 필수. `*`는 전체, `group:*`는 그룹, 그 외는 개별 키 삭제 |
+| `procModuleClearCache` | 서명 인증 JSON 캐시 삭제 API(CSRF 면제). `keys`와 `Rhymix\Framework\Security::verifySignature(implode('\|', $keys), $signature)` 검증 필수. `*`는 전체, `group:*`는 그룹, 그 외는 개별 키 삭제 |
 
 ### 관리자
 
@@ -76,7 +76,7 @@
 | `module_update` | 모듈 업데이트 상태 |
 | `action_forward` | 외부 모듈이 추가한 액션 forward |
 | `domains` | 도메인 등록 |
-| `sites` | 사이트 (deprecated, 호환만) |
+| `sites` | 사이트 (레거시, 호환 유지) |
 | `lang` | 다국어 사용자 정의 |
 | `task_queue` | 큐 작업 |
 | `task_schedule` | 큐 스케줄 |

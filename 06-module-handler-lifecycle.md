@@ -56,7 +56,7 @@ protected static $_kinds = [
 protected static $_nocsrf_methods = ['GET', 'HEAD', 'OPTIONS'];
 ```
 
-이 메서드는 CSRF 검사를 건너뛴다. 그 밖의 메서드는 `module.xml`에서 `check-csrf="false"`로 해제하지 않는 한 `Security::checkCSRF()`를 호출한다. 기본 설정(`security.check_csrf_token=false`)에서는 토큰 대신 `Sec-Fetch-Site`/`Origin`/`Referer`로 same-origin 여부를 검사한다. 토큰 검사를 활성화한 경우에는 로그인 사용자의 요청에 `X-CSRF-Token` 헤더 또는 `_rx_csrf_token` 인자가 필요하다 (`common/framework/Security.php:327-380`).
+이 메서드는 CSRF 검사를 건너뛴다. 그 밖의 메서드는 `module.xml`에서 `check-csrf="false"`로 해제하지 않는 한 `Rhymix\Framework\Security::checkCSRF()`를 호출한다. 기본 설정(`security.check_csrf_token=false`)에서는 토큰 대신 `Sec-Fetch-Site`/`Origin`/`Referer`로 same-origin 여부를 검사한다. 토큰 검사를 활성화한 경우에는 로그인 사용자의 요청에 `X-CSRF-Token` 헤더 또는 `_rx_csrf_token` 인자가 필요하다 (`common/framework/Security.php:327-380`).
 
 ## 생성자 (`:58`)
 
@@ -103,9 +103,9 @@ protected static $_nocsrf_methods = ['GET', 'HEAD', 'OPTIONS'];
 5. act가 비어 있으면 `default_index_act` 폴백, 여전히 없으면 404 (`:344-353`).
 6. type/class_name/ruleset/meta_noindex 결정 — admin이 포함된 액션은 `kind='admin'` (`:356-370`).
 7. **HTTP 메서드 검사** — 허용 method에 없으면 405 (`:372-380`).
-8. **CSRF 검사** — 비-GET/HEAD/OPTIONS + `check_csrf !== 'false'` + 설치됨이면 `Security::checkCSRF()`. 실패 시 403 (`:382-389`).
+8. **CSRF 검사** — 비-GET/HEAD/OPTIONS + `check_csrf !== 'false'` + 설치됨이면 `Rhymix\Framework\Security::checkCSRF()`. 실패 시 403 (`:382-389`).
 9. **standalone 검사** — `standalone='auto'`인데 module/mid 둘 다 비었거나, `standalone='false'`인데 mid 없으면 403 (`:391-402`).
-10. `use_mobile='N'`이면 `Mobile::setMobile(false)` (`:404-412`).
+10. `use_mobile='N'`이면 `Mobile::setMobile(false)` (`@deprecated`; `:404-412`).
 11. 로그인 회원 메뉴 lang 재할당 (`:414-419`).
 12. **모듈 인스턴스 생성** (`:421-463`):
     - `class_name` 있으면 `<namespaces>` 첫 항목 또는 표준 `Rhymix\Modules\<Module>` prefix로 풀네임 만들어 `class_exists` 후 `getInstance()` (v2).
